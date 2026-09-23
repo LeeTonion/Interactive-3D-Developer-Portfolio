@@ -114,7 +114,8 @@ public class CameraControl : MonoBehaviour
             _targetDistance = Mathf.Clamp(_targetDistance - zoomDelta, minDistance, maxDistance);
         }
 
-        _currentDistance = Mathf.Lerp(_currentDistance, _targetDistance, Time.deltaTime * zoomSmoothness);
+        float zoomT = 1f - Mathf.Exp(-zoomSmoothness * Time.deltaTime);
+        _currentDistance = Mathf.Lerp(_currentDistance, _targetDistance, zoomT);
     }
 
     void LateUpdate()
@@ -123,14 +124,16 @@ public class CameraControl : MonoBehaviour
 
         float currentH = _currentDistance * _heightToDistanceRatio;
         Vector3 desiredPosition = target.TransformPoint(new Vector3(0f, currentH, -_currentDistance));
-        transform.position = Vector3.Lerp(transform.position, desiredPosition, followSpeed * Time.deltaTime);
+        float posT = 1f - Mathf.Exp(-followSpeed * Time.deltaTime);
+        transform.position = Vector3.Lerp(transform.position, desiredPosition, posT);
 
         Vector3 lookTarget = target.position + Vector3.up * lookAtHeightOffset;
         Vector3 direction = lookTarget - transform.position;
         if (direction.sqrMagnitude > 0.001f)
         {
             Quaternion desiredRotation = Quaternion.LookRotation(direction);
-            transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, rotationSpeed * Time.deltaTime);
+            float rotT = 1f - Mathf.Exp(-rotationSpeed * Time.deltaTime);
+            transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, rotT);
         }
     }
 
