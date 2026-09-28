@@ -1,11 +1,12 @@
 using UnityEngine;
-using CodeDrive.Portfolio;
+using CodeDrive.Navigation;
 
 namespace CodeDrive.Portfolio
 {
     /// <summary>
     /// Represents a portfolio section in the world.
     /// Attach to a trigger GameObject alongside an InteractionTrigger.
+    /// Self-registers with RoadNavigationManager to avoid Find calls at runtime.
     /// </summary>
     public class PortfolioArea : MonoBehaviour
     {
@@ -15,6 +16,16 @@ namespace CodeDrive.Portfolio
 
         public PortfolioAreaType AreaType => areaType;
         public string AreaLabel => string.IsNullOrEmpty(areaLabel) ? areaType.ToString() : areaLabel;
+
+        private void OnEnable()
+        {
+            RoadNavigationManager.Instance?.RegisterArea(this);
+        }
+
+        private void OnDisable()
+        {
+            RoadNavigationManager.Instance?.UnregisterArea(this);
+        }
 
         private void OnDrawGizmos()
         {
