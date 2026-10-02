@@ -7,65 +7,79 @@ public class CameraControl : MonoBehaviour
     [Tooltip("Target transform to follow (usually the player car)")]
     public Transform target;
 
+    [Header("Isometric Camera Angle (Bruno Simon Style)")]
+    [Tooltip("Pitch angle - how steeply the camera looks down (50-55 for Bruno Simon style)")]
+    [Range(20f, 75f)]
+    public float pitch = 52f;
+    [Tooltip("Yaw angle - horizontal rotation around the target (45 = classic diagonal)")]
+    [Range(-180f, 180f)]
+    public float yaw = 45f;
+
     [Header("Follow Settings")]
     [Tooltip("Smoothing speed for camera position follow")]
-    public float followSpeed = 8f;
-    [Tooltip("Smoothing speed for camera rotation")]
-    public float rotationSpeed = 6f;
+    public float followSpeed = 6f;
     [Tooltip("Height offset for the look-at target point")]
-    public float lookAtHeightOffset = 1.2f;
+    public float lookAtHeightOffset = 0.5f;
+    [Tooltip("Look-ahead distance in the car's forward direction")]
+    [Range(0f, 5f)]
+    public float lookAheadDistance = 2f;
 
-    [Header("Distance & Height")]
-    [Tooltip("Base distance behind the car")]
-    public float distance = 18f;
-    [Tooltip("Base height above the car")]
-    public float height = 6.5f;
+    [Header("Distance")]
+    [Tooltip("Camera distance from target (controls how much world is visible)")]
+    public float distance = 22f;
 
     [Header("Zoom Settings (Mouse Scroll Wheel)")]
     [Tooltip("Enable zooming with mouse scroll wheel")]
     public bool enableZoom = true;
     [Tooltip("Minimum zoom distance")]
-    public float minDistance = 6f;
+    public float minDistance = 12f;
     [Tooltip("Maximum zoom distance")]
-    public float maxDistance = 24f;
+    public float maxDistance = 40f;
     [Tooltip("Zoom step size per scroll tick")]
-    public float zoomStep = 1.5f;
+    public float zoomStep = 2f;
     [Tooltip("Zoom smoothing speed")]
-    public float zoomSmoothness = 10f;
+    public float zoomSmoothness = 8f;
 
+    [Header("Field of View")]
+    [Tooltip("Camera field of view (lower = more telephoto/flat, higher = wider)")]
+    [Range(20f, 80f)]
+    public float fieldOfView = 40f;
+
+    private Camera _cam;
     private float _targetDistance;
     private float _currentDistance;
-    private float _heightToDistanceRatio;
+    private Vector3 _currentLookAhead;
 
     void Awake()
     {
-        _currentDistance = maxDistance;
+        _cam = GetComponent<Camera>();
+        _currentDistance = distance;
         _targetDistance = _currentDistance;
-        UpdateRatio();
     }
 
     private void OnValidate()
     {
-        UpdateRatio();
-    }
-
-    private void UpdateRatio()
-    {
-        if (distance > 0.001f)
+        if (_cam == null) _cam = GetComponent<Camera>();
+        if (_cam != null)
         {
-            _heightToDistanceRatio = height / distance;
+            _cam.fieldOfView = fieldOfView;
         }
-        else
+        if (!Application.isPlaying)
         {
-            _heightToDistanceRatio = 0.4f;
+            _currentDistance = distance;
+            _targetDistance = distance;
         }
     }
 
     void Start()
     {
-        // Keep cursor unlocked and visible for UI and portfolio interaction
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
+        if (_cam != null)
+        {
+            _cam.fieldOfView = fieldOfView;
+        }
 
         if (target != null)
         {
@@ -77,16 +91,31 @@ public class CameraControl : MonoBehaviour
     {
         if (target == null) return;
 
-        float currentH = _currentDistance * _heightToDistanceRatio;
-        Vector3 desiredPosition = target.TransformPoint(new Vector3(0f, currentH, -_currentDistance));
+        Vector3 lookTarget = GetLookTarget();
+        Quaternion rotation = Quaternion.Euler(pitch, yaw, 0f);
+        Vector3 desiredPosition = lookTarget + rotation * (Vector3.back * _currentDistance);
+
         transform.position = desiredPosition;
+        transform.LookAt(lookTarget);
+    }
+
+    private Vector3 GetLookTarget()
+    {
+        if (target == null) return Vector3.zero;
 
         Vector3 lookTarget = target.position + Vector3.up * lookAtHeightOffset;
-        Vector3 direction = lookTarget - transform.position;
-        if (direction.sqrMagnitude > 0.001f)
+
+        if (lookAheadDistance > 0.01f)
         {
-            transform.rotation = Quaternion.LookRotation(direction);
+            Vector3 forwardOffset = target.forward * lookAheadDistance;
+            forwardOffset.y = 0f;
+            _currentLookAhead = Application.isPlaying
+                ? Vector3.Lerp(_currentLookAhead, forwardOffset, Time.deltaTime * 3f)
+                : forwardOffset;
+            lookTarget += _currentLookAhead;
         }
+
+        return lookTarget;
     }
 
     void Update()
@@ -108,8 +137,6 @@ public class CameraControl : MonoBehaviour
 
         if (Mathf.Abs(scroll) > 0.01f)
         {
-            // Scrolling up (positive) -> Zoom in (closer)
-            // Scrolling down (negative) -> Zoom out (farther)
             float zoomDelta = Mathf.Sign(scroll) * zoomStep;
             _targetDistance = Mathf.Clamp(_targetDistance - zoomDelta, minDistance, maxDistance);
         }
@@ -122,19 +149,13 @@ public class CameraControl : MonoBehaviour
     {
         if (target == null) return;
 
-        float currentH = _currentDistance * _heightToDistanceRatio;
-        Vector3 desiredPosition = target.TransformPoint(new Vector3(0f, currentH, -_currentDistance));
+        Vector3 lookTarget = GetLookTarget();
+        Quaternion rotation = Quaternion.Euler(pitch, yaw, 0f);
+        Vector3 desiredPosition = lookTarget + rotation * (Vector3.back * _currentDistance);
+
         float posT = 1f - Mathf.Exp(-followSpeed * Time.deltaTime);
         transform.position = Vector3.Lerp(transform.position, desiredPosition, posT);
-
-        Vector3 lookTarget = target.position + Vector3.up * lookAtHeightOffset;
-        Vector3 direction = lookTarget - transform.position;
-        if (direction.sqrMagnitude > 0.001f)
-        {
-            Quaternion desiredRotation = Quaternion.LookRotation(direction);
-            float rotT = 1f - Mathf.Exp(-rotationSpeed * Time.deltaTime);
-            transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, rotT);
-        }
+        transform.LookAt(lookTarget);
     }
 
     public void SetTarget(Transform newTarget)

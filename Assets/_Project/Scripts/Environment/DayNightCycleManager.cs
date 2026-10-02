@@ -40,6 +40,15 @@ namespace CodeDrive.Environment
         [SerializeField] private float nightFogStart = 45f;
         [SerializeField] private float nightFogEnd = 240f;
 
+        [Header("Night & Street Lamp Thresholds")]
+        [Range(0.5f, 1f)]
+        [Tooltip("Time when lights turn ON at dusk (0.72 = 17:15 - early sunset).")]
+        [SerializeField] private float duskTurnOnTime = 0.72f;
+
+        [Range(0f, 0.5f)]
+        [Tooltip("Time when lights turn OFF at dawn (0.26 = 06:15 - early sunrise).")]
+        [SerializeField] private float dawnTurnOffTime = 0.26f;
+
         public bool IsNight { get; private set; }
         public float CurrentTimeOfDay => currentTimeOfDay;
 
@@ -87,8 +96,8 @@ namespace CodeDrive.Environment
                 if (currentTimeOfDay >= 1f) currentTimeOfDay -= 1f;
             }
 
-            // Night is between 19:15 (0.80) and 05:45 (0.24)
-            bool nightNow = currentTimeOfDay < 0.24f || currentTimeOfDay > 0.80f;
+            // Lights turn ON at dusk (~17:15, 0.72) and turn OFF at dawn (~06:15, 0.26)
+            bool nightNow = currentTimeOfDay < dawnTurnOffTime || currentTimeOfDay > duskTurnOnTime;
             if (nightNow != IsNight)
             {
                 IsNight = nightNow;
