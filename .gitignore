@@ -109,3 +109,5 @@ InitTestScene*.unity*
 Assets/Triangularity/ColorfulCity/Scenes/
 Assets/Triangularity/ColorfulCity/Scenes.meta
 
+# Temporary screenshots
+screenshot_*.png

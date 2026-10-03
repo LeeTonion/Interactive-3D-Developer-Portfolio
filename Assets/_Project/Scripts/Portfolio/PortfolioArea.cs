@@ -20,11 +20,13 @@ namespace CodeDrive.Portfolio
         private void OnEnable()
         {
             RoadNavigationManager.Instance?.RegisterArea(this);
+            Interaction.AreaManager.Instance?.RegisterArea(this);
         }
 
         private void OnDisable()
         {
             RoadNavigationManager.Instance?.UnregisterArea(this);
+            Interaction.AreaManager.Instance?.UnregisterArea(this);
         }
 
         private void OnDrawGizmos()

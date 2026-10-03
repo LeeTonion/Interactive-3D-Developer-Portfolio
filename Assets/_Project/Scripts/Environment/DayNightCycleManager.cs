@@ -5,10 +5,9 @@ using UnityEngine.Rendering;
 namespace CodeDrive.Environment
 {
     /// <summary>
-    /// Clean, crystal-clear Day/Night cycle.
-    /// Completely removes any red/dusty haze artifacts.
-    /// Transitions smoothly between Clean Sky Blue (Day) and Deep Midnight Navy (Night).
-    /// Keeps nearby fog far from the player (45m - 300m) for maximum visual clarity.
+    /// Realistic Day/Night cycle with dynamic isometric sun shadows,
+    /// high-contrast night atmosphere, smooth ambient transitions,
+    /// and keyboard shortcut 'N' to toggle Day/Night.
     /// </summary>
     public class DayNightCycleManager : MonoBehaviour
     {
@@ -20,33 +19,31 @@ namespace CodeDrive.Environment
 
         [Range(0f, 1f)]
         [Tooltip("0.0 = Midnight, 0.25 = Sunrise 06:00, 0.5 = Noon 12:00, 0.75 = Sunset 18:00")]
-        [SerializeField] private float currentTimeOfDay = 0.30f; // Start in clear morning
+        [SerializeField] private float currentTimeOfDay = 0.35f; // Start in beautiful morning sunlight
 
         [SerializeField] private bool pauseCycle = false;
 
         [Header("Sun Reference")]
         [SerializeField] private Light sunLight;
 
-        // Clean, pure colors (NO RED/BROWN DUST)
-        private static readonly Color DaySkyColor   = new Color(0.55f, 0.75f, 0.95f); // Clean clear sky blue
-        private static readonly Color NightSkyColor = new Color(0.012f, 0.022f, 0.045f); // Deep clean midnight dark
+        // Visual Palette (Clean Bruno Simon daytime & Deep Midnight nighttime)
+        private static readonly Color DaySkyColor   = new Color(0.70f, 0.82f, 0.95f); // Soft clear sky
+        private static readonly Color NightSkyColor = new Color(0.015f, 0.022f, 0.040f); // Deep clean midnight
 
-        private static readonly Color DaySunColor   = new Color(1.00f, 0.98f, 0.92f); // Warm sunlight
-        private static readonly Color DuskSunColor  = new Color(1.00f, 0.88f, 0.70f); // Soft warm gold (gentle, not red)
+        private static readonly Color DaySunColor   = new Color(1.00f, 0.97f, 0.90f); // Warm crisp sunlight
+        private static readonly Color DuskSunColor  = new Color(1.00f, 0.78f, 0.55f); // Golden sunset
 
         [Header("Fog Distance Settings")]
-        [SerializeField] private float dayFogStart = 60f;
-        [SerializeField] private float dayFogEnd = 320f;
+        [SerializeField] private float dayFogStart = 70f;
+        [SerializeField] private float dayFogEnd = 350f;
         [SerializeField] private float nightFogStart = 45f;
-        [SerializeField] private float nightFogEnd = 240f;
+        [SerializeField] private float nightFogEnd = 260f;
 
         [Header("Night & Street Lamp Thresholds")]
         [Range(0.5f, 1f)]
-        [Tooltip("Time when lights turn ON at dusk (0.72 = 17:15 - early sunset).")]
         [SerializeField] private float duskTurnOnTime = 0.72f;
 
         [Range(0f, 0.5f)]
-        [Tooltip("Time when lights turn OFF at dawn (0.26 = 06:15 - early sunrise).")]
         [SerializeField] private float dawnTurnOffTime = 0.26f;
 
         public bool IsNight { get; private set; }
@@ -75,6 +72,12 @@ namespace CodeDrive.Environment
                 if (sunGo != null) sunLight = sunGo.GetComponent<Light>();
             }
 
+            if (sunLight != null)
+            {
+                sunLight.shadows = LightShadows.Soft;
+                sunLight.shadowStrength = 0.85f;
+            }
+
             if (RenderSettings.skybox != null)
             {
                 _runtimeSkyboxMat = new Material(RenderSettings.skybox);
@@ -90,13 +93,19 @@ namespace CodeDrive.Environment
 
         private void Update()
         {
+            // Keyboard shortcut 'N' to toggle between Noon and Midnight
+            if (Input.GetKeyDown(KeyCode.N))
+            {
+                ToggleDayNightQuick();
+            }
+
             if (!pauseCycle && dayDurationInSeconds > 0f)
             {
                 currentTimeOfDay += (Time.deltaTime / dayDurationInSeconds);
                 if (currentTimeOfDay >= 1f) currentTimeOfDay -= 1f;
             }
 
-            // Lights turn ON at dusk (~17:15, 0.72) and turn OFF at dawn (~06:15, 0.26)
+            // Lights turn ON at dusk and turn OFF at dawn
             bool nightNow = currentTimeOfDay < dawnTurnOffTime || currentTimeOfDay > duskTurnOnTime;
             if (nightNow != IsNight)
             {
@@ -108,35 +117,48 @@ namespace CodeDrive.Environment
             OnTimeUpdated?.Invoke(currentTimeOfDay);
         }
 
+        public void ToggleDayNightQuick()
+        {
+            if (IsNight)
+            {
+                // Switch to sunny daytime (10:00 AM)
+                SetTimeOfDay(0.42f);
+            }
+            else
+            {
+                // Switch to midnight
+                SetTimeOfDay(0.05f);
+            }
+        }
+
         public void ApplyEnvironment(float t)
         {
             // 1. Calculate continuous smooth day factor [0 = night, 1 = midday]
             // Sun rises at 0.25 (06:00), peaks at 0.50 (12:00), sets at 0.75 (18:00)
-            float sunAngle = (t * 360f) - 90f;
             float sunElevation = Mathf.Sin((t - 0.25f) * Mathf.PI * 2f);
-
-            // Smooth cosine blend between Day and Night (no piecewise jumps)
             float dayWeight = Mathf.Clamp01(sunElevation * 2.2f);
             dayWeight = Mathf.SmoothStep(0f, 1f, dayWeight);
 
-            // 2. Pure Clean Sky & Fog Color (Interpolates strictly between Day Blue and Deep Night Navy)
+            // 2. Pure Clean Sky & Fog Color
             Color currentSkyColor = Color.Lerp(NightSkyColor, DaySkyColor, dayWeight);
 
-            // Fog is ALWAYS identical to Sky color, so the world blends cleanly into horizon with ZERO red tint
             RenderSettings.fogColor = currentSkyColor;
             RenderSettings.fogStartDistance = Mathf.Lerp(nightFogStart, dayFogStart, dayWeight);
             RenderSettings.fogEndDistance = Mathf.Lerp(nightFogEnd, dayFogEnd, dayWeight);
 
-            // 3. Sun Directional Light
+            // 3. Sun Directional Light with optimal angled shadows
             if (sunLight != null)
             {
-                sunLight.transform.rotation = Quaternion.Euler(sunAngle, 170f, 0f);
+                // Angle the sun dynamically between 35° and 60° pitch for distinct cast shadows
+                float pitch = Mathf.Lerp(25f, 52f, dayWeight);
+                float yaw = Mathf.Lerp(70f, 140f, dayWeight);
+                sunLight.transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
                 sunLight.color = Color.Lerp(DuskSunColor, DaySunColor, dayWeight);
-                sunLight.intensity = dayWeight * 1.30f;
+                sunLight.intensity = Mathf.Lerp(0f, 1.25f, dayWeight);
                 sunLight.enabled = dayWeight > 0.005f;
             }
 
-            // 4. Runtime Skybox properties
+            // 4. Skybox
             if (_runtimeSkyboxMat != null)
             {
                 if (_runtimeSkyboxMat.HasProperty("_SkyTint"))
@@ -145,27 +167,27 @@ namespace CodeDrive.Environment
                     _runtimeSkyboxMat.SetColor("_GroundColor", currentSkyColor);
                 if (_runtimeSkyboxMat.HasProperty("_Exposure"))
                 {
-                    float exposure = Mathf.Lerp(0.06f, 1.25f, dayWeight);
+                    float exposure = Mathf.Lerp(0.08f, 1.20f, dayWeight);
                     _runtimeSkyboxMat.SetFloat("_Exposure", exposure);
                 }
             }
 
-            // 5. Clean Ambient Trilight
+            // 5. Ambient Trilight (Dark enough at night so headlights pop, vibrant in day)
             RenderSettings.ambientSkyColor = Color.Lerp(
-                new Color(0.015f, 0.025f, 0.05f), // Midnight Navy
-                new Color(0.72f, 0.82f, 0.96f),   // Day Sky
+                new Color(0.012f, 0.018f, 0.035f), // Night sky ambient
+                new Color(0.70f, 0.78f, 0.90f),    // Day sky ambient
                 dayWeight
             );
 
             RenderSettings.ambientEquatorColor = Color.Lerp(
-                new Color(0.01f, 0.018f, 0.035f),
-                new Color(0.55f, 0.60f, 0.68f),
+                new Color(0.008f, 0.012f, 0.025f),
+                new Color(0.55f, 0.58f, 0.65f),
                 dayWeight
             );
 
             RenderSettings.ambientGroundColor = Color.Lerp(
-                new Color(0.005f, 0.01f, 0.02f),
-                new Color(0.35f, 0.35f, 0.38f),
+                new Color(0.004f, 0.006f, 0.012f),
+                new Color(0.32f, 0.33f, 0.36f),
                 dayWeight
             );
         }
@@ -173,6 +195,12 @@ namespace CodeDrive.Environment
         public void SetTimeOfDay(float time01)
         {
             currentTimeOfDay = Mathf.Repeat(time01, 1f);
+            bool nightNow = currentTimeOfDay < dawnTurnOffTime || currentTimeOfDay > duskTurnOnTime;
+            if (nightNow != IsNight)
+            {
+                IsNight = nightNow;
+                OnDayNightToggled?.Invoke(IsNight);
+            }
             ApplyEnvironment(currentTimeOfDay);
         }
 

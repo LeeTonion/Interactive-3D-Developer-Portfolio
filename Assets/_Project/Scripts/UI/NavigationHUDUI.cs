@@ -224,7 +224,7 @@ namespace CodeDrive.UI
             rect.sizeDelta = new Vector2(180f, 32f);
 
             var img = btnObj.GetComponent<Image>();
-            img.color = new Color(0.12f, 0.20f, 0.32f, 0.95f);
+            img.color = new Color(0.12f, 0.10f, 0.08f, 0.92f);  // Dark warm charcoal (Bruno Simon style)
             img.raycastTarget = true; // Ensure Raycast Target enabled on button image
 
             GameObject textObj = new GameObject("Text", typeof(RectTransform), typeof(Text));
@@ -241,8 +241,19 @@ namespace CodeDrive.UI
             txt.fontSize = 13;
             txt.fontStyle = FontStyle.Bold;
             txt.alignment = TextAnchor.MiddleCenter;
-            txt.color = new Color(0.9f, 0.95f, 1f);
+            txt.color = new Color(0.95f, 0.90f, 0.82f);  // Warm cream text (Bruno Simon style)
             txt.raycastTarget = false; // Disable text raycast target so parent button gets click directly
+
+            // Button hover/click color transitions
+            var btn = btnObj.GetComponent<Button>();
+            var colors = btn.colors;
+            colors.normalColor      = new Color(0.12f, 0.10f, 0.08f, 0.92f);
+            colors.highlightedColor = new Color(1f, 0.55f, 0.15f, 0.95f);   // Orange on hover
+            colors.pressedColor     = new Color(0.85f, 0.45f, 0.08f, 0.95f); // Darker orange on press
+            colors.selectedColor    = new Color(1f, 0.55f, 0.15f, 0.80f);
+            colors.colorMultiplier  = 1f;
+            colors.fadeDuration     = 0.1f;
+            btn.colors = colors;
 
             return btnObj;
         }

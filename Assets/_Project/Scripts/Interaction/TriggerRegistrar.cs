@@ -3,9 +3,9 @@ using UnityEngine;
 namespace CodeDrive.Interaction
 {
     /// <summary>
-    /// Placed on the _Systems/GameManager object (or any persistent object).
+    /// Placed on the _Systems/GameManager object (or any persistent manager object).
     /// Finds all InteractionTriggers in the scene at Start and registers them
-    /// with the InteractionManager so no manual wiring is needed per area.
+    /// with the InteractionManager and AreaManager so zero manual wiring is needed.
     /// </summary>
     public class TriggerRegistrar : MonoBehaviour
     {
@@ -15,15 +15,23 @@ namespace CodeDrive.Interaction
         {
             if (interactionManager == null)
             {
-                Debug.LogWarning("[TriggerRegistrar] No InteractionManager assigned.");
-                return;
+                interactionManager = InteractionManager.Instance != null 
+                    ? InteractionManager.Instance 
+                    : UnityEngine.Object.FindObjectOfType<InteractionManager>();
             }
 
-            var triggers = FindObjectsByType<InteractionTrigger>(FindObjectsSortMode.None);
+            var triggers = UnityEngine.Object.FindObjectsOfType<InteractionTrigger>();
             foreach (var t in triggers)
-                interactionManager.RegisterTrigger(t);
+            {
+                if (interactionManager != null)
+                    interactionManager.RegisterTrigger(t);
 
-            Debug.Log($"[TriggerRegistrar] Registered {triggers.Length} interaction trigger(s).");
+                var area = t.GetComponent<Portfolio.PortfolioArea>();
+                if (area != null && AreaManager.Instance != null)
+                    AreaManager.Instance.RegisterArea(area);
+            }
+
+            Debug.Log($"[TriggerRegistrar] Auto-registered {triggers.Length} interaction trigger(s).");
         }
     }
 }

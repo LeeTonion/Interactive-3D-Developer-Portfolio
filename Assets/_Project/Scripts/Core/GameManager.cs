@@ -32,6 +32,56 @@ namespace CodeDrive.Core
             Instance = this;
         }
 
+        private void Start()
+        {
+            // Auto-create intro overlay
+            if (FindObjectOfType<UI.IntroOverlayUI>() == null)
+            {
+                var introObj = new GameObject("IntroOverlay");
+                introObj.AddComponent<UI.IntroOverlayUI>();
+            }
+
+            // Auto-create ambient particles
+            if (FindObjectOfType<Environment.AmbientParticles>() == null)
+            {
+                var ambientObj = new GameObject("AmbientParticles");
+                ambientObj.AddComponent<Environment.AmbientParticles>();
+            }
+
+            // Auto-attach camera speed effects
+            var mainCam = Camera.main;
+            if (mainCam != null && mainCam.GetComponent<CameraSystem.CameraSpeedEffects>() == null)
+            {
+                mainCam.gameObject.AddComponent<CameraSystem.CameraSpeedEffects>();
+            }
+
+            // Auto-attach car dust trail
+            var car = FindObjectOfType<CarControl>();
+            if (car != null && car.GetComponent<CarDustTrail>() == null)
+            {
+                car.gameObject.AddComponent<CarDustTrail>();
+            }
+
+            // Auto-create speed HUD (via reflection to avoid compile-order dependency)
+            bool hasSpeedHud = FindObjectOfType<MonoBehaviour>() != null &&
+                               System.Array.Exists(FindObjectsOfType<MonoBehaviour>(),
+                                   m => m.GetType().Name == "SpeedHUDUI");
+            if (!hasSpeedHud)
+            {
+                System.Type speedHudType = null;
+                foreach (var asm in System.AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    speedHudType = asm.GetType("CodeDrive.UI.SpeedHUDUI");
+                    if (speedHudType != null) break;
+                }
+                if (speedHudType != null)
+                {
+                    var speedHudObj = new GameObject("SpeedHUD");
+                    speedHudObj.AddComponent(speedHudType);
+                }
+            }
+        }
+
         private void OnEnable()
         {
             if (inputActions == null) return;
@@ -60,6 +110,12 @@ namespace CodeDrive.Core
 
         private void OnPause(InputAction.CallbackContext ctx)
         {
+            if (Interaction.ShowcaseBooth3D.AnyBoothFocused)
+            {
+                Interaction.ShowcaseBooth3D.CloseActiveBooth();
+                return;
+            }
+
             TogglePause();
         }
 

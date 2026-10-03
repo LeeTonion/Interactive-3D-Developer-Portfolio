@@ -218,6 +218,18 @@ public class CarControl : MonoBehaviour
         DriveWheels();
     }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        // Ignore gentle ground touches
+        float impactSpeed = collision.relativeVelocity.magnitude;
+        if (impactSpeed > 2.5f)
+        {
+            float intensity = Mathf.Clamp(impactSpeed * 0.035f, 0.08f, 0.45f);
+            float duration = Mathf.Clamp(impactSpeed * 0.025f, 0.12f, 0.30f);
+            CodeDrive.CameraSystem.CameraSpeedEffects.Instance?.TriggerImpactShake(intensity, duration);
+        }
+    }
+
     #endregion
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -239,11 +251,19 @@ public class CarControl : MonoBehaviour
         _resetAction = map.FindAction("ResetVehicle");
     }
 
+    public bool IsInputBlocked { get; set; }
+
     private void ReadInput()
     {
         _horizontalInput = 0f;
         _verticalInput   = 0f;
         _isHandbraking   = false;
+
+        if (IsInputBlocked)
+        {
+            _isHandbraking = true;
+            return;
+        }
 
         bool hasActionInput = false;
 
