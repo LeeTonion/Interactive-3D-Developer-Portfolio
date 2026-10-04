@@ -52,9 +52,19 @@ namespace CodeDrive.Interaction.Editor
             displayRootGo.transform.SetParent(t, false);
             var displayRoot = displayRootGo.transform;
 
-            // 1. Center Billboard Wooden Structure
+            // Add large trigger BoxCollider so clicking anywhere on the booth in 3D world focuses into it
+            var boothCollider = displayRootGo.AddComponent<BoxCollider>();
+            boothCollider.center = new Vector3(0f, 3.5f, 0.5f);
+            boothCollider.size = new Vector3(18f, 8f, 6f);
+            boothCollider.isTrigger = true;
+
+            // 1. Center Billboard Wooden Structure (with solid physics collider)
             var billboard = new GameObject("Structure_Billboard").transform;
             billboard.SetParent(displayRoot, false);
+            var billboardCol = billboard.gameObject.AddComponent<BoxCollider>();
+            billboardCol.center = new Vector3(0f, 3.3f, 0f);
+            billboardCol.size = new Vector3(9.8f, 6.8f, 0.8f);
+            billboardCol.isTrigger = false;
 
             // Left and Right main upright pillars (warm wood)
             CreateCube(billboard, "Post_Left", new Vector3(4.5f, 3.3f, 0f), new Vector3(0.55f, 6.8f, 0.55f), warmWoodMat);
@@ -105,14 +115,21 @@ namespace CodeDrive.Interaction.Editor
                 go.transform.SetParent(t, false);
                 anchor = go.transform;
             }
-            anchor.localPosition = new Vector3(0f, 3.80f, 11.5f);
-            anchor.localRotation = Quaternion.Euler(8f, 180f, 0f);
+            anchor.localPosition = new Vector3(0f, 3.85f, 12.25f);
+            anchor.localRotation = Quaternion.Euler(7.8f, 180f, 0f);
+
+            // 10. Position PointMarker_Root cleanly in front of the board
+            var pointMarker = t.Find("PointMarker_Root");
+            if (pointMarker != null)
+            {
+                pointMarker.localPosition = new Vector3(0f, 1.30f, 3.20f);
+            }
 
             // Wire up SerializedFields on ShowcaseBooth3D
             var so = new SerializedObject(booth);
             so.FindProperty("displayRoot").objectReferenceValue = displayRoot.gameObject;
             so.FindProperty("cameraFocusAnchor").objectReferenceValue = anchor;
-            so.FindProperty("focusFOV").floatValue = 46f;
+            so.FindProperty("focusFOV").floatValue = 50f;
 
             // Center Screen
             so.FindProperty("titleText").objectReferenceValue = screenCanvas.titleText;
@@ -312,7 +329,7 @@ namespace CodeDrive.Interaction.Editor
             var wing = new GameObject("Left_Wing").transform;
             wing.SetParent(root, false);
             // Viewer's LEFT is +X
-            wing.localPosition = new Vector3(6.3f, 4.4f, 0f);
+            wing.localPosition = new Vector3(6.6f, 4.4f, 0f);
 
             // Overhead arm & chains
             CreateCube(wing, "Arm_Beam", new Vector3(0f, 1.15f, 0f), new Vector3(2.8f, 0.3f, 0.3f), darkWood);
@@ -348,8 +365,8 @@ namespace CodeDrive.Interaction.Editor
 
             // Purple Arrow Button below hanging sign
             var btnImg = CreateUIElement<Image>(canvasGo.transform, "Btn_LeftArrow");
-            btnImg.rectTransform.anchorMin = new Vector2(0.32f, -0.72f);
-            btnImg.rectTransform.anchorMax = new Vector2(0.68f, -0.12f);
+            btnImg.rectTransform.anchorMin = new Vector2(0.28f, -0.76f);
+            btnImg.rectTransform.anchorMax = new Vector2(0.72f, -0.14f);
             btnImg.rectTransform.offsetMin = Vector2.zero;
             btnImg.rectTransform.offsetMax = Vector2.zero;
             btnImg.color = new Color(0.60f, 0.26f, 0.88f, 1f);
@@ -373,7 +390,7 @@ namespace CodeDrive.Interaction.Editor
             var wing = new GameObject("Right_Wing").transform;
             wing.SetParent(root, false);
             // Viewer's RIGHT is -X
-            wing.localPosition = new Vector3(-6.3f, 4.4f, 0f);
+            wing.localPosition = new Vector3(-6.6f, 4.4f, 0f);
 
             // Overhead arm & chains
             CreateCube(wing, "Arm_Beam", new Vector3(0f, 1.15f, 0f), new Vector3(2.8f, 0.3f, 0.3f), darkWood);
@@ -409,8 +426,8 @@ namespace CodeDrive.Interaction.Editor
 
             // Purple Arrow Button below hanging sign
             var btnImg = CreateUIElement<Image>(canvasGo.transform, "Btn_RightArrow");
-            btnImg.rectTransform.anchorMin = new Vector2(0.32f, -0.72f);
-            btnImg.rectTransform.anchorMax = new Vector2(0.68f, -0.12f);
+            btnImg.rectTransform.anchorMin = new Vector2(0.28f, -0.76f);
+            btnImg.rectTransform.anchorMax = new Vector2(0.72f, -0.14f);
             btnImg.rectTransform.offsetMin = Vector2.zero;
             btnImg.rectTransform.offsetMax = Vector2.zero;
             btnImg.color = new Color(0.60f, 0.26f, 0.88f, 1f);
@@ -441,6 +458,12 @@ namespace CodeDrive.Interaction.Editor
             chalk.SetParent(root, false);
             res.root = chalk.gameObject;
 
+            // Solid physics collider for chalkboard
+            var chalkCol = chalk.gameObject.AddComponent<BoxCollider>();
+            chalkCol.center = new Vector3(0f, 1.25f, 0f);
+            chalkCol.size = new Vector3(2.1f, 2.5f, 0.8f);
+            chalkCol.isTrigger = false;
+
             // Standing A-Frame Chalkboard on viewer's LEFT floor (+X): x = +5.2f, z = 1.4f
             chalk.localPosition = new Vector3(5.2f, 0f, 1.4f);
             // Angled 18 degrees towards the camera
@@ -452,7 +475,7 @@ namespace CodeDrive.Interaction.Editor
 
             var canvasGo = new GameObject("ChalkCanvas");
             canvasGo.transform.SetParent(chalk, false);
-            canvasGo.transform.localPosition = new Vector3(0f, 1.25f, 0.20f);
+            canvasGo.transform.localPosition = new Vector3(0f, 1.25f, 0.24f);
             canvasGo.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
             canvasGo.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
 
@@ -500,25 +523,32 @@ namespace CodeDrive.Interaction.Editor
             var res = new RightSignpostResult();
             var post = new GameObject("Right_Signpost").transform;
             post.SetParent(root, false);
-            // Signpost on viewer's RIGHT floor (-X): x = -5.5f, z = 1.4f
-            post.localPosition = new Vector3(-5.5f, 0f, 1.4f);
+            // Signpost on viewer's RIGHT floor (-X): x = -5.2f, z = 1.4f
+            post.localPosition = new Vector3(-5.2f, 0f, 1.4f);
             // Angled 18 degrees towards camera
             post.localRotation = Quaternion.Euler(0f, 18f, 0f);
 
-            // Upright Pole holding the signpost on outer right edge
-            CreateCube(post, "Post_Pole", new Vector3(-1.25f, 2.3f, 0.05f), new Vector3(0.35f, 4.6f, 0.35f), darkWood);
+            // Solid physics collider for signpost
+            var postCol = post.gameObject.AddComponent<BoxCollider>();
+            postCol.center = new Vector3(0f, 1.4f, 0.1f);
+            postCol.size = new Vector3(2.8f, 2.8f, 0.6f);
+            postCol.isTrigger = false;
 
-            // Top: ROLE Badge (attached on top-right of the plank) & Planks
-            CreateCube(post, "Role_Badge_3D", new Vector3(-0.85f, 3.60f, 0.20f), new Vector3(1.1f, 0.46f, 0.12f), orangeBadge);
-            CreateCube(post, "Role_Plank_3D", new Vector3(0.0f, 3.05f, 0.15f), new Vector3(2.8f, 0.75f, 0.12f), lightPlank);
+            // Upright Pole holding the signpost
+            CreateCube(post, "Post_Pole", new Vector3(-1.0f, 1.4f, 0.05f), new Vector3(0.35f, 2.8f, 0.35f), darkWood);
 
-            // Bottom: WITH Badge (attached on top-right of the plank) & Planks
-            CreateCube(post, "With_Badge_3D", new Vector3(-0.85f, 2.00f, 0.20f), new Vector3(1.1f, 0.46f, 0.12f), orangeBadge);
-            CreateCube(post, "With_Plank_3D", new Vector3(0.0f, 1.45f, 0.15f), new Vector3(2.8f, 0.75f, 0.12f), lightPlank);
+            // Top: ROLE Badge & Plank (Positioned on ground level so it NEVER blocks the wing arrow button above it)
+            CreateCube(post, "Role_Badge_3D", new Vector3(-0.65f, 2.20f, 0.20f), new Vector3(1.1f, 0.46f, 0.12f), orangeBadge);
+            CreateCube(post, "Role_Plank_3D", new Vector3(0.0f, 1.65f, 0.15f), new Vector3(2.8f, 0.75f, 0.12f), lightPlank);
 
+            // Bottom: WITH Badge & Plank
+            CreateCube(post, "With_Badge_3D", new Vector3(-0.65f, 0.95f, 0.20f), new Vector3(1.1f, 0.46f, 0.12f), orangeBadge);
+            CreateCube(post, "With_Plank_3D", new Vector3(0.0f, 0.40f, 0.15f), new Vector3(2.8f, 0.75f, 0.12f), lightPlank);
+
+            // Canvas placed at Z=0.32f to completely prevent Z-fighting with 3D wood cubes
             var canvasGo = new GameObject("SignpostCanvas");
             canvasGo.transform.SetParent(post, false);
-            canvasGo.transform.localPosition = new Vector3(0f, 2.4f, 0.26f);
+            canvasGo.transform.localPosition = new Vector3(0f, 1.05f, 0.32f);
             canvasGo.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
             canvasGo.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
 
@@ -528,40 +558,48 @@ namespace CodeDrive.Interaction.Editor
             var rt = canvasGo.GetComponent<RectTransform>();
             rt.sizeDelta = new Vector2(360f, 320f);
 
-            // Canvas coordinate mapping (Y=180 rotation flips X):
+            // Canvas coordinate mapping (Y=180 rotation flips X, so +65 in canvas is -0.65 in 3D):
             var roleBadgeTxt = CreateUIElement<Text>(canvasGo.transform, "RoleBadgeText");
-            roleBadgeTxt.rectTransform.anchoredPosition = new Vector2(85f, 120f);
-            roleBadgeTxt.rectTransform.sizeDelta = new Vector2(110f, 46f);
+            roleBadgeTxt.rectTransform.anchoredPosition = new Vector2(65f, 115f);
+            roleBadgeTxt.rectTransform.sizeDelta = new Vector2(100f, 40f);
             roleBadgeTxt.alignment = TextAnchor.MiddleCenter;
-            roleBadgeTxt.fontSize = 20;
+            roleBadgeTxt.fontSize = 17;
             roleBadgeTxt.fontStyle = FontStyle.Bold;
+            roleBadgeTxt.horizontalOverflow = HorizontalWrapMode.Wrap;
             roleBadgeTxt.color = Color.white;
             roleBadgeTxt.text = "ROLE";
 
             res.roleText = CreateUIElement<Text>(canvasGo.transform, "RoleText");
-            res.roleText.rectTransform.anchoredPosition = new Vector2(0f, 65f);
-            res.roleText.rectTransform.sizeDelta = new Vector2(270f, 75f);
+            res.roleText.rectTransform.anchoredPosition = new Vector2(0f, 60f);
+            res.roleText.rectTransform.sizeDelta = new Vector2(260f, 70f);
             res.roleText.alignment = TextAnchor.MiddleCenter;
-            res.roleText.fontSize = 19;
+            res.roleText.fontSize = 15;
             res.roleText.fontStyle = FontStyle.Bold;
+            res.roleText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            res.roleText.verticalOverflow = VerticalWrapMode.Truncate;
+            res.roleText.lineSpacing = 1.1f;
             res.roleText.color = Color.white;
             res.roleText.text = "DEVELOPER\nFORMATER";
 
             var withBadgeTxt = CreateUIElement<Text>(canvasGo.transform, "WithBadgeText");
-            withBadgeTxt.rectTransform.anchoredPosition = new Vector2(85f, -40f);
-            withBadgeTxt.rectTransform.sizeDelta = new Vector2(110f, 46f);
+            withBadgeTxt.rectTransform.anchoredPosition = new Vector2(65f, -10f);
+            withBadgeTxt.rectTransform.sizeDelta = new Vector2(100f, 40f);
             withBadgeTxt.alignment = TextAnchor.MiddleCenter;
-            withBadgeTxt.fontSize = 20;
+            withBadgeTxt.fontSize = 17;
             withBadgeTxt.fontStyle = FontStyle.Bold;
+            withBadgeTxt.horizontalOverflow = HorizontalWrapMode.Wrap;
             withBadgeTxt.color = Color.white;
             withBadgeTxt.text = "WITH";
 
             res.withText = CreateUIElement<Text>(canvasGo.transform, "WithText");
-            res.withText.rectTransform.anchoredPosition = new Vector2(0f, -95f);
-            res.withText.rectTransform.sizeDelta = new Vector2(270f, 75f);
+            res.withText.rectTransform.anchoredPosition = new Vector2(0f, -65f);
+            res.withText.rectTransform.sizeDelta = new Vector2(260f, 70f);
             res.withText.alignment = TextAnchor.MiddleCenter;
-            res.withText.fontSize = 19;
+            res.withText.fontSize = 15;
             res.withText.fontStyle = FontStyle.Bold;
+            res.withText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            res.withText.verticalOverflow = VerticalWrapMode.Truncate;
+            res.withText.lineSpacing = 1.1f;
             res.withText.color = Color.white;
             res.withText.text = "HERVÉ STUDIO\nBONHOMME PARIS";
 
@@ -578,6 +616,13 @@ namespace CodeDrive.Interaction.Editor
             var res = new FrontBenchResult();
             var bench = new GameObject("Front_Bench").transform;
             bench.SetParent(root, false);
+
+            // Solid physics collider for front bench
+            var benchCol = bench.gameObject.AddComponent<BoxCollider>();
+            benchCol.center = new Vector3(0f, 0.5f, 0f);
+            benchCol.size = new Vector3(3.8f, 1.0f, 1.2f);
+            benchCol.isTrigger = false;
+
             // Wooden Bench on front center: x = 0f, z = 2.4f
             bench.localPosition = new Vector3(0f, 0f, 2.4f);
 
@@ -602,7 +647,7 @@ namespace CodeDrive.Interaction.Editor
 
             var canvasGo = new GameObject("BenchCanvas");
             canvasGo.transform.SetParent(bench, false);
-            canvasGo.transform.localPosition = new Vector3(0f, 0.50f, 0.69f);
+            canvasGo.transform.localPosition = new Vector3(0f, 0.50f, 0.74f);
             canvasGo.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
             canvasGo.transform.localScale = new Vector3(0.009f, 0.009f, 0.009f);
 
@@ -616,7 +661,7 @@ namespace CodeDrive.Interaction.Editor
             res.text.rectTransform.anchorMin = Vector2.zero;
             res.text.rectTransform.anchorMax = Vector2.one;
             res.text.alignment = TextAnchor.MiddleCenter;
-            res.text.fontSize = 20;
+            res.text.fontSize = 18;
             res.text.fontStyle = FontStyle.Bold;
             res.text.color = Color.white;
             res.text.text = "DISTINCTIONS • FWA OF THE DAY";

@@ -61,7 +61,7 @@ namespace CodeDrive.Interaction
         [Header("Camera & Parking")]
         [SerializeField] private Transform cameraFocusAnchor;
         [SerializeField] private Transform parkingSpotAnchor;
-        [SerializeField] private float focusFOV = 44f;
+        [SerializeField] private float focusFOV = 50f;
         [SerializeField] private float focusSpeed = 4.5f;
 
         [Header("Center Screen UI References")]
@@ -126,8 +126,24 @@ namespace CodeDrive.Interaction
             UpdateSlideUI();
             UpdateMarkerUI();
 
-            if (displayRoot != null) displayRoot.SetActive(false);
+            // Always display the 3D booth structure in the world
+            if (displayRoot != null)
+            {
+                displayRoot.SetActive(true);
+                displayRoot.transform.localScale = Vector3.one;
+            }
             if (pointMarkerRoot != null) pointMarkerRoot.SetActive(true);
+
+            // Ensure world cameras are set for UI raycasting
+            var canvases = GetComponentsInChildren<Canvas>(true);
+            var mainCam = Camera.main;
+            foreach (var c in canvases)
+            {
+                if (c.renderMode == RenderMode.WorldSpace && c.worldCamera == null)
+                {
+                    c.worldCamera = mainCam;
+                }
+            }
         }
 
         public void ConfigureArea(PortfolioAreaType type, string label, List<ShowcaseSlide> customSlides = null)
@@ -467,19 +483,34 @@ namespace CodeDrive.Interaction
 
             if (clicked)
             {
+                // If clicking on screen HUD UI, don't trigger 3D booth focus
+                if (UnityEngine.EventSystems.EventSystem.current != null &&
+                    UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+                {
+                    return;
+                }
+
                 var cam = Camera.main;
                 if (cam == null) return;
 
                 Ray ray = cam.ScreenPointToRay(mousePos);
-                var hits = Physics.RaycastAll(ray, 400f, ~0, QueryTriggerInteraction.Collide);
+                var hits = Physics.RaycastAll(ray, 500f, ~0, QueryTriggerInteraction.Collide);
                 for (int i = 0; i < hits.Length; i++)
                 {
-                    if (hits[i].transform.IsChildOf(transform))
+                    if (hits[i].transform == transform || hits[i].transform.IsChildOf(transform))
                     {
                         EnterFocusView();
                         break;
                     }
                 }
+            }
+        }
+
+        private void OnMouseDown()
+        {
+            if (!_isFocusedOnBooth)
+            {
+                EnterFocusView();
             }
         }
 
@@ -623,11 +654,11 @@ namespace CodeDrive.Interaction
             _isFocusedOnBooth = true;
             _activeFocusedBooth = this;
 
+            // Ensure display is active and at scale
             if (displayRoot != null)
             {
                 displayRoot.SetActive(true);
-                if (_scaleCoroutine != null) StopCoroutine(_scaleCoroutine);
-                _scaleCoroutine = StartCoroutine(AnimateDisplayScale(Vector3.zero, Vector3.one, displayScaleSpeed));
+                displayRoot.transform.localScale = Vector3.one;
             }
             if (pointMarkerRoot != null) pointMarkerRoot.SetActive(false);
 
@@ -669,10 +700,11 @@ namespace CodeDrive.Interaction
             _isFocusedOnBooth = false;
             if (_activeFocusedBooth == this) _activeFocusedBooth = null;
 
+            // Always keep displayRoot visible in world!
             if (displayRoot != null)
             {
-                if (_scaleCoroutine != null) StopCoroutine(_scaleCoroutine);
-                _scaleCoroutine = StartCoroutine(AnimateDisplayScaleOut());
+                displayRoot.SetActive(true);
+                displayRoot.transform.localScale = Vector3.one;
             }
             if (pointMarkerRoot != null) pointMarkerRoot.SetActive(true);
 
@@ -716,36 +748,6 @@ namespace CodeDrive.Interaction
         {
             _isPlayerInsideZone = false;
             // Note: Do NOT call ExitFocusView() here because parking the vehicle moves it outside the trigger zone.
-        }
-
-        private IEnumerator AnimateDisplayScale(Vector3 from, Vector3 to, float speed)
-        {
-            displayRoot.transform.localScale = from;
-            float t = 0f;
-            while (t < 1f)
-            {
-                t += Time.deltaTime * speed;
-                float eased = 1f - Mathf.Pow(1f - Mathf.Clamp01(t), 3f);
-                displayRoot.transform.localScale = Vector3.Lerp(from, to, eased);
-                yield return null;
-            }
-            displayRoot.transform.localScale = to;
-        }
-
-        private IEnumerator AnimateDisplayScaleOut()
-        {
-            Vector3 from = displayRoot.transform.localScale;
-            Vector3 to = Vector3.zero;
-            float t = 0f;
-            while (t < 1f)
-            {
-                t += Time.deltaTime * displayScaleSpeed * 1.5f;
-                float eased = Mathf.Clamp01(t) * Mathf.Clamp01(t);
-                displayRoot.transform.localScale = Vector3.Lerp(from, to, eased);
-                yield return null;
-            }
-            displayRoot.transform.localScale = Vector3.one;
-            displayRoot.SetActive(false);
         }
     }
 }

@@ -112,12 +112,24 @@ namespace CodeDrive.Interaction
 
         private void Update()
         {
+            if (parentBooth != null && parentBooth.IsFocused)
+            {
+                _isHovered = false;
+                if (speechBubbleRoot != null) speechBubbleRoot.localScale = Vector3.zero;
+                return;
+            }
+
             CheckMouseHover();
             UpdateBubbleAndHoverVisuals();
         }
 
         private void CheckMouseHover()
         {
+            if (parentBooth != null && parentBooth.IsFocused)
+            {
+                _isHovered = false;
+                return;
+            }
             if (_mainCam == null) _mainCam = Camera.main;
             if (_mainCam == null) return;
 
