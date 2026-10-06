@@ -198,14 +198,10 @@ MonoBehaviour:
   rearBrakePower: 2000
   handbrakePower: 3000
   engineBrakePower: 800
-  coastingDrag: 0.6
-  lateralGripAssist: 0.85
-  frontSidewaysStiffness: 3.5
   normalSidewaysStiffness: 3.5
   driftSidewaysStiffness: 1
   frictionRecoverySpeed: 8
   driftStabilization: 0.8
-  antiRollForce: 6000
   downforceCoefficient: 6
   enableAutoReset: 1
   flipAngleThreshold: 65
