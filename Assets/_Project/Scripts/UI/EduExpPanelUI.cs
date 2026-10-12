@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -9,6 +9,7 @@ namespace CodeDrive.UI
     /// <summary>
     /// Combined Education + Experience panel with two tabs.
     /// Uses a single EduExpItemUI prefab for both lists.
+    /// Supports UITheme for consistent styling.
     /// </summary>
     public class EduExpPanelUI : MonoBehaviour
     {
@@ -16,13 +17,14 @@ namespace CodeDrive.UI
         [Header("Data")]
         [SerializeField] private EducationData  educationData;
         [SerializeField] private ExperienceData experienceData;
+        [SerializeField] private UITheme uiTheme;
 
         // ── Tabs ─────────────────────────────────────────────────────────────────
         [Header("Tabs")]
         [SerializeField] private Button tabEducation;
         [SerializeField] private Button tabExperience;
-        [SerializeField] private Color  tabActiveColor   = new Color(0.2f, 0.6f, 1f);
-        [SerializeField] private Color  tabInactiveColor = new Color(0.25f, 0.25f, 0.3f);
+        [SerializeField] private TextMeshProUGUI tabEducationText;
+        [SerializeField] private TextMeshProUGUI tabExperienceText;
 
         // ── Content parents (each inside its own scroll view) ─────────────────────
         [Header("Content Parents")]
@@ -51,6 +53,24 @@ namespace CodeDrive.UI
             if (closeButton   != null) closeButton.onClick.AddListener(OnCloseClicked);
             if (tabEducation  != null) tabEducation.onClick.AddListener(ShowEducation);
             if (tabExperience != null) tabExperience.onClick.AddListener(ShowExperience);
+
+            // Apply theme
+            if (uiTheme != null)
+            {
+                if (titleText != null) uiTheme.ApplyToText(titleText, UITheme.TextStyle.Heading);
+                if (tabEducationText != null) uiTheme.ApplyToText(tabEducationText, UITheme.TextStyle.Subheading);
+                if (tabExperienceText != null) uiTheme.ApplyToText(tabExperienceText, UITheme.TextStyle.Subheading);
+
+                // Style close button
+                if (closeButton != null)
+                    uiTheme.ApplyToButton(closeButton, closeButton.GetComponentInChildren<TMP_Text>());
+
+                // Style tab buttons
+                if (tabEducation != null)
+                    uiTheme.ApplyToButton(tabEducation, tabEducationText);
+                if (tabExperience != null)
+                    uiTheme.ApplyToButton(tabExperience, tabExperienceText);
+            }
         }
 
         private void OnDestroy()
@@ -115,7 +135,7 @@ namespace CodeDrive.UI
             SetTabActive(tabExperience, false);
             SetActive(educationScrollView,  true);
             SetActive(experienceScrollView, false);
-            if (titleText != null) titleText.text = "Học Vấn & Chứng Chỉ";
+            if (titleText != null) titleText.text = "HỌC VẤN & CHỨNG CHỈ";
         }
 
         private void ShowExperience()
@@ -124,14 +144,20 @@ namespace CodeDrive.UI
             SetTabActive(tabExperience, true);
             SetActive(educationScrollView,  false);
             SetActive(experienceScrollView, true);
-            if (titleText != null) titleText.text = "Kinh Nghiệm Làm Việc";
+            if (titleText != null) titleText.text = "KINH NGHIỆM LÀM VIỆC";
         }
 
         private void SetTabActive(Button btn, bool active)
         {
             if (btn == null) return;
             var img = btn.GetComponent<Image>();
-            if (img != null) img.color = active ? tabActiveColor : tabInactiveColor;
+            if (img != null && uiTheme != null)
+            {
+                img.color = active ? uiTheme.Primary : uiTheme.PanelBackground;
+                // Optional: update text color
+                var txt = btn.GetComponentInChildren<TMP_Text>();
+                if (txt != null) txt.color = active ? Color.white : uiTheme.TextSecondary;
+            }
         }
 
         private static void SetActive(GameObject go, bool active)

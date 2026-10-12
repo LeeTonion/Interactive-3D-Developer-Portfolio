@@ -227,6 +227,9 @@ public class CarControl : MonoBehaviour
             float intensity = Mathf.Clamp(impactSpeed * 0.035f, 0.08f, 0.45f);
             float duration = Mathf.Clamp(impactSpeed * 0.025f, 0.12f, 0.30f);
             CodeDrive.CameraSystem.CameraSpeedEffects.Instance?.TriggerImpactShake(intensity, duration);
+            
+            // Trigger impact zoom (camera moves closer, then smoothly returns)
+            CodeDrive.CameraSystem.CameraSpeedEffects.Instance?.TriggerImpactZoom(impactSpeed);
         }
     }
 

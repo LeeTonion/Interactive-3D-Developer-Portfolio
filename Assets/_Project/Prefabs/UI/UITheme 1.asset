@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8e701f1e6104e9479582b132cbbc1fa, type: 3}
+  m_Name: UITheme 1
+  m_EditorClassIdentifier: Assembly-CSharp::CodeDrive.UI.UITheme
+  primary: {r: 1, g: 0.65, b: 0.2, a: 1}
+  primaryDark: {r: 0.85, g: 0.55, b: 0.15, a: 1}
+  primaryLight: {r: 1, g: 0.75, b: 0.35, a: 1}
+  background: {r: 0.06, g: 0.06, b: 0.08, a: 0.95}
+  panelBackground: {r: 0.1, g: 0.1, b: 0.12, a: 0.98}
+  textPrimary: {r: 0.95, g: 0.95, b: 0.95, a: 1}
+  textSecondary: {r: 0.7, g: 0.7, b: 0.75, a: 1}
+  textMuted: {r: 0.55, g: 0.55, b: 0.6, a: 1}
+  accent: {r: 0.2, g: 0.85, b: 0.5, a: 1}
+  border: {r: 0.25, g: 0.25, b: 0.3, a: 0.5}
+  divider: {r: 0.3, g: 0.3, b: 0.35, a: 0.3}
+  headingFont: {fileID: 0}
+  bodyFont: {fileID: 0}
+  headingSize: 32
+  subheadingSize: 20
+  bodySize: 16
+  captionSize: 14
+  lineHeight: 1.4
+  letterSpacing: 0.5
+  spacingXS: 4
+  spacingSM: 8
+  spacingMD: 16
+  spacingLG: 24
+  spacingXL: 32
+  spacingXXL: 48
+  panelCornerRadius: 12
+  panelPadding: {x: 24, y: 24, z: 24, w: 24}
+  panelBorderWidth: 1
+  panelShadow: 1
+  panelShadowColor: {r: 0, g: 0, b: 0, a: 0.3}
+  panelShadowOffset: {x: 0, y: 4}
+  panelShadowBlur: 16
+  buttonCornerRadius: 8
+  buttonPadding: {x: 24, y: 12}
+  buttonFontSize: 16
+  buttonTransitionDuration: 0.1
+  inputCornerRadius: 6
+  inputPadding: {x: 12, y: 10}
+  inputFontSize: 16

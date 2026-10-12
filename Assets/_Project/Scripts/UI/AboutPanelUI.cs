@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using CodeDrive.Portfolio;
@@ -7,12 +7,13 @@ namespace CodeDrive.UI
 {
     /// <summary>
     /// Displays the About Me / Profile section using a ProfileData ScriptableObject.
-    /// Assign all references in the Inspector on the About Panel prefab.
+    /// Supports UITheme for consistent styling.
     /// </summary>
     public class AboutPanelUI : MonoBehaviour
     {
         [Header("Profile Data")]
         [SerializeField] private ProfileData profileData;
+        [SerializeField] private UITheme uiTheme;
 
         [Header("UI References")]
         [SerializeField] private Image           avatarImage;
@@ -32,6 +33,22 @@ namespace CodeDrive.UI
         {
             if (closeButton != null)
                 closeButton.onClick.AddListener(OnCloseClicked);
+
+            // Apply theme
+            if (uiTheme != null)
+            {
+                if (fullNameText != null) uiTheme.ApplyToText(fullNameText, UITheme.TextStyle.Heading);
+                if (titleText != null) uiTheme.ApplyToText(titleText, UITheme.TextStyle.Subheading);
+                if (bioText != null) uiTheme.ApplyToText(bioText, UITheme.TextStyle.Body);
+                if (locationText != null) uiTheme.ApplyToText(locationText, UITheme.TextStyle.Caption);
+                if (emailText != null) uiTheme.ApplyToText(emailText, UITheme.TextStyle.Caption);
+                if (githubText != null) uiTheme.ApplyToText(githubText, UITheme.TextStyle.Caption);
+                if (linkedinText != null) uiTheme.ApplyToText(linkedinText, UITheme.TextStyle.Caption);
+
+                // Style close button
+                if (closeButton != null)
+                    uiTheme.ApplyToButton(closeButton, closeButton.GetComponentInChildren<TMP_Text>());
+            }
         }
 
         private void OnDestroy()
