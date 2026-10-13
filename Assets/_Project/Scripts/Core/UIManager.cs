@@ -27,7 +27,9 @@ namespace CodeDrive.Core
         [SerializeField] private GameObject eduExpPanel;
         [Tooltip("Projects panel — attach ProjectsPanelUI component")]
         [SerializeField] private GameObject projectsPanel;
-        [Tooltip("Fallback panel for Contact / unhandled types — attach PortfolioPanelUI component")]
+        [Tooltip("Contact panel — attach ContactPanelUI component")]
+        [SerializeField] private GameObject contactPanel;
+        [Tooltip("Fallback panel for unhandled types — attach PortfolioPanelUI component")]
         [SerializeField] private GameObject fallbackPanel;
 
         private PortfolioPanelUI _fallbackPanelUI;
@@ -166,6 +168,7 @@ namespace CodeDrive.Core
                 PortfolioAreaType.Education  => eduExpPanel,
                 PortfolioAreaType.Experience => eduExpPanel,
                 PortfolioAreaType.Projects   => projectsPanel,
+                PortfolioAreaType.Contact    => contactPanel,
                 _                            => fallbackPanel
             };
 

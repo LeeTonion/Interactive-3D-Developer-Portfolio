@@ -17,6 +17,9 @@ namespace CodeDrive.UI
         [SerializeField] private Text titleUiText;
         [SerializeField] private Text bodyUiText;
 
+        [Header("Optional: Profile Data for Contact fallback")]
+        [SerializeField] private ProfileData profileData;
+
         [Header("Controls")]
         [SerializeField] private Button closeButton;
         [SerializeField] private Core.UIManager uiManager;
@@ -124,6 +127,16 @@ namespace CodeDrive.UI
                            "• Khóa học chuyên sâu: Advanced 3D Graphics & Game Architecture";
 
                 case PortfolioAreaType.Contact:
+                    if (profileData != null)
+                    {
+                        var pd = profileData;
+                        return "THÔNG TIN LIÊN HỆ (CONTACT INFORMATION):\n\n" +
+                               $"• Email: {pd.Email}\n" +
+                               $"• GitHub: {pd.GithubUrl}\n" +
+                               $"• LinkedIn: {pd.LinkedinUrl}\n" +
+                               $"• Portfolio: {pd.CvUrl}\n\n" +
+                               "Rất vui được kết nối và hợp tác cùng bạn trong các dự án tương lai!";
+                    }
                     return "THÔNG TIN LIÊN HỆ (CONTACT INFORMATION):\n\n" +
                            "• Email: leetoniom.dev@gmail.com\n" +
                            "• GitHub: github.com/LeeTonion\n" +

@@ -418,18 +418,26 @@ namespace CodeDrive.Interaction
                     };
 
                 case PortfolioAreaType.Contact:
+                    // Try to load ProfileData from Resources for dynamic contact info
+                    var profileData = Resources.Load<ProfileData>("ProfileData");
+                    string email = profileData != null && !string.IsNullOrEmpty(profileData.Email) ? profileData.Email : "leetoniom.dev@gmail.com";
+                    string github = profileData != null && !string.IsNullOrEmpty(profileData.GithubUrl) ? profileData.GithubUrl : "github.com/LeeTonion";
+                    string linkedin = profileData != null && !string.IsNullOrEmpty(profileData.LinkedinUrl) ? profileData.LinkedinUrl : "linkedin.com/in/leetoniom";
+                    string cvUrl = profileData != null && !string.IsNullOrEmpty(profileData.CvUrl) ? profileData.CvUrl : "";
+                    string location = profileData != null && !string.IsNullOrEmpty(profileData.Location) ? profileData.Location : "Vietnam (Open for Remote / Relocation)";
+
                     return new List<ShowcaseSlide>
                     {
                         new ShowcaseSlide
                         {
                             title = "GET IN TOUCH",
-                            subtitleUrl = "LEETONIOM.DEV@GMAIL.COM",
+                            subtitleUrl = email.ToUpper(),
                             role = "OPEN FOR HIRE &\nCOLLABORATION",
                             withCollab = "REMOTE /\nRELOCATION",
                             distinctions = "★ AVAILABLE FOR FREELANCE & FULLTIME ★",
-                            description = "• Email: leetoniom.dev@gmail.com\n• GitHub: github.com/LeeTonion\n• LinkedIn: linkedin.com/in/leetoniom\n• Location: Vietnam (Open for Remote / Relocation)",
+                            description = $"• Email: {email}\n• GitHub: {github}\n• LinkedIn: {linkedin}\n• Location: {location}",
                             techStack = "EMAIL • GITHUB • LINKEDIN",
-                            externalLinkUrl = "https://github.com",
+                            externalLinkUrl = string.IsNullOrEmpty(github) ? "" : (github.StartsWith("http") ? github : "https://" + github),
                             themeColor = new Color(1f, 0.4f, 0.5f)
                         }
                     };

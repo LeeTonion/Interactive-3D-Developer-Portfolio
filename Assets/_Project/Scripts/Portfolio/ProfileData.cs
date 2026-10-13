@@ -12,6 +12,7 @@ namespace CodeDrive.Portfolio
         [SerializeField] private string email;
         [SerializeField] private string githubUrl;
         [SerializeField] private string linkedinUrl;
+        [SerializeField] private string cvUrl;           // Download CV link
         [SerializeField] private Sprite profilePhoto;
 
         public string FullName    => fullName;
@@ -21,6 +22,7 @@ namespace CodeDrive.Portfolio
         public string Email       => email;
         public string GithubUrl   => githubUrl;
         public string LinkedinUrl => linkedinUrl;
+        public string CvUrl       => cvUrl;
         public Sprite ProfilePhoto => profilePhoto;
     }
 }
