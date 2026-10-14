@@ -25,7 +25,7 @@ namespace CodeDrive.Interaction
     }
 
     /// <summary>
-    /// 1:1 Bruno Simon Three.js Journey-style Showcase Booth.
+    /// Interactive 3D Showcase Booth.
     /// Features:
     /// - Center wooden billboard with large title, link pill badge, project preview artwork, and dots pagination.
     /// - Left wing: Hanging wooden sign for previous project + arrow button.
@@ -340,7 +340,7 @@ namespace CodeDrive.Interaction
                             title = "3D PORTFOLIO WORLD",
                             subtitleUrl = "LEETONION.PORTFOLIO.IO",
                             role = "CREATIVE\nTECHNOLOGIST",
-                            withCollab = "BRUNO SIMON\nINSPIRED DESIGN",
+                            withCollab = "3D PORTFOLIO\nINTERACTIVE WORLD",
                             distinctions = "★ CREATIVE DEV SHOWCASE 2026 ★",
                             description = "Thành phố 3D tương tác với hệ thống GPS Road Navigation A*, điều khiển xe isometric và bảng Showcase thời gian thực.",
                             techStack = "UNITY 6 / 2022 • C# • LIGHTWEIGHT A* • URP",

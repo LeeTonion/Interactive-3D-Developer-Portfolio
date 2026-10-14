@@ -23,8 +23,8 @@ MonoBehaviour:
   accent: {r: 0.2, g: 0.85, b: 0.5, a: 1}
   border: {r: 0.25, g: 0.25, b: 0.3, a: 0.5}
   divider: {r: 0.3, g: 0.3, b: 0.35, a: 0.3}
-  headingFont: {fileID: 0}
-  bodyFont: {fileID: 0}
+  headingFont: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  bodyFont: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   headingSize: 32
   subheadingSize: 20
   bodySize: 16

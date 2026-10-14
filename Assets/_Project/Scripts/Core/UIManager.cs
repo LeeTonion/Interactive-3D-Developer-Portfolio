@@ -18,6 +18,16 @@ namespace CodeDrive.Core
         [SerializeField] private GameObject pauseOverlay;
         [SerializeField] private GameObject interactionPrompt;
 
+        [Header("Pause Menu Components")]
+        [Tooltip("The PauseMenuUI component (handles Resume, Settings, Controls, Main Menu)")]
+        [SerializeField] private PauseMenuUI pauseMenuUI;
+        [Tooltip("Settings panel under pause menu")]
+        [SerializeField] private GameObject settingsPanel;
+        [SerializeField] private SettingsPanelUI settingsPanelUI;
+        [Tooltip("Controls panel under pause menu")]
+        [SerializeField] private GameObject controlsPanel;
+        [SerializeField] private ControlsPanelUI controlsPanelUI;
+
         [Header("Portfolio Panels (assign one per AreaType)")]
         [Tooltip("About Me panel — attach AboutPanelUI component")]
         [SerializeField] private GameObject aboutPanel;
@@ -50,6 +60,14 @@ namespace CodeDrive.Core
 
             CachePromptTextReferences();
             CacheFallbackPanelReference();
+
+            // Auto-find pause menu components if not assigned
+            if (pauseOverlay != null && pauseMenuUI == null)
+                pauseMenuUI = pauseOverlay.GetComponent<PauseMenuUI>();
+            if (settingsPanel != null && settingsPanelUI == null)
+                settingsPanelUI = settingsPanel.GetComponent<SettingsPanelUI>();
+            if (controlsPanel != null && controlsPanelUI == null)
+                controlsPanelUI = controlsPanel.GetComponent<ControlsPanelUI>();
         }
 
         private void Start()
@@ -91,8 +109,10 @@ namespace CodeDrive.Core
 
         private void HideAll()
         {
-            SetActive(pauseOverlay,     false);
+            SetActive(pauseOverlay, false);
             SetActive(interactionPrompt, false);
+            SetActive(settingsPanel, false);
+            SetActive(controlsPanel, false);
             HideAllPortfolioPanels();
         }
 
@@ -110,6 +130,8 @@ namespace CodeDrive.Core
         {
             if (GameManager.Instance == null) return;
 
+            bool isPaused = GameManager.Instance.IsPaused;
+
             // If portfolio panel is open, do not show standard pause overlay
             if (IsPortfolioPanelOpen())
             {
@@ -117,7 +139,24 @@ namespace CodeDrive.Core
                 return;
             }
 
-            SetActive(pauseOverlay, GameManager.Instance.IsPaused);
+            // Show/hide pause overlay
+            SetActive(pauseOverlay, isPaused);
+
+            // If pause menu UI exists, ensure sub-panels are closed when pause toggles
+            if (pauseMenuUI != null)
+            {
+                if (!isPaused)
+                {
+                    // Game resumed - force close any open sub-panels
+                    pauseMenuUI.ForceCloseSubPanels();
+                    SetActive(settingsPanel, false);
+                    SetActive(controlsPanel, false);
+                }
+            }
+
+            // Manage cursor state
+            Cursor.lockState = isPaused ? CursorLockMode.None : CursorLockMode.Locked;
+            Cursor.visible = isPaused;
         }
 
         /// <summary>
@@ -196,6 +235,40 @@ namespace CodeDrive.Core
         public bool IsPortfolioPanelOpen()
         {
             return _activePortfolioPanel != null && _activePortfolioPanel.activeSelf;
+        }
+
+        /// <summary>
+        /// Opens the Settings panel from pause menu.
+        /// </summary>
+        public void OpenSettingsPanel()
+        {
+            if (settingsPanel != null)
+            {
+                SetActive(settingsPanel, true);
+                if (controlsPanel != null) SetActive(controlsPanel, false);
+            }
+        }
+
+        /// <summary>
+        /// Opens the Controls panel from pause menu.
+        /// </summary>
+        public void OpenControlsPanel()
+        {
+            if (controlsPanel != null)
+            {
+                SetActive(controlsPanel, true);
+                if (settingsPanel != null) SetActive(settingsPanel, false);
+            }
+        }
+
+        /// <summary>
+        /// Closes all pause menu sub-panels (settings, controls).
+        /// </summary>
+        public void ClosePauseSubPanels()
+        {
+            SetActive(settingsPanel, false);
+            SetActive(controlsPanel, false);
+            pauseMenuUI?.ForceCloseSubPanels();
         }
 
         private static void SetActive(GameObject go, bool active)

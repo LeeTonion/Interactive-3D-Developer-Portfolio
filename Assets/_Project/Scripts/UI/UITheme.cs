@@ -112,7 +112,9 @@ namespace CodeDrive.UI
         public void ApplyToText(TMP_Text text, TextStyle style = TextStyle.Body)
         {
             if (text == null) return;
-            text.font = style == TextStyle.Heading ? headingFont : bodyFont;
+            var targetFont = style == TextStyle.Heading ? headingFont : bodyFont;
+            if (targetFont != null)
+                text.font = targetFont;
             text.fontSize = style switch
             {
                 TextStyle.Heading => headingSize,
@@ -151,7 +153,8 @@ namespace CodeDrive.UI
             }
             if (btnText != null)
             {
-                btnText.font = bodyFont;
+                if (bodyFont != null)
+                    btnText.font = bodyFont;
                 btnText.fontSize = buttonFontSize;
                 btnText.color = Color.white;
                 btnText.fontStyle = FontStyles.Bold;
