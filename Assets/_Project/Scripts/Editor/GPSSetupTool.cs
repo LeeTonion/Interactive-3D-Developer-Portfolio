@@ -24,7 +24,7 @@ namespace CodeDrive.EditorTools
             if (!activeScene.isLoaded) return;
 
             // 0. Ensure EventSystem exists in Scene
-            var es = Object.FindObjectOfType<EventSystem>();
+            var es = Object.FindFirstObjectByType<EventSystem>();
             if (es == null)
             {
                 GameObject esObj = new GameObject("EventSystem", typeof(EventSystem));
