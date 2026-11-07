@@ -4,8 +4,6 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-namespace CodeDrive.Core
-{
     /// <summary>
     /// Suppresses harmless Unity Editor SendMouseEvents / Frustum assertion log spam
     /// that causes severe main thread lag and screen stuttering when Game View is scaled or letterboxed.
@@ -74,4 +72,3 @@ namespace CodeDrive.Core
             }
         }
     }
-}

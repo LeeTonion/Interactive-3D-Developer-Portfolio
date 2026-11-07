@@ -9,20 +9,8 @@ EditorBuildSettings:
     path: Assets/_Project/Scenes/MainMenu.unity
     guid: f3212a2f2166a5340a2f2a5fe1c4fe06
   - enabled: 1
-    path: Assets/_Project/Scenes/PortfolioWorld.unity
-    guid: 640b297749c54ed46977204c3e5d2a79
-  - enabled: 1
-    path: Assets/_Project/Scenes/PlannedCity.unity
-    guid: 55ee8391cc82f294e92c6fb8b10eb185
-  - enabled: 1
-    path: Assets/_Project/Scenes/FutureCity.unity
-    guid: 3f94669f785ccd64fa46de8e5e8e24bd
-  - enabled: 1
-    path: Assets/_Project/Scenes/FloatingIslandWorld.unity
-    guid: dc99f4efe7cfd1648b0eb21f84748302
-  - enabled: 1
-    path: Assets/_Project/Scenes/SpaceStationMap.unity
-    guid: 47be790e7c501054e8b61745d2534fdd
+    path: Assets/_Project/Scenes/New Scene.unity
+    guid: 053b2d09846ae2e429f784c2b9557b2f
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

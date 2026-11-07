@@ -2,10 +2,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
-using CodeDrive.Core;
-
-namespace CodeDrive.UI
-{
     /// <summary>
     /// Handles the Main Menu UI: Enter Portfolio button, input blocking, scene transition.
     /// Attach to the MainMenuCanvas GameObject.
@@ -14,7 +10,7 @@ namespace CodeDrive.UI
     {
         [Header("UI References")]
         [SerializeField] private Button enterButton;
-        [SerializeField] private string portfolioSceneName = "PortfolioWorld";
+        [SerializeField] private string portfolioSceneName = "New Scene";
         
         [Header("Input")]
         [SerializeField] private InputActionAsset inputActions;
@@ -22,7 +18,6 @@ namespace CodeDrive.UI
         private InputAction _moveAction;
         private InputAction _brakeAction;
         private InputAction _interactAction;
-        private InputAction _pauseAction;
         private InputAction _resetAction;
         
         private bool _hasTransitioned = false;
@@ -94,4 +89,3 @@ namespace CodeDrive.UI
             }
         }
     }
-}

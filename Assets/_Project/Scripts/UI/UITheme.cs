@@ -2,8 +2,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-namespace CodeDrive.UI
-{
     /// <summary>
     /// Centralized UI Design System - colors, fonts, spacing, panel styles.
     /// Assign to all portfolio panels for consistent look.
@@ -172,4 +170,3 @@ namespace CodeDrive.UI
             Caption
         }
     }
-}

@@ -111,3 +111,9 @@ Assets/Triangularity/ColorfulCity/Scenes.meta
 
 # Temporary screenshots
 screenshot_*.png
+
+# Crash recovery scenes
+Assets/_Recovery/
+Assets/_Recovery.meta
+
+bpmn/

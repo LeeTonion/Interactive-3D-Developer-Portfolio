@@ -1,104 +1,96 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using TMPro;
-using CodeDrive.Core;
-using CodeDrive.UI;
-
-namespace CodeDrive.UI
-{
-    /// <summary>
-    /// Handles the Pause Menu UI: Resume, Settings, Controls, Main Menu.
-    /// Attach to the PauseMenuPanel GameObject under Canvas.
-    /// </summary>
-    public class PauseMenuUI : MonoBehaviour
+/// <summary>
+/// Handles the Pause Menu UI: Resume, Settings, Controls, Main Menu, Quit.
+/// Attach to the PauseMenuPanel GameObject under Canvas.
+/// Requires a CanvasGroup on this GameObject for the dim overlay effect.
+/// </summary>
+[RequireComponent(typeof(CanvasGroup))]
+public class PauseMenuUI : MonoBehaviour
     {
         [Header("UI References")]
         [SerializeField] private Button resumeButton;
         [SerializeField] private Button settingsButton;
         [SerializeField] private Button controlsButton;
         [SerializeField] private Button mainMenuButton;
-        [SerializeField] private Button quitButton; // Optional: for standalone builds
+        [SerializeField] private Button quitButton;
 
         [Header("Sub-Panels")]
         [SerializeField] private GameObject settingsPanel;
         [SerializeField] private GameObject controlsPanel;
 
-        [Header("Theme")]
-        [SerializeField] private UITheme uiTheme;
-
+        private CanvasGroup _canvasGroup;
         private bool _isSettingsOpen = false;
         private bool _isControlsOpen = false;
 
+        private bool _isShowing = false;
+
         private void Awake()
         {
-            // Force compilation timestamp
-            System.Diagnostics.Debug.WriteLine($"PauseMenuUI compiled at {System.DateTime.Now}");
-            
-            // Button listeners
-            if (resumeButton != null)
-                resumeButton.onClick.AddListener(OnResumeClicked);
-            if (settingsButton != null)
-                settingsButton.onClick.AddListener(OnSettingsClicked);
-            if (controlsButton != null)
-                controlsButton.onClick.AddListener(OnControlsClicked);
-            if (mainMenuButton != null)
-                mainMenuButton.onClick.AddListener(OnMainMenuClicked);
-            if (quitButton != null)
-                quitButton.onClick.AddListener(OnQuitClicked);
-
-            // Initially hide sub-panels
-            SetActive(settingsPanel, false);
-            SetActive(controlsPanel, false);
-
-            // Apply theme if available
-            if (uiTheme != null)
-                ApplyTheme();
+            _canvasGroup = GetComponent<CanvasGroup>();
+            if (!_isShowing)
+            {
+                SetActive(settingsPanel, false);
+                SetActive(controlsPanel, false);
+                HideOverlay();
+            }
         }
 
-        private void OnDestroy()
+        private void OnEnable()
         {
-            if (resumeButton != null)
-                resumeButton.onClick.RemoveListener(OnResumeClicked);
-            if (settingsButton != null)
-                settingsButton.onClick.RemoveListener(OnSettingsClicked);
-            if (controlsButton != null)
-                controlsButton.onClick.RemoveListener(OnControlsClicked);
-            if (mainMenuButton != null)
-                mainMenuButton.onClick.RemoveListener(OnMainMenuClicked);
-            if (quitButton != null)
-                quitButton.onClick.RemoveListener(OnQuitClicked);
+            Subscribe(resumeButton, OnResumeClicked);
+            Subscribe(settingsButton, OnSettingsClicked);
+            Subscribe(controlsButton, OnControlsClicked);
+            Subscribe(mainMenuButton, OnMainMenuClicked);
+            Subscribe(quitButton, OnQuitClicked);
         }
 
-        private void ApplyTheme()
+        private void OnDisable()
         {
-            if (uiTheme == null) return;
+            Unsubscribe(resumeButton, OnResumeClicked);
+            Unsubscribe(settingsButton, OnSettingsClicked);
+            Unsubscribe(controlsButton, OnControlsClicked);
+            Unsubscribe(mainMenuButton, OnMainMenuClicked);
+            Unsubscribe(quitButton, OnQuitClicked);
+        }
 
-            uiTheme.ApplyToButton(resumeButton, resumeButton?.GetComponentInChildren<TMP_Text>());
-            uiTheme.ApplyToButton(settingsButton, settingsButton?.GetComponentInChildren<TMP_Text>());
-            uiTheme.ApplyToButton(controlsButton, controlsButton?.GetComponentInChildren<TMP_Text>());
-            uiTheme.ApplyToButton(mainMenuButton, mainMenuButton?.GetComponentInChildren<TMP_Text>());
-            if (quitButton != null)
-                uiTheme.ApplyToButton(quitButton, quitButton?.GetComponentInChildren<TMP_Text>());
+        /// <summary>
+        /// Shows the pause overlay (called by GameManager when pausing).
+        /// </summary>
+        public void ShowOverlay()
+        {
+            _isShowing = true;
+            SetActive(gameObject, true);
+            if (_canvasGroup == null) _canvasGroup = GetComponent<CanvasGroup>();
+            if (_canvasGroup != null)
+            {
+                _canvasGroup.alpha = 1f;
+                _canvasGroup.blocksRaycasts = true;
+                _canvasGroup.interactable = true;
+            }
+            CloseSubPanels();
+        }
 
-            // Apply dim overlay to fullscreen background
-            var panelImage = GetComponent<Image>();
-            if (panelImage != null)
-                panelImage.color = new Color(0.04f, 0.04f, 0.06f, 0.85f);
-
-            // Apply panel background to MenuCard if present
-            var menuCard = transform.Find("MenuCard");
-            var menuCardImage = menuCard != null ? menuCard.GetComponent<Image>() : null;
-            if (menuCardImage != null)
-                menuCardImage.color = uiTheme.PanelBackground;
+        /// <summary>
+        /// Hides the pause overlay (called by GameManager when resuming).
+        /// </summary>
+        public void HideOverlay()
+        {
+            _isShowing = false;
+            if (_canvasGroup == null) _canvasGroup = GetComponent<CanvasGroup>();
+            if (_canvasGroup != null)
+            {
+                _canvasGroup.alpha = 0f;
+                _canvasGroup.blocksRaycasts = false;
+                _canvasGroup.interactable = false;
+            }
+            CloseSubPanels();
+            SetActive(gameObject, false);
         }
 
         private void OnResumeClicked()
         {
-            // Close any open sub-panels first
-            CloseSubPanels();
-            
-            // Resume game via GameManager
             GameManager.Instance?.SetPaused(false);
         }
 
@@ -106,9 +98,7 @@ namespace CodeDrive.UI
         {
             _isSettingsOpen = !_isSettingsOpen;
             SetActive(settingsPanel, _isSettingsOpen);
-            
-            // Close controls if open
-            if (_isControlsOpen)
+            if (_isSettingsOpen && _isControlsOpen)
             {
                 _isControlsOpen = false;
                 SetActive(controlsPanel, false);
@@ -119,9 +109,7 @@ namespace CodeDrive.UI
         {
             _isControlsOpen = !_isControlsOpen;
             SetActive(controlsPanel, _isControlsOpen);
-            
-            // Close settings if open
-            if (_isSettingsOpen)
+            if (_isControlsOpen && _isSettingsOpen)
             {
                 _isSettingsOpen = false;
                 SetActive(settingsPanel, false);
@@ -130,10 +118,7 @@ namespace CodeDrive.UI
 
         private void OnMainMenuClicked()
         {
-            // Ensure timescale is restored before scene change
             Time.timeScale = 1f;
-            
-            // Unload current scene and load main menu
             SceneManager.LoadScene("MainMenu");
         }
 
@@ -146,6 +131,14 @@ namespace CodeDrive.UI
 #endif
         }
 
+        /// <summary>
+        /// Called externally to close all sub-panels (e.g., when pause menu closes).
+        /// </summary>
+        public void ForceCloseSubPanels()
+        {
+            CloseSubPanels();
+        }
+
         private void CloseSubPanels()
         {
             _isSettingsOpen = false;
@@ -154,17 +147,23 @@ namespace CodeDrive.UI
             SetActive(controlsPanel, false);
         }
 
+        private void Subscribe(Button btn, UnityEngine.Events.UnityAction action)
+        {
+            if (btn != null)
+            {
+                btn.onClick.RemoveListener(action);
+                btn.onClick.AddListener(action);
+            }
+        }
+
+        private void Unsubscribe(Button btn, UnityEngine.Events.UnityAction action)
+        {
+            if (btn != null)
+                btn.onClick.RemoveListener(action);
+        }
+
         private static void SetActive(GameObject go, bool active)
         {
             if (go != null) go.SetActive(active);
         }
-
-        /// <summary>
-        /// Called externally to close all sub-panels (e.g., when pause menu closes)
-        /// </summary>
-        public void ForceCloseSubPanels()
-        {
-            CloseSubPanels();
-        }
     }
-}

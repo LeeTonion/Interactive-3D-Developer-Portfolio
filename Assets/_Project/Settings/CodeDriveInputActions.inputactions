@@ -42,15 +42,7 @@
                     "interactions": "",
                     "initialStateCheck": false
                 },
-                {
-                    "name": "Pause",
-                    "type": "Button",
-                    "id": "a1b2c3d4-0001-0006-0001-000000000001",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
+
                 {
                     "name": "Look",
                     "type": "Value",
@@ -205,17 +197,7 @@
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
-                {
-                    "name": "",
-                    "id": "a1b2c3d4-0006-0001-0001-000000000001",
-                    "path": "<Keyboard>/escape",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Keyboard&Mouse",
-                    "action": "Pause",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
+
                 {
                     "name": "",
                     "id": "a1b2c3d4-0007-0001-0001-000000000001",
