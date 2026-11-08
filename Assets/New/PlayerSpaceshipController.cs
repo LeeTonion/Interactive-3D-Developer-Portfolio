@@ -300,6 +300,20 @@ namespace SpaceCyberpunk
             }
         }
 
+        public void RechargeEnergy(float rate, bool instantFull = false)
+        {
+            if (_isRespawning) return;
+            if (instantFull)
+            {
+                _currentHealth = maxHealth;
+            }
+            else
+            {
+                _currentHealth = Mathf.Min(maxHealth, _currentHealth + rate * Time.deltaTime);
+            }
+            _lastDamageTime = -99f;
+        }
+
         public void TakeDamage(float damage, Vector3 hitPoint)
         {
             if (_isRespawning || AboutInfoStation.AnyStationActive) return;

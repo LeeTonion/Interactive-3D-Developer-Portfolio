@@ -72,8 +72,21 @@ namespace SpaceCyberpunk
         private static readonly Color StandbyGateColor = new Color(0.15f, 0.85f, 1f, 1f);
         private static readonly Color AlertGateColor = new Color(1f, 0.16f, 0.1f, 1f);
 
+        private void Awake()
+        {
+            if (GetComponent<ProjectZoneExpansion>() == null)
+            {
+                gameObject.AddComponent<ProjectZoneExpansion>();
+            }
+        }
+
         private void Start()
         {
+            if (GetComponent<ProjectZoneExpansion>() == null)
+            {
+                gameObject.AddComponent<ProjectZoneExpansion>();
+            }
+
             CachePadAnchors();
             RefreshShipTemplates();
             EnsureTurretsAndCore();

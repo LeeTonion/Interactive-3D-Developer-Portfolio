@@ -181,6 +181,22 @@ namespace SpaceCyberpunk
                 return;
             }
 
+            // 5.5 Kiểm tra trúng Biển Quảng Cáo Cyberpunk Video hoặc Billboard Display
+            var videoBillboard = hit.collider.GetComponentInParent<CyberpunkVideoBillboard>();
+            if (videoBillboard != null)
+            {
+                videoBillboard.OnLaserHit();
+                SpaceExplosionVFX.SpawnSurfaceImpact(hit, boltDir, isPlayerShot, false);
+                return;
+            }
+            var billboard = hit.collider.GetComponentInParent<CyberpunkBillboardDisplay>();
+            if (billboard != null)
+            {
+                billboard.OnHitByLaser(hitPoint, boltDir);
+                SpaceExplosionVFX.SpawnSurfaceImpact(hit, boltDir, isPlayerShot, false);
+                return;
+            }
+
             // 6. Kiểm tra bắn vào Nhà Chính (Project / AboutIsland) hoặc các trụ / căn cứ / công trình -> Kích hoạt báo động hạm đội ngay
             if (isPlayerShot)
             {

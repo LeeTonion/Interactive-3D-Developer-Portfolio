@@ -108,6 +108,8 @@ namespace SpaceCyberpunk
         private float _savedFov;
         private Rigidbody _shipRb;
         private bool _savedKinematic;
+        private Coroutine _activeCinematicRoutine;
+        private GameObject _cinematicSkipHUD;
         private float _contentAnim = 1f;
         private MaterialPropertyBlock _mpb;
         private Texture2D _fallbackImage;
@@ -186,9 +188,13 @@ namespace SpaceCyberpunk
             switch (_state)
             {
                 case State.Idle: UpdateIdle(); break;
-                case State.Entering: UpdateTransition(State.Viewing); break;
+                case State.Entering: 
+                    if (_activeCinematicRoutine == null) UpdateTransition(State.Viewing); 
+                    break;
                 case State.Viewing: UpdateViewing(); break;
-                case State.Exiting: UpdateTransition(State.Idle); break;
+                case State.Exiting: 
+                    if (_activeCinematicRoutine == null) UpdateTransition(State.Idle); 
+                    break;
             }
             AnyStationActive = _state != State.Idle;
             AnimateVisuals();
@@ -1126,6 +1132,20 @@ namespace SpaceCyberpunk
             }
         }
 
+        private struct TourWaypoint
+        {
+            public Vector3 position;
+            public Vector3 lookTarget;
+            public float fov;
+
+            public TourWaypoint(Vector3 pos, Vector3 look, float fieldOfView)
+            {
+                position = pos;
+                lookTarget = look;
+                fov = fieldOfView;
+            }
+        }
+
         private void Enter()
         {
             if (viewCamera == null || cameraViewPoint == null) return;
@@ -1142,40 +1162,238 @@ namespace SpaceCyberpunk
                 if (_shipRb != null)
                 {
                     _savedKinematic = false; // Luôn là false để khi thoát chắc chắn bay được
-                    _shipRb.linearVelocity = Vector3.zero;
-                    _shipRb.angularVelocity = Vector3.zero;
+                    if (!_shipRb.isKinematic)
+                    {
+                        _shipRb.linearVelocity = Vector3.zero;
+                        _shipRb.angularVelocity = Vector3.zero;
+                    }
                     _shipRb.isKinematic = true;
                 }
             }
             if (cameraFollow != null) cameraFollow.enabled = false;
 
             _savedFov = viewCamera.fieldOfView;
-            _fromPos = viewCamera.transform.position;
-            _fromRot = viewCamera.transform.rotation;
-            _fromFov = _savedFov;
-            _toPos = cameraViewPoint.position;
-            Vector3 look = cameraLookTarget != null ? cameraLookTarget.position : transform.position;
-            _toRot = Quaternion.LookRotation(look - _toPos, Vector3.up);
-            _toFov = viewFov;
-            _t = 0f;
+
+            if (_activeCinematicRoutine != null) StopCoroutine(_activeCinematicRoutine);
+            _activeCinematicRoutine = StartCoroutine(PerformCitadelTourCinematicRoutine());
+        }
+
+        private System.Collections.IEnumerator PerformCitadelTourCinematicRoutine()
+        {
             _state = State.Entering;
             ShowSlide(_index, false);
+
+            var autoDoor = FindFirstObjectByType<CitadelAutomaticDoor>();
+            if (autoDoor == null)
+            {
+                var dGo = GameObject.Find("West_Gate_Airlock_Portal");
+                if (dGo != null) autoDoor = dGo.GetComponent<CitadelAutomaticDoor>() ?? dGo.AddComponent<CitadelAutomaticDoor>();
+            }
+            if (autoDoor != null) autoDoor.SetOpenImmediate(0f);
+
+            // Bảng gợi ý bỏ qua cinematic
+            _cinematicSkipHUD = CreateSkipCinematicPrompt();
+
+            // Điểm bắt đầu của camera
+            Vector3 startCamPos = viewCamera.transform.position;
+            Quaternion startCamRot = viewCamera.transform.rotation;
+            float startFov = viewCamera.fieldOfView;
+
+            Vector3 finalCamPos = cameraViewPoint.position;
+            Vector3 finalLook = cameraLookTarget != null ? cameraLookTarget.position : (transform.position + Vector3.up * 2f);
+            Quaternion finalCamRot = Quaternion.LookRotation(finalLook - finalCamPos, Vector3.up);
+            float finalFov = viewFov;
+
+            // Xây dựng chuỗi Waypoints mượt mà theo yêu cầu:
+            // 1. Bay từ từ dọc theo đường băng dẫn vào cửa căn cứ
+            // 2. Cửa tự động mở khi camera tiếp cận
+            // 3. Camera bay xuyên qua cửa vào trong
+            // 4. Lượn quét toàn bộ không gian căn cứ (quét qua Mission Control cánh Bắc, vòm trần ánh sáng, vòng xoay trung tâm)
+            // 5. Từ từ hạ cánh nhẹ nhàng đối diện bàn điều khiển 3D Portfolio World ("cái chính")
+            List<TourWaypoint> waypoints = new List<TourWaypoint>();
+
+            // P0: Vị trí hiện tại của camera sau khi hạ cánh
+            waypoints.Add(new TourWaypoint(startCamPos, new Vector3(-10.0f, 2.0f, 23.0f), startFov));
+
+            // P1: Lướt chậm trên đường băng ngoài trời hướng vào cổng Tây
+            waypoints.Add(new TourWaypoint(new Vector3(-21.0f, 2.30f, 23.0f), new Vector3(-10.0f, 2.0f, 23.0f), 52f));
+
+            // P2: Đến gần cửa (X = -13.5m) -> Kích hoạt cửa mở
+            waypoints.Add(new TourWaypoint(new Vector3(-13.5f, 2.10f, 23.0f), new Vector3(-2.0f, 2.0f, 23.0f), 50f));
+
+            // P3: Bay xuyên qua cửa đã mở (X = -7.0m)
+            waypoints.Add(new TourWaypoint(new Vector3(-7.0f, 2.10f, 23.0f), new Vector3(10.0f, 2.5f, 23.0f), 50f));
+
+            // P4: Thoát khỏi hầm cửa bước vào Đại sảnh Rotunda (X = -1.0m)
+            waypoints.Add(new TourWaypoint(new Vector3(-1.0f, 2.40f, 23.0f), new Vector3(14.0f, 2.6f, 23.0f), 52f));
+
+            // P5: Nâng cao độ & lượn sang cánh Bắc ngắm dàn màn hình Mission Control khổng lồ
+            waypoints.Add(new TourWaypoint(new Vector3(4.5f, 3.40f, 27.5f), new Vector3(14.0f, 2.8f, 46.0f), 55f));
+
+            // P6: Quét toàn cảnh kiến trúc mái vòm trần cao & toàn bộ không gian căn cứ
+            waypoints.Add(new TourWaypoint(new Vector3(9.5f, 3.90f, 32.0f), new Vector3(16.0f, 2.6f, 23.0f), 56f));
+
+            // P7: Lượn vòng cung mềm mại quanh lõi mạch điện trung tâm và dàn server
+            waypoints.Add(new TourWaypoint(new Vector3(12.5f, 3.20f, 19.5f), new Vector3(15.2f, 2.5f, 23.0f), 52f));
+
+            // P8: Vị trí quan sát chính thức trước bàn kiosk Portfolio World
+            waypoints.Add(new TourWaypoint(finalCamPos, finalLook, finalFov));
+
+            float totalFlightDuration = 8.5f; // Di chuyển nhịp nhàng 8.5s cho toàn bộ hành trình
+            float elapsed = 0f;
+            bool doorOpened = false;
+
+            while (elapsed < totalFlightDuration)
+            {
+                // Kiểm tra phím Bỏ qua (Skip)
+                if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown(KeyCode.Escape))
+                {
+                    break;
+                }
+
+                elapsed += Time.deltaTime;
+                float globalT = Mathf.Clamp01(elapsed / totalFlightDuration);
+
+                // Kích hoạt cửa tự động mở khi camera bắt đầu tiếp cận (khoảng 20% hành trình)
+                if (!doorOpened && globalT >= 0.20f)
+                {
+                    doorOpened = true;
+                    if (autoDoor != null) autoDoor.OpenDoor(locked: true);
+                }
+
+                // Nội suy mượt mà qua các waypoints bằng đường cong Catmull-Rom đa đoạn
+                Vector3 curPos;
+                Vector3 curLook;
+                float curFov;
+                SampleSplinePath(waypoints, globalT, out curPos, out curLook, out curFov);
+
+                viewCamera.transform.position = curPos;
+                viewCamera.transform.rotation = Quaternion.Slerp(viewCamera.transform.rotation, Quaternion.LookRotation(curLook - curPos, Vector3.up), Time.deltaTime * 10f);
+                viewCamera.fieldOfView = curFov;
+
+                yield return null;
+            }
+
+            // Đảm bảo cửa đã mở
+            if (autoDoor != null) autoDoor.OpenDoor(locked: true);
+
+            // Chuyển êm ái vào vị trí quan sát cuối cùng
+            float settleElapsed = 0f;
+            Vector3 settleStartPos = viewCamera.transform.position;
+            Quaternion settleStartRot = viewCamera.transform.rotation;
+            float settleStartFov = viewCamera.fieldOfView;
+
+            while (settleElapsed < 0.35f)
+            {
+                settleElapsed += Time.deltaTime;
+                float st = Mathf.SmoothStep(0f, 1f, settleElapsed / 0.35f);
+                viewCamera.transform.position = Vector3.Lerp(settleStartPos, finalCamPos, st);
+                viewCamera.transform.rotation = Quaternion.Slerp(settleStartRot, finalCamRot, st);
+                viewCamera.fieldOfView = Mathf.Lerp(settleStartFov, finalFov, st);
+                yield return null;
+            }
+
+            viewCamera.transform.position = finalCamPos;
+            viewCamera.transform.rotation = finalCamRot;
+            viewCamera.fieldOfView = finalFov;
+
+            if (_cinematicSkipHUD != null) Destroy(_cinematicSkipHUD);
+
+            _state = State.Viewing;
+            ShowSlide(_index, true);
+            _activeCinematicRoutine = null;
+        }
+
+        private void SampleSplinePath(List<TourWaypoint> waypoints, float t, out Vector3 pos, out Vector3 look, out float fov)
+        {
+            if (waypoints.Count == 0)
+            {
+                pos = Vector3.zero; look = Vector3.forward; fov = 50f; return;
+            }
+            if (waypoints.Count == 1 || t <= 0f)
+            {
+                pos = waypoints[0].position; look = waypoints[0].lookTarget; fov = waypoints[0].fov; return;
+            }
+            if (t >= 1f)
+            {
+                var last = waypoints[waypoints.Count - 1];
+                pos = last.position; look = last.lookTarget; fov = last.fov; return;
+            }
+
+            int numSegments = waypoints.Count - 1;
+            float segmentT = t * numSegments;
+            int segIndex = Mathf.Clamp(Mathf.FloorToInt(segmentT), 0, numSegments - 1);
+            float localT = segmentT - segIndex;
+            localT = Mathf.SmoothStep(0f, 1f, localT);
+
+            int i0 = Mathf.Clamp(segIndex - 1, 0, waypoints.Count - 1);
+            int i1 = segIndex;
+            int i2 = Mathf.Clamp(segIndex + 1, 0, waypoints.Count - 1);
+            int i3 = Mathf.Clamp(segIndex + 2, 0, waypoints.Count - 1);
+
+            pos = CatmullRom(waypoints[i0].position, waypoints[i1].position, waypoints[i2].position, waypoints[i3].position, localT);
+            look = CatmullRom(waypoints[i0].lookTarget, waypoints[i1].lookTarget, waypoints[i2].lookTarget, waypoints[i3].lookTarget, localT);
+            fov = Mathf.Lerp(waypoints[i1].fov, waypoints[i2].fov, localT);
+        }
+
+        private static Vector3 CatmullRom(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
+        {
+            float t2 = t * t;
+            float t3 = t2 * t;
+            return 0.5f * (
+                (2.0f * p1) +
+                (-p0 + p2) * t +
+                (2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3) * t2 +
+                (-p0 + 3.0f * p1 - 3.0f * p2 + p3) * t3
+            );
+        }
+
+        private GameObject CreateSkipCinematicPrompt()
+        {
+            var canvasGo = new GameObject("Cinematic_Skip_HUD");
+            var canvas = canvasGo.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 99;
+
+            var cs = canvasGo.AddComponent<CanvasScaler>();
+            cs.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            cs.referenceResolution = new Vector2(1920, 1080);
+            canvasGo.AddComponent<GraphicRaycaster>();
+
+            var textGo = new GameObject("PromptText");
+            textGo.transform.SetParent(canvasGo.transform, false);
+            var rect = textGo.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.05f);
+            rect.anchorMax = new Vector2(0.5f, 0.05f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(800, 50);
+
+            var tmp = textGo.AddComponent<TextMeshProUGUI>();
+            tmp.text = "NHẤN  [SPACE]  HOẶC  [ENTER]  ĐỂ BỎ QUA CINEMATIC";
+            tmp.fontSize = 20;
+            tmp.fontStyle = FontStyles.Bold;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.color = new Color(0.2f, 0.95f, 1.0f, 0.85f);
+
+            return canvasGo;
         }
 
         private void Exit()
         {
-            _fromPos = viewCamera.transform.position;
-            _fromRot = viewCamera.transform.rotation;
-            _fromFov = viewCamera.fieldOfView;
+            if (_activeCinematicRoutine != null) StopCoroutine(_activeCinematicRoutine);
+            _activeCinematicRoutine = StartCoroutine(PerformCitadelExitCinematicRoutine());
+        }
+
+        private System.Collections.IEnumerator PerformCitadelExitCinematicRoutine()
+        {
+            _state = State.Exiting;
+            ClearHover();
 
             // Dọn dẹp ngàm kẹp bãi đáp nếu có
-            foreach (var c in _activeDockingClamps)
-            {
-                if (c != null) Destroy(c);
-            }
+            foreach (var c in _activeDockingClamps) { if (c != null) Destroy(c); }
             _activeDockingClamps.Clear();
 
-            // Đặt lại đèn bãi đáp về chế độ standby cyan dịu nhẹ
+            // Đặt lại đèn bãi đáp về chế độ standby
             if (landingBeacons != null)
             {
                 foreach (var b in landingBeacons)
@@ -1188,30 +1406,82 @@ namespace SpaceCyberpunk
                 }
             }
 
+            var autoDoor = FindFirstObjectByType<CitadelAutomaticDoor>();
+            if (autoDoor != null) autoDoor.OpenDoor(locked: true);
+
+            Vector3 startPos = viewCamera.transform.position;
+            Quaternion startRot = viewCamera.transform.rotation;
+            float startFov = viewCamera.fieldOfView;
+
+            // Đích đến sau lưng tàu
+            Vector3 targetShipCamPos;
+            Quaternion targetShipCamRot;
             if (ship != null && cameraFollow != null)
             {
                 Transform target = cameraFollow.target != null ? cameraFollow.target : ship.transform;
-                _toPos = target.position - target.forward * cameraFollow.distance + target.up * cameraFollow.height;
+                targetShipCamPos = target.position - target.forward * cameraFollow.distance + target.up * cameraFollow.height;
                 Vector3 look = target.position + target.forward * 4f;
-                _toRot = Quaternion.LookRotation(look - _toPos, target.up);
+                targetShipCamRot = Quaternion.LookRotation(look - targetShipCamPos, target.up);
             }
             else
             {
-                _toPos = _fromPos;
-                _toRot = _fromRot;
+                targetShipCamPos = landingPadCenter != null ? landingPadCenter.position + new Vector3(0f, 3.5f, -8f) : startPos;
+                targetShipCamRot = Quaternion.identity;
             }
-            _toFov = _savedFov;
-            _t = 0f;
-            _state = State.Exiting;
-            ClearHover();
 
-            // Khóa cameraFollow trong lúc transition thoát để không tranh chấp với UpdateTransition gây lag giật camera
-            if (cameraFollow != null) cameraFollow.enabled = false;
+            // Waypoints thoát: Kiosk -> Hành lang Tây -> Ra ngoài cửa -> Bãi đáp
+            List<Vector3> exitWaypoints = new List<Vector3>
+            {
+                startPos,
+                new Vector3(4.0f, 2.5f, 23.0f),
+                new Vector3(-6.0f, 2.2f, 23.0f),
+                new Vector3(-14.0f, 2.4f, 23.0f),
+                targetShipCamPos
+            };
+
+            float exitDuration = 2.2f;
+            float elapsed = 0f;
+            bool doorClosed = false;
+
+            while (elapsed < exitDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / exitDuration);
+                float smoothT = Mathf.SmoothStep(0f, 1f, t);
+
+                int numSegments = exitWaypoints.Count - 1;
+                float segT = smoothT * numSegments;
+                int segIdx = Mathf.Clamp(Mathf.FloorToInt(segT), 0, numSegments - 1);
+                float localT = Mathf.SmoothStep(0f, 1f, segT - segIdx);
+
+                Vector3 curPos = Vector3.Lerp(exitWaypoints[segIdx], exitWaypoints[segIdx + 1], localT);
+                viewCamera.transform.position = curPos;
+                viewCamera.transform.rotation = Quaternion.Slerp(startRot, targetShipCamRot, smoothT);
+                viewCamera.fieldOfView = Mathf.Lerp(startFov, _savedFov, smoothT);
+
+                // Khi camera đã lướt ra ngoài cửa (X < -12m), tự động đóng cửa lại sau lưng!
+                if (!doorClosed && curPos.x < -12.0f)
+                {
+                    doorClosed = true;
+                    if (autoDoor != null) autoDoor.CloseDoor(unlock: true);
+                }
+
+                yield return null;
+            }
+
+            if (autoDoor != null) autoDoor.CloseDoor(unlock: true);
+
+            viewCamera.transform.position = targetShipCamPos;
+            viewCamera.transform.rotation = targetShipCamRot;
+            viewCamera.fieldOfView = _savedFov;
+
+            _state = State.Idle;
+            RestoreControl();
+            _activeCinematicRoutine = null;
         }
 
         private void UpdateTransition(State next)
         {
-            // Khi thoát (Exiting) lướt camera nhanh gọn 0.55s, khi vào (Entering) lướt 1.0s
             float curTransitionDuration = (_state == State.Exiting) ? 0.55f : Mathf.Min(transitionTime, 1.0f);
             _t += Time.deltaTime / Mathf.Max(0.01f, curTransitionDuration);
             float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(_t));
@@ -1222,7 +1492,6 @@ namespace SpaceCyberpunk
             if (_t >= 1f)
             {
                 _state = next;
-                // Khi camera đã lướt êm ái về vị trí sau lưng tàu xong thì mới mở khóa điều khiển
                 if (next == State.Idle) RestoreControl();
             }
         }
@@ -1231,10 +1500,13 @@ namespace SpaceCyberpunk
         {
             if (ship != null)
             {
+                // Nhấc nhẹ tàu lên 1.8m để phi thuyền thoát khỏi va chạm mặt sàn và bay lên ngay lập tức
+                ship.transform.position += Vector3.up * 1.8f;
+
                 if (_shipRb != null)
                 {
                     _shipRb.isKinematic = false; // BẮT BUỘC LÀ FALSE ĐỂ PHI THUYỀN NHẬN LỰC ĐỘNG CƠ BAY ĐƯỢC!
-                    _shipRb.linearVelocity = Vector3.zero;
+                    _shipRb.linearVelocity = Vector3.up * 4.0f; // Cấp lực nâng ban đầu để cất cánh mượt mà
                     _shipRb.angularVelocity = Vector3.zero;
                 }
                 ship.enabled = true;
