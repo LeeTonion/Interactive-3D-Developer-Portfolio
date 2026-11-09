@@ -130,6 +130,7 @@ namespace SpaceCyberpunk
 
         private void Awake()
         {
+            Application.runInBackground = true;
             _mpb = new MaterialPropertyBlock();
             if (ship == null) ship = FindFirstObjectByType<PlayerSpaceshipController>();
             if (cameraFollow == null) cameraFollow = FindFirstObjectByType<SpaceshipCameraFollow>();
@@ -196,12 +197,12 @@ namespace SpaceCyberpunk
             switch (_state)
             {
                 case State.Idle: UpdateIdle(); break;
-                case State.Entering: 
-                    if (_activeCinematicRoutine == null) UpdateTransition(State.Viewing); 
+                case State.Entering:
+                    // FirstPersonCitadelWalkthrough hoặc Tour Cinematic đang trực tiếp điều khiển Camera
                     break;
                 case State.Viewing: UpdateViewing(); break;
-                case State.Exiting: 
-                    if (_activeCinematicRoutine == null) UpdateTransition(State.Idle); 
+                case State.Exiting:
+                    // FirstPersonCitadelWalkthrough hoặc Exit Cinematic đang trực tiếp điều khiển Camera
                     break;
             }
             AnyStationActive = _state != State.Idle;
@@ -1191,7 +1192,30 @@ namespace SpaceCyberpunk
             _savedFov = viewCamera.fieldOfView;
 
             if (_activeCinematicRoutine != null) StopCoroutine(_activeCinematicRoutine);
-            _activeCinematicRoutine = StartCoroutine(PerformCitadelTourCinematicRoutine());
+
+            var fpsWalk = FirstPersonCitadelWalkthrough.Instance;
+            if (fpsWalk == null)
+            {
+                var walkGo = GameObject.Find("FirstPersonCitadelWalkthrough");
+                if (walkGo == null) walkGo = new GameObject("FirstPersonCitadelWalkthrough");
+                fpsWalk = walkGo.GetComponent<FirstPersonCitadelWalkthrough>() ?? walkGo.AddComponent<FirstPersonCitadelWalkthrough>();
+            }
+
+            if (fpsWalk != null)
+            {
+                _state = State.Entering;
+                ShowSlide(_index, false);
+                fpsWalk.StartEntranceWalkthrough(() =>
+                {
+                    _state = State.Viewing;
+                    ShowSlide(_index, true);
+                    _activeCinematicRoutine = null;
+                });
+            }
+            else
+            {
+                _activeCinematicRoutine = StartCoroutine(PerformCitadelTourCinematicRoutine());
+            }
         }
 
         private System.Collections.IEnumerator PerformCitadelTourCinematicRoutine()
@@ -1400,7 +1424,46 @@ namespace SpaceCyberpunk
         private void Exit()
         {
             if (_activeCinematicRoutine != null) StopCoroutine(_activeCinematicRoutine);
-            _activeCinematicRoutine = StartCoroutine(PerformCitadelExitCinematicRoutine());
+            _state = State.Exiting;
+            ClearHover();
+
+            // Dọn dẹp ngàm kẹp bãi đáp nếu có
+            foreach (var c in _activeDockingClamps) { if (c != null) Destroy(c); }
+            _activeDockingClamps.Clear();
+
+            // Đặt lại đèn bãi đáp về chế độ standby
+            if (landingBeacons != null)
+            {
+                foreach (var b in landingBeacons)
+                {
+                    if (b != null && b.material != null)
+                    {
+                        b.material.EnableKeyword("_EMISSION");
+                        b.material.SetColor("_EmissionColor", new Color(0.08f, 0.45f, 0.65f) * 1.5f);
+                    }
+                }
+            }
+
+            var fpsWalk = FirstPersonCitadelWalkthrough.Instance;
+            if (fpsWalk == null)
+            {
+                var walkGo = GameObject.Find("FirstPersonCitadelWalkthrough");
+                if (walkGo != null) fpsWalk = walkGo.GetComponent<FirstPersonCitadelWalkthrough>();
+            }
+
+            if (fpsWalk != null)
+            {
+                fpsWalk.StartExitWalkthrough(() =>
+                {
+                    _state = State.Idle;
+                    RestoreControl();
+                    _activeCinematicRoutine = null;
+                });
+            }
+            else
+            {
+                _activeCinematicRoutine = StartCoroutine(PerformCitadelExitCinematicRoutine());
+            }
         }
 
         private System.Collections.IEnumerator PerformCitadelExitCinematicRoutine()
