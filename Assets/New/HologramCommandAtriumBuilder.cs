@@ -47,7 +47,19 @@ namespace SpaceCyberpunk
                 else Object.DestroyImmediate(oldStandalone.gameObject);
             }
 
-            // Clean legacy Walkways (eliminating old conflicting tiles & knee buttresses)
+            // Clean temporary objects if present
+            string[] tempNames = new string[] { "Exterior_Courtyard_And_Machinery_Yard", "Citadel_Main_Atrium", "Dedicated_Hologram_Command_Chamber" };
+            foreach (var tn in tempNames)
+            {
+                Transform tObj = aboutIsland.transform.Find(tn);
+                if (tObj != null)
+                {
+                    if (Application.isPlaying) Object.Destroy(tObj.gameObject);
+                    else Object.DestroyImmediate(tObj.gameObject);
+                }
+            }
+            Transform indArea = aboutIsland.transform.Find("IndustrialArea");
+            if (indArea != null) indArea.gameObject.SetActive(true);
             Transform oldWalkways = aboutIsland.transform.Find("Walkways");
             if (oldWalkways != null)
             {
@@ -231,6 +243,7 @@ namespace SpaceCyberpunk
             Material coreGlowMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/New/Materials/Mat_Gemstone_CoreReactor.mat");
             Material cyanEmissiveMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/New/Materials/Mat_Gemstone_BlueCyan.mat");
             Material holoGlassMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/New/AboutStation/Materials/Mat_Station_HoloGlass.mat");
+            Material smokeMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/New/Materials/Mat_Cosmic_Smoke.mat");
 
             // Hardware & Props
             GameObject satelliteLarge = LoadPrefab("Assets/_Project/kenney_space-kit/Models/FBX format/satelliteDish_large.fbx");
@@ -269,6 +282,20 @@ namespace SpaceCyberpunk
             GameObject containerBig = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Machines/container_big.prefab");
             GameObject containerSmall = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Machines/container_small.prefab");
             GameObject storageContainerBig = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Machines/storage_container_big.prefab");
+            GameObject storageContainerSmall = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Machines/storage_container_small.prefab");
+            GameObject floorCornerPipes = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Decorative elements/floor_corner_ornament_pipes.prefab");
+            GameObject floorCornerPipesTurn = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Decorative elements/floor_corner_ornament_pipes_corner.prefab");
+            GameObject torpedoRack = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Decorative elements/torpedo_docking_station_1_side.prefab");
+            GameObject wallShelf = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Decorative elements/shelf.prefab");
+            GameObject consoleCeiling = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Decorative elements/console_celing.prefab");
+            GameObject machineBarrelLarge = LoadPrefab("Assets/_Project/kenney_space-kit/Models/FBX format/machine_barrelLarge.fbx");
+            GameObject barrelsCluster = LoadPrefab("Assets/_Project/kenney_space-kit/Models/FBX format/barrels.fbx");
+            GameObject pipeRoundLarge = LoadPrefab("Assets/_Project/kenney_space-kit/Models/FBX format/pipe_cornerRoundLarge.fbx");
+            GameObject pipeCross = LoadPrefab("Assets/_Project/kenney_space-kit/Models/FBX format/pipe_cross.fbx");
+            GameObject cableThick = LoadPrefab("Assets/_Project/Platforms/Cable_Thick.fbx")
+                                 ?? LoadPrefab("Assets/_Project/Blends/Cable_Thick.blend")
+                                 ?? LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Models/FBX/Interior/Cable_Thick.fbx");
+            Material hazardStripeMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/New/Materials/Mat_SciFi_HazardStripe.mat");
 
             // ─────────────────────────────────────────────────────────────────
             // 4. CLEAN & RESTRUCTURE OBSERVATORY COMPLEX & MAIN BUILDING
@@ -464,9 +491,32 @@ namespace SpaceCyberpunk
                 spawnWall(windowBigPrefab, new Vector3(40f, y, 29f), 180f, $"East_Wing_North_X40_T{t}");
                 spawnWall(windowBigPrefab, new Vector3(36f, y, 29f), 180f, $"East_Wing_North_X36_T{t}");
                 spawnWall(windowBigPrefab, new Vector3(32f, y, 29f), 180f, $"East_Wing_North_X32_T{t}");
+
+                // East Chamber Entrance Facade & Door Threshold (at X = 30.0m)
+                spawnWall(wallBigPrefab, new Vector3(30f, y, 19f), 270f, $"East_Chamber_Wall_S19_T{t}");
+                spawnWall(wallBigPrefab, new Vector3(30f, y, 27f), 270f, $"East_Chamber_Wall_N27_T{t}");
+
+                if (t == 1)
+                {
+                    spawnWall(wallBigPrefab, new Vector3(30f, y, 23f), 270f, "East_Chamber_Entrance_Transom");
+                }
+                else if (t == 0 && doorPrefab != null)
+                {
+                    var doorEastGo = Object.Instantiate(doorPrefab, wallsGroup.transform, false);
+                    doorEastGo.name = "East_Chamber_Airlock_Door";
+                    doorEastGo.transform.position = new Vector3(30.0f, 0.10f, 23.0f);
+                    doorEastGo.transform.rotation = Quaternion.Euler(0f, 270f, 0f);
+
+                    var autoDoorEast = doorEastGo.GetComponent<CitadelAutomaticDoor>() ?? doorEastGo.AddComponent<CitadelAutomaticDoor>();
+                    autoDoorEast.doorLeft = doorEastGo.transform.Find("door_1_left");
+                    autoDoorEast.doorRight = doorEastGo.transform.Find("door_1_right");
+                    autoDoorEast.autoProximity = true;
+                    autoDoorEast.triggerDistance = 8.0f;
+                    autoDoorEast.closeDistance = 12.0f;
+                }
             }
 
-            // ── 6.5 TRUE MATHEMATICAL CORNER COLUMNS (SEALS ALL 16 VERTICAL CORNERS!) ──
+            // ── 6.5 TRUE MATHEMATICAL CORNER COLUMNS (100% MODULAR ASSET PREFABS) ──
             Vector3[] perimeterCorners = new Vector3[]
             {
                 new Vector3(-10.0f, 0.10f, 17.0f), // West Gate South
@@ -489,25 +539,7 @@ namespace SpaceCyberpunk
 
             foreach (var cp in perimeterCorners)
             {
-                // Solid Titanium Structural Core (Seals both inside and outside 100%)
-                var col = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                col.name = $"Corner_Seal_Pillar_{cp.x}_{cp.z}";
-                col.transform.SetParent(wallsGroup.transform, false);
-                col.transform.position = cp + Vector3.up * 4.10f;
-                col.transform.localScale = new Vector3(1.20f, 8.20f, 1.20f);
-                Object.DestroyImmediate(col.GetComponent<Collider>());
-                if (darkTitaniumMat != null) col.GetComponent<Renderer>().sharedMaterial = darkTitaniumMat;
-
-                // Vertical Glowing Neon Energy Conduit Accent
-                var rod = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                rod.name = "Corner_Neon_Conduit";
-                rod.transform.SetParent(col.transform, false);
-                rod.transform.localPosition = Vector3.zero;
-                rod.transform.localScale = new Vector3(0.18f, 1.0f, 0.18f);
-                Object.DestroyImmediate(rod.GetComponent<Collider>());
-                if (cyanEmissiveMat != null) rod.GetComponent<Renderer>().sharedMaterial = cyanEmissiveMat;
-
-                // Architectural Modular Finish at Tier 0 and Tier 1
+                // Architectural Modular Finish at Tier 0 and Tier 1 (100% Asset Pack Prefabs - NO PRIMITIVE CUBES)
                 if (columnPillar != null)
                 {
                     var colT0 = Object.Instantiate(columnPillar, wallsGroup.transform, false);
@@ -967,7 +999,7 @@ namespace SpaceCyberpunk
             spawnBalustrade(rooftopSuperstructure.transform, new Vector3(-2.0f, roofY, 35.0f), 90f, "Roof_Bal_Alcove_N35", false);
 
             // ─────────────────────────────────────────────────────────────────
-            // 9. INTERIOR COMMAND SET DRESSING (Grand Open Rotunda - Zero Corridors!)
+            // 9. INTERIOR COMMAND SET DRESSING & 4 SCI-FI OUTPOST FUNCTIONAL ZONES
             // ─────────────────────────────────────────────────────────────────
             GameObject propsGroup = new GameObject("Citadel_Interior_Decorations");
             propsGroup.transform.SetParent(mainBuilding, false);
@@ -989,7 +1021,26 @@ namespace SpaceCyberpunk
             Object.DestroyImmediate(ringDeco.GetComponent<Collider>());
             if (steelAccentMat != null) ringDeco.GetComponent<Renderer>().sharedMaterial = steelAccentMat;
 
-            UpgradeStationBridge(stationGo, projectorPrefab, consolePrefab, compStation, cabinetL, pilotSeat, darkTitaniumMat, steelAccentMat);
+            // ── ZONE 1: COMMAND BRIDGE & 3D PLANETARY HOLO-TABLE ──
+            BuildCommandBridgeHoloTable(propsGroup.transform, new Vector3(14.0f, 0.10f, 23.0f),
+                projectorPrefab, compStation, pilotSeat, darkTitaniumMat, steelAccentMat, cyanEmissiveMat, coreGlowMat);
+
+            // ── ZONE 2: SERVER RACKS & CURVED TERMINAL DATA BAYS ──
+            BuildServerAndTerminalBays(propsGroup.transform, cabinetL, consolePrefab, consoleScreenPrefab,
+                consoleCeiling, pilotSeat, cableThick, cyanEmissiveMat, coreGlowMat);
+
+            // ── ZONE 3: CRYO STASIS & LIFE SUPPORT PODS ──
+            BuildCryoLifeSupportBay(propsGroup.transform, machineBarrelLarge, barrelsCluster,
+                pipeStraight, pipeCorner, consoleScreenPrefab, darkTitaniumMat, holoGlassMat, cyanEmissiveMat, smokeMat);
+
+            // ── ZONE 4: AIRLOCK & CARGO LOGISTICS BAY ──
+            BuildAirlockAndCargoBay(propsGroup.transform, containerBig, containerSmall, storageContainerSmall,
+                torpedoRack, wallShelf, barrelsCluster, floorCornerPipes, compStation,
+                hazardStripeMat, darkTitaniumMat, cyanEmissiveMat);
+
+            // ── SCATTERING: OVERHEAD VENTILATION DUCTS & BASEBOARD CONDUITS ──
+            BuildOverheadConduitsAndPipes(propsGroup.transform, pipeStraight, pipeCorner, pipeRoundLarge, pipeCross,
+                floorCornerPipes, floorCornerPipesTurn);
 
             // NORTH WING: PANORAMIC MISSION CONTROL VIDEO WALL
             if (bigScreen != null)
@@ -1018,18 +1069,24 @@ namespace SpaceCyberpunk
             Object.DestroyImmediate(headBar.GetComponent<Collider>());
             if (cyanEmissiveMat != null) headBar.GetComponent<Renderer>().sharedMaterial = cyanEmissiveMat;
 
-            // EAST WING: CREW LOUNGE & STARFIELD DECK
-            if (sofa != null)
-            {
-                spawnProp(sofa, propsGroup.transform, new Vector3(36.0f, 0.10f, 26.0f), Quaternion.Euler(0f, 180f, 0f));
-                spawnProp(sofa, propsGroup.transform, new Vector3(36.0f, 0.10f, 20.0f), Quaternion.identity);
-            }
-            if (tableGlass != null) spawnProp(tableGlass, propsGroup.transform, new Vector3(36.0f, 0.10f, 23.0f), Quaternion.identity);
-            if (chair != null)
-            {
-                spawnProp(chair, propsGroup.transform, new Vector3(33.5f, 0.10f, 23.0f), Quaternion.Euler(0f, 90f, 0f));
-                spawnProp(chair, propsGroup.transform, new Vector3(38.5f, 0.10f, 23.0f), Quaternion.Euler(0f, -90f, 0f));
-            }
+            // ── DEDICATED PORTFOLIO MASTER COMMAND CHAMBER (EAST WING - EXACT IMAGE DESIGN) ──
+            GameObject deskPrefab = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Decorative elements/Tables/desk.prefab");
+            GameObject deskNoCompPrefab = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Decorative elements/Tables/desk_no_computer.prefab");
+            GameObject bigScreenPrefab = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Decorative elements/big_screen.prefab");
+            GameObject cabinet = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Decorative elements/cabinet.prefab") ?? cabinetL;
+            GameObject ceilingLight2 = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Lights/light_celing_2.prefab") ?? ceilingLight;
+            Material radarScopeMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/New/Materials/Mat_SciFi_Radar_Scope.mat");
+            Material centralHoloMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/New/Materials/Mat_SciFi_Central_Holo_Ring.mat");
+            Material telemetryLMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/New/Materials/Mat_SciFi_Telemetry_Left.mat");
+            Material telemetryRMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/New/Materials/Mat_SciFi_Telemetry_Right.mat");
+            Material deskTelemetryMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/New/Materials/Mat_Desk_Monitors_Telemetry.mat");
+            Material deskDiagnosticsMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/New/Materials/Mat_Desk_Monitors_Diagnostics.mat");
+
+            DesignPortfolioMasterChamber(stationGo, propsGroup.transform, deskPrefab, deskNoCompPrefab, bigScreenPrefab,
+                pipeStraight, cableThick, pilotSeat, cabinet, ceilingLight2, columnPillar,
+                darkTitaniumMat, steelAccentMat, cyanEmissiveMat, smokeMat,
+                radarScopeMat, centralHoloMat, telemetryLMat, telemetryRMat,
+                deskTelemetryMat, deskDiagnosticsMat);
 
             // OPEN MONUMENTAL SCI-FI PORTAL ARCHES (Replaces solid blocking corridors!)
             if (columnPillar != null)
@@ -1039,65 +1096,12 @@ namespace SpaceCyberpunk
                 nP1.transform.position = new Vector3(10.0f, 0.10f, 36.5f);
                 var nP2 = Object.Instantiate(columnPillar, propsGroup.transform, false);
                 nP2.transform.position = new Vector3(18.0f, 0.10f, 36.5f);
-
-                // East Wing Entrance Portal
-                var eP1 = Object.Instantiate(columnPillar, propsGroup.transform, false);
-                eP1.transform.position = new Vector3(29.5f, 0.10f, 19.5f);
-                var eP2 = Object.Instantiate(columnPillar, propsGroup.transform, false);
-                eP2.transform.position = new Vector3(29.5f, 0.10f, 26.5f);
             }
 
             // ─────────────────────────────────────────────────────────────────
-            // 10. INTERIOR AMBIENT & HIGH-BAY ILLUMINATION (Eliminates Pitch-Black Shadows!)
+            // 10. INTERIOR CONTRAST LIGHTING, NEON BASEBOARD TRIMS & DUST MOTES VFX
             // ─────────────────────────────────────────────────────────────────
-            GameObject lightingGroup = new GameObject("Citadel_Interior_Lighting");
-            lightingGroup.transform.SetParent(mainBuilding, false);
-
-            // Broad Ambient Fill Light (Eliminates space-darkness inside the command deck)
-            var ambientFillGo = new GameObject("Interior_Ambient_Fill_Light");
-            ambientFillGo.transform.SetParent(lightingGroup.transform, false);
-            ambientFillGo.transform.position = new Vector3(14.0f, 5.0f, 23.0f);
-            var fillLight = ambientFillGo.AddComponent<Light>();
-            fillLight.type = LightType.Point;
-            fillLight.range = 35.0f;
-            fillLight.intensity = 2.2f;
-            fillLight.color = new Color(0.85f, 0.95f, 1.0f);
-
-            // Downward High-Bay Spotlights
-            Vector3[] floodlightPos = new Vector3[]
-            {
-                new Vector3(14.0f, 11.2f, 23.0f),
-                new Vector3(8.0f, 7.6f, 19.0f),
-                new Vector3(20.0f, 7.6f, 19.0f),
-                new Vector3(8.0f, 7.6f, 27.0f),
-                new Vector3(20.0f, 7.6f, 27.0f),
-                new Vector3(-6.0f, 3.8f, 23.0f),
-                new Vector3(14.0f, 3.8f, 43.0f),
-                new Vector3(36.0f, 3.8f, 23.0f)
-            };
-
-            foreach (var pos in floodlightPos)
-            {
-                var lightGo = new GameObject("Ceiling_HighBay_Light");
-                lightGo.transform.SetParent(lightingGroup.transform, false);
-                lightGo.transform.position = pos;
-
-                var l = lightGo.AddComponent<Light>();
-                l.type = LightType.Spot;
-                l.range = 18f;
-                l.spotAngle = 85f;
-                l.intensity = 3.5f;
-                l.color = new Color(0.92f, 0.97f, 1.0f);
-                lightGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-
-                if (ceilingLight != null)
-                {
-                    var fix = Object.Instantiate(ceilingLight, lightGo.transform, false);
-                    fix.name = "Fixture_Model";
-                    fix.transform.localPosition = Vector3.zero;
-                    fix.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
-                }
-            }
+            BuildInteriorAtmosphereAndLighting(mainBuilding, ceilingLight, cyanEmissiveMat, smokeMat);
 
             // ─────────────────────────────────────────────────────────────────
             // 11. CONTINUOUS SOLID COURTYARD PLAZA & ILLUMINATED SCI-FI GLASS BALUSTRADES
@@ -1335,118 +1339,483 @@ namespace SpaceCyberpunk
             }
         }
 
-        private static void UpgradeStationBridge(GameObject stationGo, GameObject projectorPrefab, GameObject consolePrefab,
-            GameObject compStation, GameObject cabinetL, GameObject pilotSeat, Material titaniumMat, Material steelMat)
+        private static void DesignPortfolioMasterChamber(
+            GameObject stationGo, Transform parent, GameObject deskPrefab, GameObject deskNoCompPrefab, GameObject bigScreenPrefab,
+            GameObject pipeStraight, GameObject cableThick, GameObject pilotSeat, GameObject cabinet, GameObject ceilingLight, GameObject columnPillar,
+            Material titaniumMat, Material steelMat, Material cyanEmissiveMat, Material smokeMat,
+            Material radarScopeMat, Material centralHoloMat, Material telemetryLMat, Material telemetryRMat,
+            Material deskTelemetryMat, Material deskDiagnosticsMat)
         {
             if (stationGo == null) return;
 
-            stationGo.transform.position = new Vector3(14.00f, 0.19f, 23.00f);
+            // 1. Relocate About_Info_Station into the East Wing Chamber (Back wall X = 42.0m, Z = 23.0m)
+            stationGo.transform.position = new Vector3(39.50f, 0.10f, 23.00f);
             stationGo.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
 
+            // Container for chamber architectural elements
+            Transform existingChamber = parent.Find("EastWing_Portfolio_Command_Chamber");
+            if (existingChamber != null)
+            {
+                if (Application.isPlaying) Object.Destroy(existingChamber.gameObject);
+                else Object.DestroyImmediate(existingChamber.gameObject);
+            }
+
+            var chamberGo = new GameObject("EastWing_Portfolio_Command_Chamber");
+            chamberGo.transform.SetParent(parent, false);
+
+            // ─────────────────────────────────────────────────────────────────
+            // A. SIDE WALL HORIZONTAL INDUSTRIAL PIPES & ACCENTS (FROM ASSET PACK)
+            // ─────────────────────────────────────────────────────────────────
+            if (pipeStraight != null)
+            {
+                // North Wall (Z = 28.7m, X: 31 to 41)
+                for (float x = 31.0f; x <= 41.0f; x += 3.5f)
+                {
+                    var pUpper = Object.Instantiate(pipeStraight, chamberGo.transform, false);
+                    pUpper.name = $"EastChamber_NorthPipe_Upper_X{x}";
+                    pUpper.transform.position = new Vector3(x, 2.20f, 28.70f);
+                    pUpper.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+                    pUpper.transform.localScale = new Vector3(1.2f, 1.2f, 1.2f);
+
+                    var pLower = Object.Instantiate(pipeStraight, chamberGo.transform, false);
+                    pLower.name = $"EastChamber_NorthPipe_Lower_X{x}";
+                    pLower.transform.position = new Vector3(x, 1.40f, 28.70f);
+                    pLower.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+                    pLower.transform.localScale = new Vector3(1.2f, 1.2f, 1.2f);
+                }
+
+                // South Wall (Z = 17.3m, X: 31 to 41)
+                for (float x = 31.0f; x <= 41.0f; x += 3.5f)
+                {
+                    var pUpper = Object.Instantiate(pipeStraight, chamberGo.transform, false);
+                    pUpper.name = $"EastChamber_SouthPipe_Upper_X{x}";
+                    pUpper.transform.position = new Vector3(x, 2.20f, 17.30f);
+                    pUpper.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+                    pUpper.transform.localScale = new Vector3(1.2f, 1.2f, 1.2f);
+
+                    var pLower = Object.Instantiate(pipeStraight, chamberGo.transform, false);
+                    pLower.name = $"EastChamber_SouthPipe_Lower_X{x}";
+                    pLower.transform.position = new Vector3(x, 1.40f, 17.30f);
+                    pLower.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+                    pLower.transform.localScale = new Vector3(1.2f, 1.2f, 1.2f);
+                }
+            }
+
+            // ─────────────────────────────────────────────────────────────────
+            // B. REMOVE ANY FOREGROUND COLUMNS / MOCK BLOCKS
+            // ─────────────────────────────────────────────────────────────────
+            Transform existingFg = stationGo.transform.Find("Chamber_Foreground_Gateway");
+            if (existingFg != null)
+            {
+                if (Application.isPlaying) Object.Destroy(existingFg.gameObject);
+                else Object.DestroyImmediate(existingFg.gameObject);
+            }
+
+            // Clean old floor cables that were primitive cylinders
+            var oldCables = new List<GameObject>();
+            foreach (Transform c in stationGo.transform)
+            {
+                if (c.name.StartsWith("Chamber_FloorCable_")) oldCables.Add(c.gameObject);
+            }
+            foreach (var g in oldCables)
+            {
+                if (Application.isPlaying) Object.Destroy(g);
+                else Object.DestroyImmediate(g);
+            }
+
+            // ─────────────────────────────────────────────────────────────────
+            // C. CENTRAL HOLOGRAPHIC PROJECTION RING ON MODULAR FLOOR
+            // ─────────────────────────────────────────────────────────────────
+            Transform existingDais = stationGo.transform.Find("Chamber_Central_Hologram_Dais");
+            if (existingDais != null)
+            {
+                if (Application.isPlaying) Object.Destroy(existingDais.gameObject);
+                else Object.DestroyImmediate(existingDais.gameObject);
+            }
+
+            var daisRoot = new GameObject("Chamber_Central_Hologram_Dais");
+            daisRoot.transform.SetParent(stationGo.transform, false);
+            daisRoot.transform.localPosition = new Vector3(0f, 0f, -3.10f);
+
+            var holoDisc = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            holoDisc.name = "Dais_Hologram_Projection_Disc";
+            holoDisc.transform.SetParent(daisRoot.transform, false);
+            holoDisc.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+            holoDisc.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            holoDisc.transform.localScale = new Vector3(2.15f, 2.15f, 1.0f);
+            Object.DestroyImmediate(holoDisc.GetComponent<Collider>());
+            if (centralHoloMat != null) holoDisc.GetComponent<Renderer>().sharedMaterial = centralHoloMat;
+            else if (cyanEmissiveMat != null) holoDisc.GetComponent<Renderer>().sharedMaterial = cyanEmissiveMat;
+
+            var daisLight = daisRoot.AddComponent<Light>();
+            daisLight.type = LightType.Point;
+            daisLight.range = 4.2f;
+            daisLight.intensity = 2.8f;
+            daisLight.color = new Color(0.15f, 0.95f, 1.0f);
+
+            // ─────────────────────────────────────────────────────────────────
+            // D. COMMAND BRIDGE DESKS (100% REAL MODULAR ASSETS - ZERO PRIMITIVE CUBES)
+            // ─────────────────────────────────────────────────────────────────
             Transform centerDesk = stationGo.transform.Find("Center_Desk");
             if (centerDesk != null)
             {
-                Transform glassTable = centerDesk.Find("decorative_table_glass");
-                if (glassTable != null)
+                centerDesk.localPosition = new Vector3(0f, 0f, -0.65f);
+                centerDesk.localRotation = Quaternion.identity;
+
+                var oldDeskChildren = new List<GameObject>();
+                foreach (Transform c in centerDesk) oldDeskChildren.Add(c.gameObject);
+                foreach (var g in oldDeskChildren)
                 {
-                    if (Application.isPlaying) Object.Destroy(glassTable.gameObject);
-                    else Object.DestroyImmediate(glassTable.gameObject);
-                }
-                Transform comp15 = centerDesk.Find("Cosmic_Retro_Computer_15");
-                if (comp15 != null)
-                {
-                    if (Application.isPlaying) Object.Destroy(comp15.gameObject);
-                    else Object.DestroyImmediate(comp15.gameObject);
-                }
-                Transform comp14 = centerDesk.Find("Cosmic_Retro_Computer_14");
-                if (comp14 != null)
-                {
-                    if (Application.isPlaying) Object.Destroy(comp14.gameObject);
-                    else Object.DestroyImmediate(comp14.gameObject);
+                    if (Application.isPlaying) Object.Destroy(g);
+                    else Object.DestroyImmediate(g);
                 }
 
-                Transform existingHoloConsole = centerDesk.Find("Tactical_Holo_Podium");
-                if (existingHoloConsole == null)
+                // Center Command Desk: Real asset desk_no_computer
+                if (deskNoCompPrefab != null)
                 {
-                    var podiumGo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                    podiumGo.name = "Tactical_Holo_Podium";
-                    podiumGo.transform.SetParent(centerDesk, false);
-                    podiumGo.transform.localPosition = new Vector3(0.08f, 0.45f, -0.18f);
-                    podiumGo.transform.localScale = new Vector3(2.2f, 0.45f, 2.2f);
-                    Object.DestroyImmediate(podiumGo.GetComponent<Collider>());
-                    if (steelMat != null) podiumGo.GetComponent<Renderer>().sharedMaterial = steelMat;
+                    var cDesk = Object.Instantiate(deskNoCompPrefab, centerDesk, false);
+                    cDesk.name = "Center_Bridge_Asset_Desk";
+                    cDesk.transform.localPosition = new Vector3(0f, -0.35f, 0f);
+                    cDesk.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+                }
 
-                    if (consolePrefab != null)
-                    {
-                        var cL = Object.Instantiate(consolePrefab, centerDesk, false);
-                        cL.name = "Bridge_Tactical_Console_Left";
-                        cL.transform.localPosition = new Vector3(-1.4f, 0f, 0f);
-                        cL.transform.localRotation = Quaternion.Euler(0f, 25f, 0f);
-                        cL.transform.localScale = new Vector3(1.2f, 1.0f, 1.2f);
-
-                        var cR = Object.Instantiate(consolePrefab, centerDesk, false);
-                        cR.name = "Bridge_Tactical_Console_Right";
-                        cR.transform.localPosition = new Vector3(1.5f, 0f, 0f);
-                        cR.transform.localRotation = Quaternion.Euler(0f, -25f, 0f);
-                        cR.transform.localScale = new Vector3(1.2f, 1.0f, 1.2f);
-                    }
+                // Commander Pilot Chair (Center)
+                if (pilotSeat != null)
+                {
+                    var cmdChair = Object.Instantiate(pilotSeat, centerDesk, false);
+                    cmdChair.name = "Commander_Pilot_Chair_Center";
+                    cmdChair.transform.localPosition = new Vector3(0f, 0.05f, -0.80f);
+                    cmdChair.transform.localRotation = Quaternion.identity;
+                    cmdChair.transform.localScale = new Vector3(0.72f, 0.72f, 0.72f);
                 }
             }
 
+            // Left & Right Console Wings
+            Transform existingWings = stationGo.transform.Find("Curved_Console_Wing_Plinths");
+            if (existingWings != null)
+            {
+                if (Application.isPlaying) Object.Destroy(existingWings.gameObject);
+                else Object.DestroyImmediate(existingWings.gameObject);
+            }
+
+            var wingsRoot = new GameObject("Curved_Console_Wing_Plinths");
+            wingsRoot.transform.SetParent(stationGo.transform, false);
+
+            System.Action<GameObject, Material> assignDeskMonitorMat = (deskGo, screenMat) =>
+            {
+                if (screenMat == null) return;
+                var mr = deskGo.GetComponent<MeshRenderer>();
+                if (mr != null && mr.sharedMaterials.Length >= 2)
+                {
+                    var mats = mr.sharedMaterials;
+                    mats[1] = screenMat;
+                    mr.sharedMaterials = mats;
+                }
+            };
+
+            if (deskPrefab != null)
+            {
+                // Left Wing Background Desk (Aft)
+                var leftDeskAft = Object.Instantiate(deskPrefab, wingsRoot.transform, false);
+                leftDeskAft.name = "Left_Wing_Asset_Desk";
+                leftDeskAft.transform.localPosition = new Vector3(-3.85f, -0.35f, -1.85f);
+                leftDeskAft.transform.localRotation = Quaternion.Euler(0f, 145f, 0f);
+                leftDeskAft.transform.localScale = new Vector3(0.85f, 0.85f, 0.85f);
+                assignDeskMonitorMat(leftDeskAft, deskTelemetryMat);
+
+                // Left Wing Foreground Desk (Fore)
+                var leftDeskFore = Object.Instantiate(deskPrefab, wingsRoot.transform, false);
+                leftDeskFore.name = "Left_Wing_Asset_Desk_Fore";
+                leftDeskFore.transform.localPosition = new Vector3(-6.58f, -0.22f, -5.83f);
+                leftDeskFore.transform.localRotation = Quaternion.Euler(0f, 150f, 0f);
+                leftDeskFore.transform.localScale = new Vector3(0.85f, 0.85f, 0.85f);
+                assignDeskMonitorMat(leftDeskFore, deskTelemetryMat);
+
+                // Right Wing Background Desk (Aft)
+                var rightDeskAft = Object.Instantiate(deskPrefab, wingsRoot.transform, false);
+                rightDeskAft.name = "Right_Wing_Asset_Desk";
+                rightDeskAft.transform.localPosition = new Vector3(3.85f, -0.35f, -1.85f);
+                rightDeskAft.transform.localRotation = Quaternion.Euler(0f, 215f, 0f);
+                rightDeskAft.transform.localScale = new Vector3(0.85f, 0.85f, 0.85f);
+                assignDeskMonitorMat(rightDeskAft, deskDiagnosticsMat);
+
+                // Right Wing Foreground Desk (Fore)
+                var rightDeskFore = Object.Instantiate(deskPrefab, wingsRoot.transform, false);
+                rightDeskFore.name = "Right_Wing_Asset_Desk_Fore";
+                rightDeskFore.transform.localPosition = new Vector3(6.93f, -0.05f, -5.29f);
+                rightDeskFore.transform.localRotation = Quaternion.Euler(0f, 210f, 0f);
+                rightDeskFore.transform.localScale = new Vector3(0.85f, 0.85f, 0.85f);
+                assignDeskMonitorMat(rightDeskFore, deskDiagnosticsMat);
+            }
+
+            if (pilotSeat != null)
+            {
+                var chairLAft = Object.Instantiate(pilotSeat, wingsRoot.transform, false);
+                chairLAft.name = "Officer_Chair_Left_Aft";
+                chairLAft.transform.localPosition = new Vector3(-2.85f, 0.05f, -1.85f);
+                chairLAft.transform.localRotation = Quaternion.Euler(0f, 65f, 0f);
+                chairLAft.transform.localScale = new Vector3(0.85f, 0.85f, 0.85f);
+
+                var chairLFore = Object.Instantiate(pilotSeat, wingsRoot.transform, false);
+                chairLFore.name = "Officer_Chair_Left_Fore";
+                chairLFore.transform.localPosition = new Vector3(-5.20f, 0.05f, -5.60f);
+                chairLFore.transform.localRotation = Quaternion.Euler(0f, 70f, 0f);
+                chairLFore.transform.localScale = new Vector3(0.85f, 0.85f, 0.85f);
+
+                var chairRAft = Object.Instantiate(pilotSeat, wingsRoot.transform, false);
+                chairRAft.name = "Officer_Chair_Right_Aft";
+                chairRAft.transform.localPosition = new Vector3(2.85f, 0.05f, -1.85f);
+                chairRAft.transform.localRotation = Quaternion.Euler(0f, 115f, 0f);
+                chairRAft.transform.localScale = new Vector3(0.85f, 0.85f, 0.85f);
+
+                var chairRFore = Object.Instantiate(pilotSeat, wingsRoot.transform, false);
+                chairRFore.name = "Officer_Chair_Right_Fore";
+                chairRFore.transform.localPosition = new Vector3(5.50f, 0.05f, -5.30f);
+                chairRFore.transform.localRotation = Quaternion.Euler(0f, 110f, 0f);
+                chairRFore.transform.localScale = new Vector3(0.85f, 0.85f, 0.85f);
+            }
+
+            // ─────────────────────────────────────────────────────────────────
+            // E. THE MULTI-SCREEN VIDEO WALL (MAIN DISPLAY & ANGLED FLANKING WINGS)
+            // ─────────────────────────────────────────────────────────────────
             Transform mainScreen = stationGo.transform.Find("MainScreen");
             if (mainScreen != null)
             {
-                Transform existingArch = mainScreen.Find("Command_Viewscreen_Arch");
-                if (existingArch != null)
+                mainScreen.localPosition = new Vector3(0f, 0.35f, 0.85f);
+                mainScreen.localRotation = Quaternion.identity;
+
+                string[] clutterNames = new string[] {
+                    "Frame_Bottom", "Frame_BottomStrip", "Frame_Top", "Frame_TopStrip",
+                    "Screen_Pillar", "Screen_PillarStrip", "Screen_PillarFoot",
+                    "MainScreen_Bezel_Bottom", "MainScreen_Bezel_Top", "Command_Viewscreen_Arch",
+                    "Screen_Frame_BigScreen", "Laser_Scan_Bar", "MainScreen_Backing_Frame", "MainScreen_Corner_Brackets"
+                };
+                foreach (Transform c in mainScreen)
                 {
-                    if (Application.isPlaying) Object.Destroy(existingArch.gameObject);
-                    else Object.DestroyImmediate(existingArch.gameObject);
+                    foreach (var name in clutterNames)
+                    {
+                        if (c.name.StartsWith(name))
+                        {
+                            c.gameObject.SetActive(false);
+                            break;
+                        }
+                    }
                 }
 
-                var archGo = new GameObject("Command_Viewscreen_Arch");
-                archGo.transform.SetParent(mainScreen, false);
-                archGo.transform.localPosition = new Vector3(0f, 0f, 0.35f);
-
-                if (cabinetL != null)
+                // Clean all old mock backing frames
+                var oldBackings = new List<GameObject>();
+                foreach (Transform c in mainScreen)
                 {
-                    var sL = Object.Instantiate(cabinetL, archGo.transform, false);
-                    sL.name = "Viewscreen_Rear_Server_L";
-                    sL.transform.localPosition = new Vector3(-2.2f, 0f, 0.65f);
-                    sL.transform.localRotation = Quaternion.identity;
-
-                    var sR = Object.Instantiate(cabinetL, archGo.transform, false);
-                    sR.name = "Viewscreen_Rear_Server_R";
-                    sR.transform.localPosition = new Vector3(2.2f, 0f, 0.65f);
-                    sR.transform.localRotation = Quaternion.identity;
+                    if (c.name.StartsWith("MainScreen_Bezel") || c.name.StartsWith("MainScreen_Backing") || c.name.StartsWith("MainScreen_Corner") || c.name == "MainScreen_Asset_Frame")
+                        oldBackings.Add(c.gameObject);
+                }
+                foreach (var g in oldBackings)
+                {
+                    if (Application.isPlaying) Object.Destroy(g);
+                    else Object.DestroyImmediate(g);
                 }
 
-                if (compStation != null)
+                // Real big_screen.prefab asset frame
+                if (bigScreenPrefab != null)
                 {
-                    var diag = Object.Instantiate(compStation, archGo.transform, false);
-                    diag.name = "Viewscreen_Rear_Diagnostic_Console";
-                    diag.transform.localPosition = new Vector3(0f, 0f, 0.85f);
-                    diag.transform.localRotation = Quaternion.identity;
-                }
-
-                if (pilotSeat != null)
-                {
-                    var seat = Object.Instantiate(pilotSeat, archGo.transform, false);
-                    seat.name = "Viewscreen_Rear_Operator_Seat";
-                    seat.transform.localPosition = new Vector3(0f, 0f, 1.85f);
-                    seat.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+                    var bs = Object.Instantiate(bigScreenPrefab, mainScreen, false);
+                    bs.name = "MainScreen_Asset_Frame";
+                    bs.transform.localPosition = new Vector3(0f, 2.75f, 0.15f);
+                    bs.transform.localRotation = Quaternion.identity;
+                    bs.transform.localScale = new Vector3(1.45f, 1.30f, 1.0f);
                 }
             }
 
+            // Left Multi-Screen Wing (Clean backing from Image 4)
+            Transform existingLeftWing = stationGo.transform.Find("Chamber_Left_MultiScreen_Wing");
+            if (existingLeftWing != null)
+            {
+                if (Application.isPlaying) Object.Destroy(existingLeftWing.gameObject);
+                else Object.DestroyImmediate(existingLeftWing.gameObject);
+            }
+
+            var leftWingScreenGo = new GameObject("Chamber_Left_MultiScreen_Wing");
+            leftWingScreenGo.transform.SetParent(stationGo.transform, false);
+            leftWingScreenGo.transform.localPosition = new Vector3(-3.85f, 2.30f, 0.65f);
+            leftWingScreenGo.transform.localRotation = Quaternion.Euler(0f, -24f, 0f);
+
+            if (bigScreenPrefab != null)
+            {
+                var bsL = Object.Instantiate(bigScreenPrefab, leftWingScreenGo.transform, false);
+                bsL.name = "LeftWing_Asset_Frame";
+                bsL.transform.localPosition = new Vector3(0f, 0.15f, 0.15f);
+                bsL.transform.localRotation = Quaternion.identity;
+                bsL.transform.localScale = new Vector3(0.80f, 1.05f, 1.0f);
+            }
+
+            // Middle Screen on Left Wing: Sign_Prev
+            Transform signPrev = stationGo.transform.Find("Sign_Prev");
+            if (signPrev != null)
+            {
+                signPrev.localPosition = new Vector3(-3.55f, 2.45f, 0.52f);
+                signPrev.localRotation = Quaternion.Euler(0f, -24f, 0f);
+                signPrev.localScale = new Vector3(1.05f, 1.05f, 1.05f);
+            }
+
+            // Bottom Screen on Left Wing: Controls_Board
+            Transform controlsBoard = stationGo.transform.Find("Controls_Board");
+            if (controlsBoard != null)
+            {
+                controlsBoard.localPosition = new Vector3(-3.55f, -1.03f, 0.52f);
+                controlsBoard.localRotation = Quaternion.Euler(0f, -24f, 0f);
+                controlsBoard.localScale = new Vector3(0.95f, 0.95f, 0.95f);
+
+                Transform existingBase = controlsBoard.Find("Controls_Board_ConsoleBase");
+                if (existingBase != null) existingBase.gameObject.SetActive(false);
+            }
+
+            // Right Multi-Screen Wing (Clean backing from Image 4)
+            Transform existingRightWing = stationGo.transform.Find("Chamber_Right_MultiScreen_Wing");
+            if (existingRightWing != null)
+            {
+                if (Application.isPlaying) Object.Destroy(existingRightWing.gameObject);
+                else Object.DestroyImmediate(existingRightWing.gameObject);
+            }
+
+            var rightWingScreenGo = new GameObject("Chamber_Right_MultiScreen_Wing");
+            rightWingScreenGo.transform.SetParent(stationGo.transform, false);
+            rightWingScreenGo.transform.localPosition = new Vector3(3.85f, 2.30f, 0.65f);
+            rightWingScreenGo.transform.localRotation = Quaternion.Euler(0f, 24f, 0f);
+
+            if (bigScreenPrefab != null)
+            {
+                var bsR = Object.Instantiate(bigScreenPrefab, rightWingScreenGo.transform, false);
+                bsR.name = "RightWing_Asset_Frame";
+                bsR.transform.localPosition = new Vector3(0f, 0.15f, 0.15f);
+                bsR.transform.localRotation = Quaternion.identity;
+                bsR.transform.localScale = new Vector3(0.80f, 1.05f, 1.0f);
+            }
+
+            // Middle Screen on Right Wing: Sign_Next
+            Transform signNext = stationGo.transform.Find("Sign_Next");
+            if (signNext != null)
+            {
+                signNext.localPosition = new Vector3(3.55f, 2.45f, 0.52f);
+                signNext.localRotation = Quaternion.Euler(0f, 24f, 0f);
+                signNext.localScale = new Vector3(1.05f, 1.05f, 1.05f);
+            }
+
+            // Bottom Screen on Right Wing: Achievements_Board
+            Transform achieveBoard = stationGo.transform.Find("Achievements_Board");
+            if (achieveBoard != null)
+            {
+                achieveBoard.localPosition = new Vector3(3.55f, -0.60f, 0.52f);
+                achieveBoard.localRotation = Quaternion.Euler(0f, 24f, 0f);
+                achieveBoard.localScale = new Vector3(0.95f, 0.95f, 0.95f);
+
+                Transform existingBase = achieveBoard.Find("Achievements_Board_ConsoleBase");
+                if (existingBase != null) existingBase.gameObject.SetActive(false);
+            }
+
+            // Hide unused redundant monitors
+            Transform signRole = stationGo.transform.Find("Sign_RoleWith");
+            if (signRole != null) signRole.gameObject.SetActive(false);
+
+            Transform retroTerm = stationGo.transform.Find("Retro_Terminal_Left");
+            if (retroTerm != null) retroTerm.gameObject.SetActive(false);
+
+            Transform serverTower = stationGo.transform.Find("Server_Tower_Right");
+            if (serverTower != null) serverTower.gameObject.SetActive(false);
+
+            // ─────────────────────────────────────────────────────────────────
+            // F. ATMOSPHERIC ARCHITECTURAL & WORKSTATION LIGHTING
+            // ─────────────────────────────────────────────────────────────────
+            Transform existingPendants = stationGo.transform.Find("Chamber_Overhead_Pendant_Lights");
+            if (existingPendants != null)
+            {
+                if (Application.isPlaying) Object.Destroy(existingPendants.gameObject);
+                else Object.DestroyImmediate(existingPendants.gameObject);
+            }
+
+            Transform existingAtmosphere = chamberGo.transform.Find("Chamber_Atmospheric_Lighting");
+            if (existingAtmosphere != null)
+            {
+                if (Application.isPlaying) Object.Destroy(existingAtmosphere.gameObject);
+                else Object.DestroyImmediate(existingAtmosphere.gameObject);
+            }
+
+            var lightGroup = new GameObject("Chamber_Atmospheric_Lighting");
+            lightGroup.transform.SetParent(chamberGo.transform, false);
+
+            System.Action<string, Vector3, Color, float, float> spawnPointLight = (lName, lPos, lCol, lIntensity, lRange) =>
+            {
+                var go = new GameObject(lName);
+                go.transform.SetParent(lightGroup.transform, false);
+                go.transform.position = lPos;
+                var l = go.AddComponent<Light>();
+                l.type = LightType.Point;
+                l.color = lCol;
+                l.intensity = lIntensity;
+                l.range = lRange;
+            };
+
+            System.Action<string, Vector3, Vector3, Color, float, float, float> spawnSpotLight = (lName, lPos, lRot, lCol, lIntensity, lRange, lAngle) =>
+            {
+                var go = new GameObject(lName);
+                go.transform.SetParent(lightGroup.transform, false);
+                go.transform.position = lPos;
+                go.transform.rotation = Quaternion.Euler(lRot);
+                var l = go.AddComponent<Light>();
+                l.type = LightType.Spot;
+                l.color = lCol;
+                l.intensity = lIntensity;
+                l.range = lRange;
+                l.spotAngle = lAngle;
+            };
+
+            // 1. High-Bay Central Ambient Fill (Soft, clear ice-white/blue)
+            spawnPointLight("Chamber_Center_Fill", new Vector3(35.0f, 5.8f, 23.0f), new Color(0.88f, 0.94f, 1.0f), 2.0f, 22.0f);
+
+            // 2. North Wall Architectural Sconces (Vibrant cyan wash over hexagonal pipes & wall panels)
+            spawnPointLight("NorthWall_Accent_A", new Vector3(31.5f, 3.6f, 28.2f), new Color(0.15f, 0.85f, 1.0f), 2.8f, 8.5f);
+            spawnPointLight("NorthWall_Accent_B", new Vector3(37.0f, 3.6f, 28.2f), new Color(0.15f, 0.85f, 1.0f), 2.8f, 8.5f);
+
+            // 3. South Wall Architectural Sconces (Warm amber complementary contrast glow)
+            spawnPointLight("SouthWall_Accent_A", new Vector3(31.5f, 3.6f, 17.8f), new Color(1.0f, 0.68f, 0.22f), 2.8f, 8.5f);
+            spawnPointLight("SouthWall_Accent_B", new Vector3(37.0f, 3.6f, 17.8f), new Color(1.0f, 0.68f, 0.22f), 2.8f, 8.5f);
+
+            // 4. Console Workstation Downlights (Focused task illumination for desks & keyboards)
+            spawnSpotLight("TaskLight_North_Fore", new Vector3(33.0f, 4.4f, 28.0f), new Vector3(85f, 0f, 0f), new Color(0.92f, 0.96f, 1.0f), 2.6f, 6.5f, 70f);
+            spawnSpotLight("TaskLight_North_Aft", new Vector3(37.2f, 4.4f, 26.5f), new Vector3(85f, 0f, 0f), new Color(0.92f, 0.96f, 1.0f), 2.6f, 6.5f, 70f);
+            spawnSpotLight("TaskLight_South_Fore", new Vector3(33.0f, 4.4f, 18.0f), new Vector3(85f, 0f, 0f), new Color(0.92f, 0.96f, 1.0f), 2.6f, 6.5f, 70f);
+            spawnSpotLight("TaskLight_South_Aft", new Vector3(37.2f, 4.4f, 19.5f), new Vector3(85f, 0f, 0f), new Color(0.92f, 0.96f, 1.0f), 2.6f, 6.5f, 70f);
+
+            // 5. Entrance Walkway Runner Downlight
+            spawnSpotLight("Walkway_Entry_Downlight", new Vector3(28.0f, 4.5f, 23.0f), new Vector3(90f, 0f, 0f), new Color(0.85f, 0.95f, 1.0f), 2.2f, 7.0f, 75f);
+
+            // 6. Video Wall Backing Halo Glow & Key Spotlight on Main Screen
+            spawnPointLight("VideoWall_Backing_Halo", new Vector3(40.8f, 3.8f, 23.0f), new Color(0.1f, 0.7f, 1.0f), 2.0f, 7.0f);
+
+            var screenSpotGo = new GameObject("Chamber_Screen_Spotlight");
+            screenSpotGo.transform.SetParent(lightGroup.transform, false);
+            screenSpotGo.transform.position = new Vector3(37.5f, 5.50f, 23.0f);
+            screenSpotGo.transform.rotation = Quaternion.Euler(50f, 90f, 0f);
+            var ss = screenSpotGo.AddComponent<Light>();
+            ss.type = LightType.Spot;
+            ss.range = 10f;
+            ss.spotAngle = 65f;
+            ss.intensity = 3.2f;
+            ss.color = new Color(0.95f, 0.98f, 1.0f);
+
+            // ─────────────────────────────────────────────────────────────────
+            // G. EXACT CAMERA VIEWPOINT & LOOK TARGET (LOCKED & PRESERVED)
+            // G. EXACT CAMERA VIEWPOINT & LOOK TARGET (LOCKED TO USER APPROVED STATE)
+            // ─────────────────────────────────────────────────────────────────
             Transform camView = stationGo.transform.Find("Camera_ViewPoint");
-            if (camView != null) camView.localPosition = new Vector3(0f, 4.20f, -12.50f);
+            if (camView != null) camView.localPosition = new Vector3(0f, 2.40f, -7.00f);
 
             Transform camLook = stationGo.transform.Find("Camera_LookTarget");
-            if (camLook != null) camLook.localPosition = new Vector3(0f, 2.70f, 0.80f);
+            if (camLook != null) camLook.localPosition = new Vector3(0f, 2.25f, 0.85f);
 
             var infoComp = stationGo.GetComponent<AboutInfoStation>();
             if (infoComp != null)
             {
-                infoComp.viewFov = 64f;
+                infoComp.viewFov = 52f;
                 if (camView != null) infoComp.cameraViewPoint = camView;
                 if (camLook != null) infoComp.cameraLookTarget = camLook;
 
@@ -1456,6 +1825,714 @@ namespace SpaceCyberpunk
                 var beaconsGo = GameObject.Find("LandingLights");
                 if (beaconsGo != null) infoComp.landingBeacons = beaconsGo.GetComponentsInChildren<Renderer>();
             }
+        }
+
+        private static void BuildCommandBridgeHoloTable(
+            Transform parent, Vector3 centerPos,
+            GameObject projectorPrefab, GameObject compStation, GameObject pilotSeat,
+            Material titaniumMat, Material steelMat, Material cyanEmissiveMat, Material coreGlowMat)
+        {
+            var holoTableRoot = new GameObject("Zone1_CommandBridge_HoloTable");
+            holoTableRoot.transform.SetParent(parent, false);
+            holoTableRoot.transform.position = centerPos;
+
+            // 1. Real Sci-Fi Hexagonal Command Table Asset (table_2.prefab)
+            var table2Prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Sci-Fi Styled Modular Pack/Prefabs/Decorative elements/Tables/table_2.prefab");
+            if (table2Prefab != null)
+            {
+                var t2 = Object.Instantiate(table2Prefab, holoTableRoot.transform, false);
+                t2.name = "Table2_Asset_Base";
+                t2.transform.localPosition = Vector3.zero;
+            }
+
+            // Projector Base at center
+            if (projectorPrefab != null)
+            {
+                var proj = Object.Instantiate(projectorPrefab, holoTableRoot.transform, false);
+                proj.name = "Holo_Projector_Emitter";
+                proj.transform.localPosition = new Vector3(0f, 1.15f, 0f);
+                proj.transform.localRotation = Quaternion.identity;
+                proj.transform.localScale = new Vector3(0.55f, 0.55f, 0.55f);
+            }
+
+            // 2. 3D Floating Planetary Hologram Core
+            var holoPlanetGo = new GameObject("HoloTable_Planetary_Hologram");
+            holoPlanetGo.transform.SetParent(holoTableRoot.transform, false);
+            holoPlanetGo.transform.localPosition = new Vector3(0f, 1.45f, 0f);
+
+            // Planet Core Sphere
+            var planetCore = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            planetCore.name = "Planet_Core";
+            planetCore.transform.SetParent(holoPlanetGo.transform, false);
+            planetCore.transform.localPosition = Vector3.zero;
+            planetCore.transform.localScale = new Vector3(0.65f, 0.65f, 0.65f);
+            Object.DestroyImmediate(planetCore.GetComponent<Collider>());
+            if (cyanEmissiveMat != null) planetCore.GetComponent<Renderer>().sharedMaterial = cyanEmissiveMat;
+
+            // Inner Orbit Ring A
+            var ringA = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            ringA.name = "Orbit_Ring_Inner";
+            ringA.transform.SetParent(holoPlanetGo.transform, false);
+            ringA.transform.localPosition = Vector3.zero;
+            ringA.transform.localRotation = Quaternion.Euler(22f, 0f, 15f);
+            ringA.transform.localScale = new Vector3(1.30f, 0.012f, 1.30f);
+            Object.DestroyImmediate(ringA.GetComponent<Collider>());
+            if (cyanEmissiveMat != null) ringA.GetComponent<Renderer>().sharedMaterial = cyanEmissiveMat;
+
+            // Outer Orbit Ring B
+            var ringB = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            ringB.name = "Orbit_Ring_Outer";
+            ringB.transform.SetParent(holoPlanetGo.transform, false);
+            ringB.transform.localPosition = Vector3.zero;
+            ringB.transform.localRotation = Quaternion.Euler(-30f, 40f, -10f);
+            ringB.transform.localScale = new Vector3(1.85f, 0.010f, 1.85f);
+            Object.DestroyImmediate(ringB.GetComponent<Collider>());
+            if (coreGlowMat != null) ringB.GetComponent<Renderer>().sharedMaterial = coreGlowMat;
+            else if (cyanEmissiveMat != null) ringB.GetComponent<Renderer>().sharedMaterial = cyanEmissiveMat;
+
+            // Vertical Scan Beam
+            var scanBeam = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            scanBeam.name = "Laser_Scan_Beam";
+            scanBeam.transform.SetParent(holoPlanetGo.transform, false);
+            scanBeam.transform.localPosition = Vector3.zero;
+            scanBeam.transform.localScale = new Vector3(0.035f, 0.55f, 0.035f);
+            Object.DestroyImmediate(scanBeam.GetComponent<Collider>());
+            if (cyanEmissiveMat != null) scanBeam.GetComponent<Renderer>().sharedMaterial = cyanEmissiveMat;
+
+            // Hologram Point Light
+            var holoLight = holoPlanetGo.AddComponent<Light>();
+            holoLight.type = LightType.Point;
+            holoLight.range = 3.5f;
+            holoLight.intensity = 1.6f;
+            holoLight.color = new Color(0.2f, 0.85f, 1.0f);
+
+            // Attach HologramPlanetRotator component
+            var rotator = holoPlanetGo.AddComponent<HologramPlanetRotator>();
+            rotator.planetCore = planetCore.transform;
+            rotator.innerRing = ringA.transform;
+            rotator.outerRing = ringB.transform;
+            rotator.scanBeam = scanBeam.transform;
+            rotator.holoSpotLight = holoLight;
+            rotator.planetSpinSpeed = 25f;
+            rotator.innerRingSpeed = -34f;
+            rotator.outerRingSpeed = 26f;
+
+            // 3. Ergonomic Commander Seats
+            if (pilotSeat != null)
+            {
+                var seatLeft = Object.Instantiate(pilotSeat, holoTableRoot.transform, false);
+                seatLeft.name = "Commander_Seat_South";
+                seatLeft.transform.localPosition = new Vector3(-1.6f, 0f, -1.8f);
+                seatLeft.transform.localRotation = Quaternion.Euler(0f, 40f, 0f);
+
+                var seatRight = Object.Instantiate(pilotSeat, holoTableRoot.transform, false);
+                seatRight.name = "Commander_Seat_North";
+                seatRight.transform.localPosition = new Vector3(-1.6f, 0f, 1.8f);
+                seatRight.transform.localRotation = Quaternion.Euler(0f, -40f, 0f);
+            }
+
+            // 4. Tactical Status Lecterns
+            if (compStation != null)
+            {
+                var lecternSouth = Object.Instantiate(compStation, holoTableRoot.transform, false);
+                lecternSouth.name = "Holo_Tactical_Console_South";
+                lecternSouth.transform.localPosition = new Vector3(0f, 0f, -2.4f);
+                lecternSouth.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
+
+                var lecternNorth = Object.Instantiate(compStation, holoTableRoot.transform, false);
+                lecternNorth.name = "Holo_Tactical_Console_North";
+                lecternNorth.transform.localPosition = new Vector3(0f, 0f, 2.4f);
+                lecternNorth.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            }
+
+            // Overhead Cyan Spotlight pool
+            var spotGo = new GameObject("HoloTable_Overhead_Spotlight");
+            spotGo.transform.SetParent(holoTableRoot.transform, false);
+            spotGo.transform.localPosition = new Vector3(0f, 6.0f, 0f);
+            spotGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            var spot = spotGo.AddComponent<Light>();
+            spot.type = LightType.Spot;
+            spot.range = 8f;
+            spot.spotAngle = 45f;
+            spot.intensity = 2.8f;
+            spot.color = new Color(0.2f, 0.85f, 1.0f);
+        }
+
+        private static void BuildServerAndTerminalBays(
+            Transform parent, GameObject cabinetL, GameObject consolePrefab, GameObject consoleScreenPrefab,
+            GameObject consoleCeiling, GameObject pilotSeat, GameObject cableThick, Material cyanEmissiveMat, Material coreGlowMat)
+        {
+            var serverBayRoot = new GameObject("Zone2_Server_And_Terminal_Bays");
+            serverBayRoot.transform.SetParent(parent, false);
+
+            // 1. South Wall Server Racks (Z = 9.8m)
+            float[] rackXPositions = new float[] { 6.5f, 10.0f, 13.5f, 17.0f, 20.5f };
+            for (int i = 0; i < rackXPositions.Length; i++)
+            {
+                float x = rackXPositions[i];
+                var rackContainer = new GameObject($"Server_Rack_Bay_{i + 1}");
+                rackContainer.transform.SetParent(serverBayRoot.transform, false);
+                rackContainer.transform.position = new Vector3(x, 0.10f, 9.8f);
+                rackContainer.transform.rotation = Quaternion.identity;
+
+                if (cabinetL != null)
+                {
+                    var model = Object.Instantiate(cabinetL, rackContainer.transform, false);
+                    model.transform.localPosition = Vector3.zero;
+                    model.transform.localRotation = Quaternion.identity;
+                }
+
+                // Procedural Blinking LED indicators on rack front panel
+                List<Renderer> ledRends = new List<Renderer>();
+                float[] ledY = new float[] { 0.7f, 1.1f, 1.5f, 1.9f };
+                for (int j = 0; j < ledY.Length; j++)
+                {
+                    var led = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    led.name = $"LED_Status_{j}";
+                    led.transform.SetParent(rackContainer.transform, false);
+                    led.transform.localPosition = new Vector3(0f, ledY[j], 0.38f);
+                    led.transform.localScale = new Vector3(0.55f, 0.05f, 0.04f);
+                    Object.DestroyImmediate(led.GetComponent<Collider>());
+                    var rend = led.GetComponent<Renderer>();
+                    if (cyanEmissiveMat != null) rend.sharedMaterial = cyanEmissiveMat;
+                    ledRends.Add(rend);
+                }
+
+                // Add ServerBlinkingLights script
+                var bl = rackContainer.AddComponent<ServerBlinkingLights>();
+                bl.ledRenderers = ledRends.ToArray();
+                bl.minBlinkInterval = 0.06f;
+                bl.maxBlinkInterval = 0.22f;
+            }
+
+            // 2. Curved Consoles & Operator Chairs (Z ≈ 13.0m)
+            Vector3[] consolePos = new Vector3[]
+            {
+                new Vector3(10.5f, 0.10f, 13.3f),
+                new Vector3(13.5f, 0.10f, 13.0f),
+                new Vector3(16.5f, 0.10f, 13.3f)
+            };
+            float[] consoleAngles = new float[] { 18f, 0f, -18f };
+
+            for (int i = 0; i < consolePos.Length; i++)
+            {
+                if (consolePrefab != null)
+                {
+                    var c = Object.Instantiate(consolePrefab, serverBayRoot.transform, false);
+                    c.name = $"Terminal_Console_{i + 1}";
+                    c.transform.position = consolePos[i];
+                    c.transform.rotation = Quaternion.Euler(0f, consoleAngles[i], 0f);
+                }
+                if (consoleScreenPrefab != null)
+                {
+                    var cs = Object.Instantiate(consoleScreenPrefab, serverBayRoot.transform, false);
+                    cs.name = $"Terminal_Screen_{i + 1}";
+                    cs.transform.position = consolePos[i] + new Vector3(0f, 0.85f, 0.15f);
+                    cs.transform.rotation = Quaternion.Euler(0f, consoleAngles[i], 0f);
+                }
+            }
+
+            // Operator chairs facing the terminals (rotated 180)
+            if (pilotSeat != null)
+            {
+                var chairL = Object.Instantiate(pilotSeat, serverBayRoot.transform, false);
+                chairL.name = "Server_Operator_Chair_L";
+                chairL.transform.position = new Vector3(11.5f, 0.10f, 14.5f);
+                chairL.transform.rotation = Quaternion.Euler(0f, 195f, 0f);
+
+                var chairR = Object.Instantiate(pilotSeat, serverBayRoot.transform, false);
+                chairR.name = "Server_Operator_Chair_R";
+                chairR.transform.position = new Vector3(15.5f, 0.10f, 14.5f);
+                chairR.transform.rotation = Quaternion.Euler(0f, 165f, 0f);
+            }
+
+            // 3. Suspended Overhead Terminal
+            if (consoleCeiling != null)
+            {
+                var cCeil = Object.Instantiate(consoleCeiling, serverBayRoot.transform, false);
+                cCeil.name = "ServerBay_Overhead_Terminal";
+                cCeil.transform.position = new Vector3(13.5f, 3.8f, 12.0f);
+                cCeil.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+            }
+
+            // 4. Heavy Baseboard Power Cables
+            if (cableThick != null)
+            {
+                for (float x = 7.0f; x <= 20.0f; x += 4.0f)
+                {
+                    var cb = Object.Instantiate(cableThick, serverBayRoot.transform, false);
+                    cb.name = $"Server_Cable_Trunk_X{x}";
+                    cb.transform.position = new Vector3(x, 0.10f, 9.4f);
+                    cb.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+                }
+            }
+
+            // 5. Warm Amber Accent Wash Light
+            var amberLightGo = new GameObject("ServerBay_Amber_Accent_Light");
+            amberLightGo.transform.SetParent(serverBayRoot.transform, false);
+            amberLightGo.transform.position = new Vector3(13.5f, 3.2f, 10.5f);
+            var ambLight = amberLightGo.AddComponent<Light>();
+            ambLight.type = LightType.Point;
+            ambLight.range = 10f;
+            ambLight.intensity = 2.2f;
+            ambLight.color = new Color(1.0f, 0.60f, 0.15f);
+        }
+
+        private static void BuildCryoLifeSupportBay(
+            Transform parent, GameObject machineBarrelLarge, GameObject barrelsCluster,
+            GameObject pipeStraight, GameObject pipeCorner, GameObject consoleScreenPrefab,
+            Material darkTitaniumMat, Material holoGlassMat, Material cyanEmissiveMat, Material smokeMat)
+        {
+            var cryoRoot = new GameObject("Zone3_Cryo_Life_Support_Bay");
+            cryoRoot.transform.SetParent(parent, false);
+
+            // 1. 3 Upright Cryo Stasis Pods (along west wall of north wing: X = 4.0m, Z = 38.5, 40.8, 43.1)
+            float[] podZ = new float[] { 38.5f, 40.8f, 43.1f };
+            for (int i = 0; i < podZ.Length; i++)
+            {
+                float z = podZ[i];
+                var podGo = new GameObject($"Cryo_Stasis_Pod_{i + 1}");
+                podGo.transform.SetParent(cryoRoot.transform, false);
+                podGo.transform.position = new Vector3(4.0f, 0.10f, z);
+
+                // Octagonal Plinth Base
+                var basePlinth = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                basePlinth.name = "Pod_Base_Plinth";
+                basePlinth.transform.SetParent(podGo.transform, false);
+                basePlinth.transform.localPosition = new Vector3(0f, 0.12f, 0f);
+                basePlinth.transform.localScale = new Vector3(1.35f, 0.24f, 1.35f);
+                Object.DestroyImmediate(basePlinth.GetComponent<Collider>());
+                if (darkTitaniumMat != null) basePlinth.GetComponent<Renderer>().sharedMaterial = darkTitaniumMat;
+
+                // Glass Stasis Capsule
+                var glassCapsule = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                glassCapsule.name = "Pod_Glass_Capsule";
+                glassCapsule.transform.SetParent(podGo.transform, false);
+                glassCapsule.transform.localPosition = new Vector3(0f, 1.35f, 0f);
+                glassCapsule.transform.localScale = new Vector3(1.10f, 1.0f, 1.10f);
+                Object.DestroyImmediate(glassCapsule.GetComponent<Collider>());
+                if (holoGlassMat != null) glassCapsule.GetComponent<Renderer>().sharedMaterial = holoGlassMat;
+                else if (cyanEmissiveMat != null) glassCapsule.GetComponent<Renderer>().sharedMaterial = cyanEmissiveMat;
+
+                // Internal Glowing Stasis Core Rod
+                var stasisCore = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                stasisCore.name = "Pod_Stasis_Core";
+                stasisCore.transform.SetParent(podGo.transform, false);
+                stasisCore.transform.localPosition = new Vector3(0f, 1.35f, 0f);
+                stasisCore.transform.localScale = new Vector3(0.18f, 0.85f, 0.18f);
+                Object.DestroyImmediate(stasisCore.GetComponent<Collider>());
+                if (cyanEmissiveMat != null) stasisCore.GetComponent<Renderer>().sharedMaterial = cyanEmissiveMat;
+
+                // Pressurized Top Cap
+                var topCap = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                topCap.name = "Pod_Top_Cap";
+                topCap.transform.SetParent(podGo.transform, false);
+                topCap.transform.localPosition = new Vector3(0f, 2.45f, 0f);
+                topCap.transform.localScale = new Vector3(1.25f, 0.18f, 1.25f);
+                Object.DestroyImmediate(topCap.GetComponent<Collider>());
+                if (darkTitaniumMat != null) topCap.GetComponent<Renderer>().sharedMaterial = darkTitaniumMat;
+
+                // Ice-Cyan Stasis Glow Light
+                var glowLightGo = new GameObject("Stasis_Glow_Light");
+                glowLightGo.transform.SetParent(podGo.transform, false);
+                glowLightGo.transform.localPosition = new Vector3(0f, 1.35f, 0f);
+                var glowLight = glowLightGo.AddComponent<Light>();
+                glowLight.type = LightType.Point;
+                glowLight.range = 3.2f;
+                glowLight.intensity = 1.8f;
+                glowLight.color = new Color(0.15f, 0.85f, 1.0f);
+
+                // Procedural Cryo Frost Vapor Vent Emitter
+                var ventGo = new GameObject("Cryo_Vapor_Emitter");
+                ventGo.transform.SetParent(podGo.transform, false);
+                ventGo.transform.localPosition = new Vector3(0.55f, 0.20f, 0f);
+                ventGo.transform.localRotation = Quaternion.Euler(-15f, 90f, 0f);
+
+                var ps = ventGo.AddComponent<ParticleSystem>();
+                var psRend = ventGo.GetComponent<ParticleSystemRenderer>();
+                if (psRend != null && smokeMat != null) psRend.sharedMaterial = smokeMat;
+
+                var main = ps.main;
+                main.startLifetime = 1.6f;
+                main.startSpeed = 1.5f;
+                main.startSize = 0.4f;
+                main.startColor = new Color(0.8f, 0.95f, 1.0f, 0.5f);
+                main.maxParticles = 50;
+                main.playOnAwake = false;
+
+                var emission = ps.emission;
+                emission.rateOverTime = 0; // Triggered via burst in CryoVaporVent
+
+                var shape = ps.shape;
+                shape.shapeType = ParticleSystemShapeType.Cone;
+                shape.angle = 25f;
+                shape.radius = 0.08f;
+
+                var cryoVent = ventGo.AddComponent<CryoVaporVent>();
+                cryoVent.vaporParticle = ps;
+                cryoVent.ventGlowLight = glowLight;
+                cryoVent.minInterval = 4.0f + i * 1.5f;
+                cryoVent.maxInterval = 7.5f + i * 1.5f;
+                cryoVent.burstCount = 18;
+            }
+
+            // 2. Oxygen & Nitrogen Gas Buffer Tanks (X = 6.8m, Z = 39.5, 42.0)
+            if (machineBarrelLarge != null)
+            {
+                var t1 = Object.Instantiate(machineBarrelLarge, cryoRoot.transform, false);
+                t1.name = "Cryo_Buffer_Tank_O2";
+                t1.transform.position = new Vector3(6.8f, 0.10f, 39.5f);
+                t1.transform.localScale = new Vector3(1.4f, 1.4f, 1.4f);
+
+                var t2 = Object.Instantiate(machineBarrelLarge, cryoRoot.transform, false);
+                t2.name = "Cryo_Buffer_Tank_N2";
+                t2.transform.position = new Vector3(6.8f, 0.10f, 42.2f);
+                t2.transform.localScale = new Vector3(1.4f, 1.4f, 1.4f);
+            }
+            if (barrelsCluster != null)
+            {
+                var bc = Object.Instantiate(barrelsCluster, cryoRoot.transform, false);
+                bc.name = "Cryo_Chemical_Barrels";
+                bc.transform.position = new Vector3(6.8f, 0.10f, 44.5f);
+            }
+
+            // 3. Manifold Pipes connecting buffer tanks to pods
+            if (pipeStraight != null)
+            {
+                var p1 = Object.Instantiate(pipeStraight, cryoRoot.transform, false);
+                p1.name = "Cryo_Manifold_Pipe_1";
+                p1.transform.position = new Vector3(5.4f, 0.35f, 39.5f);
+                p1.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+
+                var p2 = Object.Instantiate(pipeStraight, cryoRoot.transform, false);
+                p2.name = "Cryo_Manifold_Pipe_2";
+                p2.transform.position = new Vector3(5.4f, 0.35f, 42.2f);
+                p2.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+            }
+
+            // 4. Cryo Vitals Monitor Console
+            if (consoleScreenPrefab != null)
+            {
+                var mon = Object.Instantiate(consoleScreenPrefab, cryoRoot.transform, false);
+                mon.name = "Cryo_Vitals_Telemetry_Screen";
+                mon.transform.position = new Vector3(3.8f, 0.10f, 36.8f);
+                mon.transform.rotation = Quaternion.Euler(0f, 45f, 0f);
+            }
+        }
+
+        private static void BuildAirlockAndCargoBay(
+            Transform parent, GameObject containerBig, GameObject containerSmall, GameObject storageContainerSmall,
+            GameObject torpedoRack, GameObject wallShelf, GameObject barrelsCluster, GameObject floorCornerPipes,
+            GameObject compStation, Material hazardStripeMat, Material darkTitaniumMat, Material cyanEmissiveMat)
+        {
+            var cargoRoot = new GameObject("Zone4_Airlock_And_Cargo_Bay");
+            cargoRoot.transform.SetParent(parent, false);
+
+            // 1. Floor Hazard Warning Decal Stripes at Door Thresholds
+            if (hazardStripeMat != null)
+            {
+                // Inner sliding blast door threshold (X = -2.2m, across Z: 21 to 25)
+                var stripeInner = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                stripeInner.name = "Hazard_Stripe_Inner_Threshold";
+                stripeInner.transform.SetParent(cargoRoot.transform, false);
+                stripeInner.transform.position = new Vector3(-2.2f, 0.11f, 23.0f);
+                stripeInner.transform.localScale = new Vector3(0.75f, 0.015f, 4.4f);
+                Object.DestroyImmediate(stripeInner.GetComponent<Collider>());
+                stripeInner.GetComponent<Renderer>().sharedMaterial = hazardStripeMat;
+
+                // Outer airlock threshold (X = -9.2m, across Z: 21 to 25)
+                var stripeOuter = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                stripeOuter.name = "Hazard_Stripe_Outer_Threshold";
+                stripeOuter.transform.SetParent(cargoRoot.transform, false);
+                stripeOuter.transform.position = new Vector3(-9.2f, 0.11f, 23.0f);
+                stripeOuter.transform.localScale = new Vector3(0.75f, 0.015f, 4.4f);
+                Object.DestroyImmediate(stripeOuter.GetComponent<Collider>());
+                stripeOuter.GetComponent<Renderer>().sharedMaterial = hazardStripeMat;
+            }
+
+            // 2. Biometric Security / Retina Scanner Wall Terminals flanking door frame
+            if (compStation != null)
+            {
+                var scanSouth = Object.Instantiate(compStation, cargoRoot.transform, false);
+                scanSouth.name = "Biometric_Door_Terminal_South";
+                scanSouth.transform.position = new Vector3(-2.2f, 0.10f, 20.8f);
+                scanSouth.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+                scanSouth.transform.localScale = new Vector3(0.7f, 0.85f, 0.7f);
+
+                var scanNorth = Object.Instantiate(compStation, cargoRoot.transform, false);
+                scanNorth.name = "Biometric_Door_Terminal_North";
+                scanNorth.transform.position = new Vector3(-2.2f, 0.10f, 25.2f);
+                scanNorth.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+                scanNorth.transform.localScale = new Vector3(0.7f, 0.85f, 0.7f);
+            }
+
+            // 3. South Cargo Staging Bay (X: -7.5 to -3.5, Z: 18.2 to 20.5)
+            if (containerBig != null)
+            {
+                var cb = Object.Instantiate(containerBig, cargoRoot.transform, false);
+                cb.name = "Cargo_Heavy_Shipping_Container";
+                cb.transform.position = new Vector3(-5.2f, 0.10f, 19.5f);
+                cb.transform.rotation = Quaternion.Euler(0f, 5f, 0f);
+            }
+            if (containerSmall != null)
+            {
+                var cs1 = Object.Instantiate(containerSmall, cargoRoot.transform, false);
+                cs1.name = "Cargo_Stacked_Small_Crate";
+                cs1.transform.position = new Vector3(-5.0f, 1.45f, 19.6f);
+                cs1.transform.rotation = Quaternion.Euler(0f, 18f, 0f);
+            }
+            if (storageContainerSmall != null)
+            {
+                var scs = Object.Instantiate(storageContainerSmall, cargoRoot.transform, false);
+                scs.name = "Cargo_Modular_Storage_Unit";
+                scs.transform.position = new Vector3(-7.2f, 0.10f, 19.2f);
+                scs.transform.rotation = Quaternion.Euler(0f, -8f, 0f);
+            }
+            if (barrelsCluster != null)
+            {
+                var bc = Object.Instantiate(barrelsCluster, cargoRoot.transform, false);
+                bc.name = "Cargo_Coolant_Barrels";
+                bc.transform.position = new Vector3(-3.2f, 0.10f, 19.5f);
+            }
+
+            // 4. North Equipment & EVA Bay (X: -7.5 to -3.5, Z: 25.5 to 27.8)
+            if (torpedoRack != null)
+            {
+                var tr = Object.Instantiate(torpedoRack, cargoRoot.transform, false);
+                tr.name = "EVA_Equipment_Rack";
+                tr.transform.position = new Vector3(-5.5f, 0.10f, 27.2f);
+                tr.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+            }
+            if (wallShelf != null)
+            {
+                var ws = Object.Instantiate(wallShelf, cargoRoot.transform, false);
+                ws.name = "Airlock_Wall_Gear_Shelf";
+                ws.transform.position = new Vector3(-3.4f, 1.20f, 27.4f);
+                ws.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+            }
+
+            // Automated Hover-Lifter Pallet
+            var hoverGo = new GameObject("Automated_Hover_Lifter_Pallet");
+            hoverGo.transform.SetParent(cargoRoot.transform, false);
+            hoverGo.transform.position = new Vector3(-4.5f, 0.22f, 25.5f);
+
+            var palletDeck = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            palletDeck.name = "Pallet_Platform";
+            palletDeck.transform.SetParent(hoverGo.transform, false);
+            palletDeck.transform.localPosition = Vector3.zero;
+            palletDeck.transform.localScale = new Vector3(1.8f, 0.10f, 1.4f);
+            Object.DestroyImmediate(palletDeck.GetComponent<Collider>());
+            if (darkTitaniumMat != null) palletDeck.GetComponent<Renderer>().sharedMaterial = darkTitaniumMat;
+
+            // 4 Cyan anti-gravity repulsor pads underneath
+            Vector3[] padOffsets = new Vector3[]
+            {
+                new Vector3(-0.7f, -0.06f, -0.5f),
+                new Vector3(0.7f, -0.06f, -0.5f),
+                new Vector3(-0.7f, -0.06f, 0.5f),
+                new Vector3(0.7f, -0.06f, 0.5f)
+            };
+            foreach (var off in padOffsets)
+            {
+                var pad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                pad.name = "AntiGrav_Thruster_Pad";
+                pad.transform.SetParent(hoverGo.transform, false);
+                pad.transform.localPosition = off;
+                pad.transform.localScale = new Vector3(0.30f, 0.04f, 0.30f);
+                Object.DestroyImmediate(pad.GetComponent<Collider>());
+                if (cyanEmissiveMat != null) pad.GetComponent<Renderer>().sharedMaterial = cyanEmissiveMat;
+            }
+
+            // Loaded cargo on hover pallet
+            if (storageContainerSmall != null)
+            {
+                var hc = Object.Instantiate(storageContainerSmall, hoverGo.transform, false);
+                hc.name = "Hover_Loaded_Alloy_Crate";
+                hc.transform.localPosition = new Vector3(0f, 0.06f, 0f);
+                hc.transform.localRotation = Quaternion.Euler(0f, 12f, 0f);
+            }
+
+            // Warm Task Spotlights for Cargo Staging
+            var cargoLightGo = new GameObject("Airlock_Cargo_Floodlight");
+            cargoLightGo.transform.SetParent(cargoRoot.transform, false);
+            cargoLightGo.transform.position = new Vector3(-5.0f, 3.6f, 23.0f);
+            var cl = cargoLightGo.AddComponent<Light>();
+            cl.type = LightType.Spot;
+            cl.range = 8f;
+            cl.spotAngle = 75f;
+            cl.intensity = 2.4f;
+            cl.color = new Color(1.0f, 0.95f, 0.88f);
+            cargoLightGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+        }
+
+        private static void BuildOverheadConduitsAndPipes(
+            Transform parent, GameObject pipeStraight, GameObject pipeCorner, GameObject pipeRoundLarge, GameObject pipeCross,
+            GameObject floorCornerPipes, GameObject floorCornerPipesTurn)
+        {
+            var conduitRoot = new GameObject("Scattering_Overhead_Conduits_And_Pipes");
+            conduitRoot.transform.SetParent(parent, false);
+
+            float ductY = 7.60f; // High-bay truss elevation
+
+            // 1. South High-Bay Duct Run along Z = 17.0m (X: 4 to 24)
+            if (pipeStraight != null)
+            {
+                for (float x = 6.0f; x <= 22.0f; x += 4.0f)
+                {
+                    var p = Object.Instantiate(pipeStraight, conduitRoot.transform, false);
+                    p.name = $"Overhead_Duct_South_X{x}";
+                    p.transform.position = new Vector3(x, ductY, 17.0f);
+                    p.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+                    p.transform.localScale = new Vector3(1.8f, 1.8f, 1.8f);
+                }
+
+                // 2. North High-Bay Duct Run along Z = 29.0m (X: 4 to 24)
+                for (float x = 6.0f; x <= 22.0f; x += 4.0f)
+                {
+                    var p = Object.Instantiate(pipeStraight, conduitRoot.transform, false);
+                    p.name = $"Overhead_Duct_North_X{x}";
+                    p.transform.position = new Vector3(x, ductY, 29.0f);
+                    p.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+                    p.transform.localScale = new Vector3(1.8f, 1.8f, 1.8f);
+                }
+
+                // 3. Portico Airlock Ceiling Ducts at Y = 3.8m
+                for (float z = 20.0f; z <= 26.0f; z += 3.0f)
+                {
+                    var p = Object.Instantiate(pipeStraight, conduitRoot.transform, false);
+                    p.name = $"Airlock_Ceiling_Duct_Z{z}";
+                    p.transform.position = new Vector3(-6.0f, 3.80f, z);
+                    p.transform.rotation = Quaternion.identity;
+                    p.transform.localScale = new Vector3(1.3f, 1.3f, 1.3f);
+                }
+            }
+
+            // Cross junctions
+            if (pipeCross != null)
+            {
+                var pc1 = Object.Instantiate(pipeCross, conduitRoot.transform, false);
+                pc1.name = "Duct_Cross_South";
+                pc1.transform.position = new Vector3(14.0f, ductY, 17.0f);
+                pc1.transform.localScale = new Vector3(1.8f, 1.8f, 1.8f);
+
+                var pc2 = Object.Instantiate(pipeCross, conduitRoot.transform, false);
+                pc2.name = "Duct_Cross_North";
+                pc2.transform.position = new Vector3(14.0f, ductY, 29.0f);
+                pc2.transform.localScale = new Vector3(1.8f, 1.8f, 1.8f);
+            }
+
+            // 4. Floor Baseboard Perimeter Ornament Pipes
+            if (floorCornerPipes != null)
+            {
+                for (float x = 8.0f; x <= 20.0f; x += 4.0f)
+                {
+                    var fcp = Object.Instantiate(floorCornerPipes, conduitRoot.transform, false);
+                    fcp.name = $"Baseboard_Pipes_South_X{x}";
+                    fcp.transform.position = new Vector3(x, 0.10f, 9.15f);
+                    fcp.transform.rotation = Quaternion.identity;
+                }
+            }
+        }
+
+        private static void BuildInteriorAtmosphereAndLighting(
+            Transform parent, GameObject ceilingLight, Material cyanEmissiveMat, Material smokeMat)
+        {
+            var lightingGroup = new GameObject("Citadel_Interior_Lighting");
+            lightingGroup.transform.SetParent(parent, false);
+
+            // 1. Balanced Ambient Fill Light (Contrast Lighting: reduced from 2.2f to 1.15f)
+            var ambientFillGo = new GameObject("Interior_Ambient_Fill_Light");
+            ambientFillGo.transform.SetParent(lightingGroup.transform, false);
+            ambientFillGo.transform.position = new Vector3(14.0f, 5.0f, 23.0f);
+            var fillLight = ambientFillGo.AddComponent<Light>();
+            fillLight.type = LightType.Point;
+            fillLight.range = 38.0f;
+            fillLight.intensity = 1.15f; // Gives shadows depth while keeping base clear
+            fillLight.color = new Color(0.85f, 0.95f, 1.0f);
+
+            // 2. Floor Baseboard Neon Trims (Cyan / Neon Blue ambient glow lines)
+            if (cyanEmissiveMat != null)
+            {
+                var neonSouth = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                neonSouth.name = "Baseboard_Neon_South";
+                neonSouth.transform.SetParent(lightingGroup.transform, false);
+                neonSouth.transform.position = new Vector3(14.0f, 0.14f, 9.10f);
+                neonSouth.transform.localScale = new Vector3(28.0f, 0.06f, 0.06f);
+                Object.DestroyImmediate(neonSouth.GetComponent<Collider>());
+                neonSouth.GetComponent<Renderer>().sharedMaterial = cyanEmissiveMat;
+
+                var neonNorth = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                neonNorth.name = "Baseboard_Neon_North_Hall";
+                neonNorth.transform.SetParent(lightingGroup.transform, false);
+                neonNorth.transform.position = new Vector3(14.0f, 0.14f, 48.90f);
+                neonNorth.transform.localScale = new Vector3(22.0f, 0.06f, 0.06f);
+                Object.DestroyImmediate(neonNorth.GetComponent<Collider>());
+                neonNorth.GetComponent<Renderer>().sharedMaterial = cyanEmissiveMat;
+            }
+
+            // 3. High-Bay Overhead Spotlights
+            Vector3[] floodlightPos = new Vector3[]
+            {
+                new Vector3(14.0f, 11.2f, 23.0f),
+                new Vector3(8.0f, 7.6f, 19.0f),
+                new Vector3(20.0f, 7.6f, 19.0f),
+                new Vector3(8.0f, 7.6f, 27.0f),
+                new Vector3(20.0f, 7.6f, 27.0f),
+                new Vector3(-6.0f, 3.8f, 23.0f),
+                new Vector3(14.0f, 3.8f, 43.0f)
+            };
+
+            foreach (var pos in floodlightPos)
+            {
+                var lightGo = new GameObject("Ceiling_HighBay_Light");
+                lightGo.transform.SetParent(lightingGroup.transform, false);
+                lightGo.transform.position = pos;
+
+                var l = lightGo.AddComponent<Light>();
+                l.type = LightType.Spot;
+                l.range = 18f;
+                l.spotAngle = 80f;
+                l.intensity = 2.8f;
+                l.color = new Color(0.92f, 0.97f, 1.0f);
+                lightGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+
+                if (ceilingLight != null)
+                {
+                    var fix = Object.Instantiate(ceilingLight, lightGo.transform, false);
+                    fix.name = "Fixture_Model";
+                    fix.transform.localPosition = Vector3.zero;
+                    fix.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+                }
+            }
+
+            // 4. Volumetric Space Dust Motes Particle System
+            var dustGo = new GameObject("Citadel_Atmospheric_Dust_Motes");
+            dustGo.transform.SetParent(lightingGroup.transform, false);
+            dustGo.transform.position = new Vector3(14.0f, 4.0f, 25.0f);
+
+            var ps = dustGo.AddComponent<ParticleSystem>();
+            var psRend = dustGo.GetComponent<ParticleSystemRenderer>();
+            if (psRend != null && smokeMat != null) psRend.sharedMaterial = smokeMat;
+
+            var main = ps.main;
+            main.maxParticles = 120;
+            main.startLifetime = 14f;
+            main.startSpeed = 0.12f;
+            main.startSize = 0.05f;
+            main.startColor = new Color(0.85f, 0.95f, 1.0f, 0.40f);
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+
+            var emission = ps.emission;
+            emission.rateOverTime = 8f;
+
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Box;
+            shape.scale = new Vector3(28.0f, 7.0f, 26.0f);
+
+            var noise = ps.noise;
+            noise.enabled = true;
+            noise.strength = 0.25f;
+            noise.frequency = 0.15f;
         }
 
         private static GameObject LoadPrefab(string path)

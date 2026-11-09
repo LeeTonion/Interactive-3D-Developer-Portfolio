@@ -1225,21 +1225,24 @@ namespace SpaceCyberpunk
             waypoints.Add(new TourWaypoint(new Vector3(-7.0f, 2.10f, 23.0f), new Vector3(10.0f, 2.5f, 23.0f), 50f));
 
             // P4: Thoát khỏi hầm cửa bước vào Đại sảnh Rotunda (X = -1.0m)
-            waypoints.Add(new TourWaypoint(new Vector3(-1.0f, 2.40f, 23.0f), new Vector3(14.0f, 2.6f, 23.0f), 52f));
+            waypoints.Add(new TourWaypoint(new Vector3(-1.0f, 2.40f, 23.0f), new Vector3(14.0f, 2.4f, 23.0f), 52f));
 
-            // P5: Nâng cao độ & lượn sang cánh Bắc ngắm dàn màn hình Mission Control khổng lồ
-            waypoints.Add(new TourWaypoint(new Vector3(4.5f, 3.40f, 27.5f), new Vector3(14.0f, 2.8f, 46.0f), 55f));
+            // P5: Lượn sang cánh Bắc ngắm dàn màn hình Mission Control khổng lồ & buồng Cryo
+            waypoints.Add(new TourWaypoint(new Vector3(5.0f, 3.20f, 28.0f), new Vector3(14.0f, 2.8f, 46.0f), 55f));
 
-            // P6: Quét toàn cảnh kiến trúc mái vòm trần cao & toàn bộ không gian căn cứ
-            waypoints.Add(new TourWaypoint(new Vector3(9.5f, 3.90f, 32.0f), new Vector3(16.0f, 2.6f, 23.0f), 56f));
+            // P6: Quét qua vòm trần cao, ngắm Bàn Hologram Hành tinh 3D xoay tại tâm Đại sảnh
+            waypoints.Add(new TourWaypoint(new Vector3(12.0f, 3.60f, 29.0f), new Vector3(14.0f, 1.6f, 23.0f), 56f));
 
-            // P7: Lượn vòng cung mềm mại quanh lõi mạch điện trung tâm và dàn server
-            waypoints.Add(new TourWaypoint(new Vector3(12.5f, 3.20f, 19.5f), new Vector3(15.2f, 2.5f, 23.0f), 52f));
+            // P7: Lượn vòng cung mềm mại qua cụm server phía Nam và hướng mũi nhìn sang cánh Đông
+            waypoints.Add(new TourWaypoint(new Vector3(18.5f, 3.10f, 19.5f), new Vector3(30.0f, 2.3f, 23.0f), 54f));
 
-            // P8: Vị trí quan sát chính thức trước bàn kiosk Portfolio World
+            // P8: Tiến vào trục cửa Căn phòng Chỉ huy Cánh Đông
+            waypoints.Add(new TourWaypoint(new Vector3(26.5f, 2.45f, 23.0f), new Vector3(40.35f, 2.35f, 23.0f), 52f));
+
+            // P9: Vị trí quan sát chính thức trước bàn điều khiển Portfolio World (ngay giữa hai cột cửa cánh Đông)
             waypoints.Add(new TourWaypoint(finalCamPos, finalLook, finalFov));
 
-            float totalFlightDuration = 8.5f; // Di chuyển nhịp nhàng 8.5s cho toàn bộ hành trình
+            float totalFlightDuration = 9.2f; // Di chuyển nhịp nhàng 9.2s cho toàn bộ hành trình
             float elapsed = 0f;
             bool doorOpened = false;
 
@@ -1429,17 +1432,18 @@ namespace SpaceCyberpunk
                 targetShipCamRot = Quaternion.identity;
             }
 
-            // Waypoints thoát: Kiosk -> Hành lang Tây -> Ra ngoài cửa -> Bãi đáp
+            // Waypoints thoát: Phòng Cánh Đông -> Đại sảnh Rotunda -> Cổng Tây -> Bãi đáp
             List<Vector3> exitWaypoints = new List<Vector3>
             {
                 startPos,
+                new Vector3(22.0f, 2.7f, 23.0f),
                 new Vector3(4.0f, 2.5f, 23.0f),
                 new Vector3(-6.0f, 2.2f, 23.0f),
                 new Vector3(-14.0f, 2.4f, 23.0f),
                 targetShipCamPos
             };
 
-            float exitDuration = 2.2f;
+            float exitDuration = 2.8f;
             float elapsed = 0f;
             bool doorClosed = false;
 
