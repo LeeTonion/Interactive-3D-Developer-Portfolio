@@ -24,11 +24,11 @@ namespace SpaceCyberpunk
         public float openSpeed = 2.4f;
         public float closeSpeed = 2.6f;
 
-        // Tọa độ đóng mở chính xác theo mesh của Sci-Fi Modular Pack door_1
+        // Tọa độ đóng mở chính xác: Khi mở hoàn toàn trượt sâu 3.6m vào trong vách để thông thoáng 100%
         private static readonly Vector3 ClosedLeftPos = new Vector3(1.386f, 0.0057f, 0f);
         private static readonly Vector3 ClosedRightPos = new Vector3(-1.409f, 0f, 0f);
-        private static readonly Vector3 OpenLeftPos = new Vector3(2.65f, 0.0057f, 0f);
-        private static readonly Vector3 OpenRightPos = new Vector3(-2.75f, 0f, 0f);
+        private static readonly Vector3 OpenLeftPos = new Vector3(3.60f, 0.0057f, 0f);
+        private static readonly Vector3 OpenRightPos = new Vector3(-3.60f, 0f, 0f);
 
         [Header("Proximity Auto-Sense")]
         public bool autoProximity = true;
@@ -71,6 +71,7 @@ namespace SpaceCyberpunk
             if (doorLeft == null) doorLeft = transform.Find("door_1_left");
             if (doorRight == null) doorRight = transform.Find("door_1_right");
             if (animator == null) animator = GetComponent<Animator>();
+            if (animator != null) animator.enabled = false; // Tắt animator để không bị kẹp chết ở vị trí hé mở 2.47m
         }
 
         private void CreateStatusIndicators()
@@ -160,8 +161,18 @@ namespace SpaceCyberpunk
 
             var rend = ps.GetComponent<ParticleSystemRenderer>();
             rend.renderMode = ParticleSystemRenderMode.Billboard;
+#if UNITY_EDITOR
+            var smokeMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/New/Materials/Mat_Cosmic_Smoke.mat");
+            if (smokeMat != null) rend.sharedMaterial = smokeMat;
+#endif
 
             return ps;
+        }
+
+        private void LateUpdate()
+        {
+            // Luôn áp dụng vị trí cửa tại LateUpdate để đảm bảo không bị bất kỳ Animator nào ghi đè
+            ApplyDoorPositions();
         }
 
         private void Update()

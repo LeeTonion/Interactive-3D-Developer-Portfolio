@@ -229,6 +229,9 @@ namespace SpaceCyberpunk
             // ─────────────────────────────────────────────────────────────────
             GameObject windowBigPrefab = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Windows/Complete Windows/window_big.prefab")
                                       ?? LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Windows/window_big.prefab");
+            GameObject cornerFarPrefab = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Windows/Complete Windows/window_big_corner_far.prefab")
+                                      ?? LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Windows/window_big_corner_far.prefab");
+            GameObject doorBlockerPrefab = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Windows/window_big_blocker_3.prefab");
             GameObject wallBigPrefab = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Walls/wall_big.prefab");
             GameObject columnPillar = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Decorative elements/Column/column_end.prefab");
             GameObject doorPrefab = LoadPrefab("Assets/Sci-Fi Styled Modular Pack/Prefabs/Doors/door_1.prefab")
@@ -513,42 +516,102 @@ namespace SpaceCyberpunk
                     autoDoorEast.autoProximity = true;
                     autoDoorEast.triggerDistance = 8.0f;
                     autoDoorEast.closeDistance = 12.0f;
+
+                    if (columnPillar != null)
+                    {
+                        for (int tPortal = 0; tPortal <= 1; tPortal++)
+                        {
+                            float yPortal = 0.10f + tPortal * 4.0f;
+                            var colES = Object.Instantiate(columnPillar, wallsGroup.transform, false);
+                            colES.name = $"East_Portal_Col_South_T{tPortal}";
+                            colES.transform.position = new Vector3(30.0f, yPortal, 21.0f);
+
+                            var colEN = Object.Instantiate(columnPillar, wallsGroup.transform, false);
+                            colEN.name = $"East_Portal_Col_North_T{tPortal}";
+                            colEN.transform.position = new Vector3(30.0f, yPortal, 25.0f);
+                        }
+                    }
                 }
             }
 
-            // ── 6.5 TRUE MATHEMATICAL CORNER COLUMNS (100% MODULAR ASSET PREFABS) ──
-            Vector3[] perimeterCorners = new Vector3[]
-            {
-                new Vector3(-10.0f, 0.10f, 17.0f), // West Gate South
-                new Vector3(-10.0f, 0.10f, 29.0f), // West Gate North
-                new Vector3(-2.0f, 0.10f, 17.0f),  // Portico meets Rotunda West South
-                new Vector3(-2.0f, 0.10f, 29.0f),  // Portico meets Rotunda West North
-                new Vector3(-2.0f, 0.10f, 9.0f),   // Rotunda South-West
-                new Vector3(30.0f, 0.10f, 9.0f),   // Rotunda South-East
-                new Vector3(30.0f, 0.10f, 17.0f),  // Rotunda meets East Wing South
-                new Vector3(42.0f, 0.10f, 17.0f),  // East Wing South-East
-                new Vector3(42.0f, 0.10f, 29.0f),  // East Wing North-East
-                new Vector3(30.0f, 0.10f, 29.0f),  // East Wing North meets Rotunda
-                new Vector3(30.0f, 0.10f, 37.0f),  // Rotunda North-East
-                new Vector3(26.0f, 0.10f, 37.0f),  // North Hall meets North Wing East
-                new Vector3(26.0f, 0.10f, 49.0f),  // North Wing North-East
-                new Vector3(2.0f, 0.10f, 49.0f),   // North Wing North-West
-                new Vector3(2.0f, 0.10f, 37.0f),   // North Hall meets North Wing West
-                new Vector3(-2.0f, 0.10f, 37.0f)   // Rotunda North-West
+            // ── 6.5 MODULAR SEAMLESS CORNERS (100% ASSET PACK CORNER PREFABS - NO GAPS, NO CLIPPING) ──
+            var cornerPositions = new Vector3[] {
+                new Vector3(2.0f, 0.10f, 49.0f),
+                new Vector3(26.0f, 0.10f, 49.0f),
+                new Vector3(42.0f, 0.10f, 29.0f),
+                new Vector3(42.0f, 0.10f, 17.0f),
+                new Vector3(30.0f, 0.10f, 9.0f),
+                new Vector3(-2.0f, 0.10f, 9.0f),
+                new Vector3(-10.0f, 0.10f, 17.0f),
+                new Vector3(-10.0f, 0.10f, 29.0f),
+                new Vector3(30.0f, 0.10f, 37.0f),
+                new Vector3(-2.0f, 0.10f, 37.0f)
             };
 
-            foreach (var cp in perimeterCorners)
-            {
-                // Architectural Modular Finish at Tier 0 and Tier 1 (100% Asset Pack Prefabs - NO PRIMITIVE CUBES)
-                if (columnPillar != null)
-                {
-                    var colT0 = Object.Instantiate(columnPillar, wallsGroup.transform, false);
-                    colT0.name = $"Column_Finish_{cp.x}_{cp.z}_T0";
-                    colT0.transform.position = cp;
+            var cornerRotations = new float[] {
+                90f,
+                180f,
+                180f,
+                270f,
+                270f,
+                0f,
+                0f,
+                90f,
+                180f,
+                90f
+            };
 
-                    var colT1 = Object.Instantiate(columnPillar, wallsGroup.transform, false);
-                    colT1.name = $"Column_Finish_{cp.x}_{cp.z}_T1";
-                    colT1.transform.position = cp + Vector3.up * 4.0f;
+            var cornerNames = new string[] {
+                "NorthWing_NW",
+                "NorthWing_NE",
+                "EastWing_NE",
+                "EastWing_SE",
+                "Rotunda_SE",
+                "Rotunda_SW",
+                "WestGate_SW",
+                "WestGate_NW",
+                "Rotunda_NE",
+                "Rotunda_NW"
+            };
+
+            if (cornerFarPrefab != null)
+            {
+                for (int i = 0; i < cornerPositions.Length; i++)
+                {
+                    var pos = cornerPositions[i];
+                    var rot = cornerRotations[i];
+                    var name = cornerNames[i];
+                    for (int t = 0; t <= 1; t++)
+                    {
+                        float y = pos.y + t * 4.0f;
+                        var cGo = Object.Instantiate(cornerFarPrefab, wallsGroup.transform, false);
+                        cGo.name = $"Corner_Far_{name}_T{t}";
+                        cGo.transform.position = new Vector3(pos.x, y, pos.z);
+                        cGo.transform.rotation = Quaternion.Euler(0f, rot, 0f);
+                    }
+                }
+            }
+
+            // ── 6.6 INSIDE CORNER FINISH COLUMNS (SEAMLESS 90-DEGREE JUNCTIONS - ZERO CLIPPING) ──
+            if (columnPillar != null)
+            {
+                var insideCorners = new (float x, float z, string name)[] {
+                    (2f, 37f, "NorthWing_West_Return"),
+                    (26f, 37f, "NorthWing_East_Return"),
+                    (-2f, 17f, "Portico_South_Return"),
+                    (-2f, 29f, "Portico_North_Return"),
+                    (30f, 17f, "EastWing_South_Return"),
+                    (30f, 29f, "EastWing_North_Return")
+                };
+                foreach (var ic in insideCorners)
+                {
+                    for (int t = 0; t <= 1; t++)
+                    {
+                        float y = 0.10f + t * 4.0f;
+                        var col = Object.Instantiate(columnPillar, wallsGroup.transform, false);
+                        col.name = $"Inside_Corner_Col_{ic.name}_T{t}";
+                        col.transform.position = new Vector3(ic.x, y, ic.z);
+                    }
                 }
             }
 
@@ -583,7 +646,7 @@ namespace SpaceCyberpunk
                 spawnWall(windowBigPrefab, new Vector3(4f, roofY, z), 90f, $"Crown_West_Z{z}");
                 spawnWall(windowBigPrefab, new Vector3(24f, roofY, z), 270f, $"Crown_East_Z{z}");
             }
-            // 4 Crown Tower Corner Seal Columns
+            // 4 Crown Tower Corner Seal Modules (100% Asset Pack window_big_corner_far - ZERO primitive cubes)
             Vector3[] crownCorners = new Vector3[]
             {
                 new Vector3(4f, roofY, 13f),
@@ -591,15 +654,16 @@ namespace SpaceCyberpunk
                 new Vector3(24f, roofY, 33f),
                 new Vector3(4f, roofY, 33f)
             };
-            foreach (var cc in crownCorners)
+            float[] crownCornerRots = new float[] { 0f, 270f, 180f, 90f };
+            if (cornerFarPrefab != null)
             {
-                var cCol = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                cCol.name = $"Crown_Corner_{cc.x}_{cc.z}";
-                cCol.transform.SetParent(crownTower.transform, false);
-                cCol.transform.position = cc + Vector3.up * 2.0f;
-                cCol.transform.localScale = new Vector3(1.10f, 4.10f, 1.10f);
-                Object.DestroyImmediate(cCol.GetComponent<Collider>());
-                if (darkTitaniumMat != null) cCol.GetComponent<Renderer>().sharedMaterial = darkTitaniumMat;
+                for (int i = 0; i < crownCorners.Length; i++)
+                {
+                    var cGo = Object.Instantiate(cornerFarPrefab, crownTower.transform, false);
+                    cGo.name = $"Crown_Corner_Far_{i}";
+                    cGo.transform.position = crownCorners[i];
+                    cGo.transform.rotation = Quaternion.Euler(0f, crownCornerRots[i], 0f);
+                }
             }
 
             if (floorTile != null)
@@ -998,6 +1062,29 @@ namespace SpaceCyberpunk
             spawnBalustrade(rooftopSuperstructure.transform, new Vector3(-2.0f, roofY, 31.0f), 90f, "Roof_Bal_Alcove_N31", false);
             spawnBalustrade(rooftopSuperstructure.transform, new Vector3(-2.0f, roofY, 35.0f), 90f, "Roof_Bal_Alcove_N35", false);
 
+            // Balcony Outer Corner Posts (Caps gaps between perpendicular balustrades - 100% modular column_end)
+            if (columnPillar != null)
+            {
+                var roofCorners = new Vector3[] {
+                    new Vector3(42.0f, roofY, 17.0f),
+                    new Vector3(42.0f, roofY, 29.0f),
+                    new Vector3(30.0f, roofY, 9.0f),
+                    new Vector3(-2.0f, roofY, 9.0f),
+                    new Vector3(-10.0f, roofY, 17.0f),
+                    new Vector3(-10.0f, roofY, 29.0f),
+                    new Vector3(2.0f, roofY, 49.0f),
+                    new Vector3(26.0f, roofY, 49.0f),
+                    new Vector3(30.0f, roofY, 37.0f),
+                    new Vector3(-2.0f, roofY, 37.0f)
+                };
+                for (int i = 0; i < roofCorners.Length; i++)
+                {
+                    var col = Object.Instantiate(columnPillar, rooftopSuperstructure.transform, false);
+                    col.name = $"Roof_Balcony_Corner_Finish_{i}";
+                    col.transform.position = roofCorners[i];
+                }
+            }
+
             // ─────────────────────────────────────────────────────────────────
             // 9. INTERIOR COMMAND SET DRESSING & 4 SCI-FI OUTPOST FUNCTIONAL ZONES
             // ─────────────────────────────────────────────────────────────────
@@ -1083,7 +1170,7 @@ namespace SpaceCyberpunk
             Material deskDiagnosticsMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/New/Materials/Mat_Desk_Monitors_Diagnostics.mat");
 
             DesignPortfolioMasterChamber(stationGo, propsGroup.transform, deskPrefab, deskNoCompPrefab, bigScreenPrefab,
-                pipeStraight, cableThick, pilotSeat, cabinet, ceilingLight2, columnPillar,
+                pipeStraight, cableThick, pilotSeat, cabinet, ceilingLight2, columnPillar, wallShelf,
                 darkTitaniumMat, steelAccentMat, cyanEmissiveMat, smokeMat,
                 radarScopeMat, centralHoloMat, telemetryLMat, telemetryRMat,
                 deskTelemetryMat, deskDiagnosticsMat);
@@ -1342,6 +1429,7 @@ namespace SpaceCyberpunk
         private static void DesignPortfolioMasterChamber(
             GameObject stationGo, Transform parent, GameObject deskPrefab, GameObject deskNoCompPrefab, GameObject bigScreenPrefab,
             GameObject pipeStraight, GameObject cableThick, GameObject pilotSeat, GameObject cabinet, GameObject ceilingLight, GameObject columnPillar,
+            GameObject wallShelf,
             Material titaniumMat, Material steelMat, Material cyanEmissiveMat, Material smokeMat,
             Material radarScopeMat, Material centralHoloMat, Material telemetryLMat, Material telemetryRMat,
             Material deskTelemetryMat, Material deskDiagnosticsMat)
@@ -1399,6 +1487,32 @@ namespace SpaceCyberpunk
                     pLower.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
                     pLower.transform.localScale = new Vector3(1.2f, 1.2f, 1.2f);
                 }
+            }
+
+            // ─────────────────────────────────────────────────────────────────
+            // A2. SIDE WALL HEXAGONAL SHELVING UNITS (100% MODULAR shelf.prefab)
+            // ─────────────────────────────────────────────────────────────────
+            if (wallShelf != null)
+            {
+                var sL1 = Object.Instantiate(wallShelf, chamberGo.transform, false);
+                sL1.name = "Chamber_Hex_Shelf_North_1";
+                sL1.transform.position = new Vector3(34.2f, 2.10f, 28.80f);
+                sL1.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+
+                var sL2 = Object.Instantiate(wallShelf, chamberGo.transform, false);
+                sL2.name = "Chamber_Hex_Shelf_North_2";
+                sL2.transform.position = new Vector3(36.8f, 2.10f, 28.80f);
+                sL2.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+
+                var sR1 = Object.Instantiate(wallShelf, chamberGo.transform, false);
+                sR1.name = "Chamber_Hex_Shelf_South_1";
+                sR1.transform.position = new Vector3(34.2f, 2.10f, 17.20f);
+                sR1.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+
+                var sR2 = Object.Instantiate(wallShelf, chamberGo.transform, false);
+                sR2.name = "Chamber_Hex_Shelf_South_2";
+                sR2.transform.position = new Vector3(36.8f, 2.10f, 17.20f);
+                sR2.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
             }
 
             // ─────────────────────────────────────────────────────────────────

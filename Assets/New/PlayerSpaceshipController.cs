@@ -416,8 +416,10 @@ namespace SpaceCyberpunk
 
             if (hitGround)
             {
-                float bobOffset = Mathf.Sin(Time.time * bobFrequency) * bobAmplitude;
-                float desiredHeight = targetHoverHeight + bobOffset;
+                // Khi người chơi chủ động giữ phím hạ cánh (Ctrl / C / Q): hạ đệm nâng xuống 0.35m để tiếp đất thay vì giữ cố định 2.2m
+                float baseHeight = (_targetVerticalSpeed < -0.1f) ? 0.35f : targetHoverHeight;
+                float bobOffset = (_targetVerticalSpeed < -0.1f && _groundDistance < 0.6f) ? 0f : (Mathf.Sin(Time.time * bobFrequency) * bobAmplitude);
+                float desiredHeight = baseHeight + bobOffset;
 
                 float error = desiredHeight - _groundDistance;
                 float upwardVel = _rb.linearVelocity.y;
@@ -429,7 +431,17 @@ namespace SpaceCyberpunk
                 }
                 else
                 {
-                    _rb.AddForce(Vector3.up * (springForce * 0.3f), ForceMode.Acceleration);
+                    if (error > 0f)
+                    {
+                        _rb.AddForce(Vector3.up * (springForce * 0.4f), ForceMode.Acceleration);
+                    }
+                }
+
+                // Khi tàu đã tiếp đất ổn định (đáp thành công): triệt tiêu trượt ngang để tàu đỗ vững chắc
+                if (_groundDistance <= 0.45f && Mathf.Abs(_currentForwardSpeed) < 3f)
+                {
+                    Vector3 flatVel = new Vector3(_rb.linearVelocity.x, 0f, _rb.linearVelocity.z);
+                    _rb.AddForce(-flatVel * 6f, ForceMode.Acceleration);
                 }
             }
             else

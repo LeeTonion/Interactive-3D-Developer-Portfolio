@@ -136,6 +136,14 @@ namespace SpaceCyberpunk
             if (viewCamera == null) viewCamera = cameraFollow != null ? cameraFollow.GetComponent<Camera>() : Camera.main;
             if (ship != null) _shipRb = ship.GetComponent<Rigidbody>();
 
+            if (landingPadCenter == null)
+            {
+                var pad = GameObject.Find("LandingPad_Center");
+                if (pad == null) pad = GameObject.Find("About_Spaceship_Landing_Platform");
+                if (pad == null) pad = GameObject.Find("LandingPad");
+                if (pad != null) landingPadCenter = pad.transform;
+            }
+
             titleText = titleText ? titleText : FindText("Screen_Title");
             linkText = linkText ? linkText : FindText("Screen_Link");
             bodyText = bodyText ? bodyText : FindText("Screen_Body");
@@ -205,7 +213,15 @@ namespace SpaceCyberpunk
         // ───────────────────────── Idle: phát hiện đáp tàu ─────────────────────────
         private void UpdateIdle()
         {
-            if (ship == null || landingPadCenter == null || _isLandingSequence) return;
+            if (ship == null || _isLandingSequence) return;
+            if (landingPadCenter == null)
+            {
+                var pad = GameObject.Find("LandingPad_Center");
+                if (pad == null) pad = GameObject.Find("About_Spaceship_Landing_Platform");
+                if (pad == null) pad = GameObject.Find("LandingPad");
+                if (pad != null) landingPadCenter = pad.transform;
+                else return;
+            }
 
             Vector3 d = ship.transform.position - landingPadCenter.position;
             float flatDist = new Vector2(d.x, d.z).magnitude;
