@@ -35,6 +35,41 @@ namespace SpaceCyberpunk
         private static readonly Color ColorCyan = new Color(0.15f, 0.9f, 1f);
 
         public bool IsAccessGranted { get; private set; }
+        private bool _isEnteringSequence = false;
+
+        private void Update()
+        {
+            if (IsAccessGranted || _isEnteringSequence) return;
+
+            Camera cam = Camera.main;
+            if (cam == null) return;
+
+            float dist = Vector3.Distance(cam.transform.position, transform.position);
+            if (dist < 4.5f)
+            {
+                if (statusText != null && statusText.text != "NHẤN [F] ĐỂ MỞ KHÓA CỬA")
+                {
+                    statusText.text = "<color=#00e5ff>NHẤN [F] ĐỂ MỞ KHÓA CỬA</color>";
+                }
+
+                if (Input.GetKeyDown(KeyCode.F))
+                {
+                    StartCoroutine(PerformPasscodeEntrySequence(() =>
+                    {
+                        var door = FindFirstObjectByType<CitadelAutomaticDoor>();
+                        if (door != null) door.OpenDoor(locked: true);
+                    }));
+                }
+            }
+            else
+            {
+                if (statusText != null && statusText.text.Contains("NHẤN [F]"))
+                {
+                    statusText.text = "LOCKED // ENTER SECURITY PIN";
+                    statusText.color = ColorLocked;
+                }
+            }
+        }
 
         private void Awake()
         {
@@ -289,6 +324,7 @@ namespace SpaceCyberpunk
         /// </summary>
         public IEnumerator PerformPasscodeEntrySequence(Action onAccessGranted)
         {
+            _isEnteringSequence = true;
             ResetTerminal();
             yield return new WaitForSeconds(0.4f);
 
@@ -351,6 +387,7 @@ namespace SpaceCyberpunk
             }
 
             yield return new WaitForSeconds(0.2f);
+            _isEnteringSequence = false;
             onAccessGranted?.Invoke();
         }
 

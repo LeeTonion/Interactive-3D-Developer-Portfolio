@@ -171,19 +171,31 @@ namespace SpaceCyberpunk
                 if (ec != null) eastChamberDoor = ec.GetComponent<CitadelAutomaticDoor>();
             }
 
-            // Bàn phím an ninh Cổng Tây
+            // Bàn phím an ninh Cổng Tây (gắn chuẩn vào Landing_Telemetry_Console)
             if (keypadTerminal == null)
             {
                 var kt = GameObject.Find("Citadel_Entrance_Keypad_Terminal");
                 if (kt != null) keypadTerminal = kt.GetComponent<CitadelKeypadTerminal>();
-                else
+            }
+
+            var ltc = GameObject.Find("Landing_Telemetry_Console");
+            if (ltc != null)
+            {
+                if (keypadTerminal == null)
                 {
-                    // Tạo terminal mới cạnh cổng Tây nếu chưa có
                     var terminalGo = new GameObject("Citadel_Entrance_Keypad_Terminal");
-                    terminalGo.transform.position = new Vector3(-10.65f, 0.10f, 21.25f);
-                    terminalGo.transform.rotation = Quaternion.Euler(0f, 110f, 0f);
                     keypadTerminal = terminalGo.AddComponent<CitadelKeypadTerminal>();
                 }
+                keypadTerminal.transform.position = ltc.transform.position;
+                keypadTerminal.transform.rotation = ltc.transform.rotation;
+                keypadTerminal.EnsureTerminalSetup();
+            }
+            else if (keypadTerminal == null)
+            {
+                var terminalGo = new GameObject("Citadel_Entrance_Keypad_Terminal");
+                terminalGo.transform.position = new Vector3(-11.840f, 0.090f, 20.810f);
+                terminalGo.transform.rotation = Quaternion.Euler(0f, 273.275f, 0f);
+                keypadTerminal = terminalGo.AddComponent<CitadelKeypadTerminal>();
             }
 
             // Nút bấm mở cửa Cánh Đông
@@ -205,6 +217,10 @@ namespace SpaceCyberpunk
             {
                 var chair = GameObject.Find("Commander_Pilot_Chair_Center");
                 if (chair != null) commanderChair = chair.transform;
+            }
+            if (commanderChair != null)
+            {
+                commanderChair.rotation = Quaternion.Euler(0f, 90f, 0f);
             }
         }
 
@@ -256,7 +272,7 @@ namespace SpaceCyberpunk
 
             // ═════════════════════════════════════════════════════════════════════════
             // BƯỚC 1: XUỐNG TÀU (Disembark Ship)
-            // Bắt đầu tại cửa khoang phi thuyền trên bãi đáp, bước xuống sàn
+            // Xuất hiện ngay bên cạnh phi thuyền (bên mạn phải/cửa khoang phi thuyền)
             // ═════════════════════════════════════════════════════════════════════════
             Transform pad = (station != null && station.landingPadCenter != null) ? station.landingPadCenter : null;
             if (pad == null)
@@ -266,59 +282,76 @@ namespace SpaceCyberpunk
             }
             Vector3 padPos = (pad != null) ? pad.position : new Vector3(-32f, 0.12f, 23f);
             float padFloorY = padPos.y + 0.72f;
-            Vector3 shipDoorPos = (ship != null && Vector3.Distance(ship.transform.position, padPos) < 15f)
-                ? ship.transform.position + new Vector3(2.2f, eyeHeight, 0f)
-                : padPos + new Vector3(2.5f, padFloorY + eyeHeight, 0f);
-            Vector3 landingDeckPos = new Vector3(-27.5f, padFloorY + eyeHeight, 23.0f);
 
-            playerCamera.transform.position = shipDoorPos;
-            playerCamera.transform.rotation = Quaternion.Euler(0f, 90f, 0f); // Nhìn thẳng về hướng cổng Đông (+X)
+            Vector3 shipPos = (ship != null && Vector3.Distance(ship.transform.position, padPos) < 25f)
+                ? ship.transform.position
+                : padPos;
+            Transform shipTr = (ship != null && Vector3.Distance(ship.transform.position, padPos) < 25f)
+                ? ship.transform
+                : null;
+
+            // Xuất hiện bên cạnh phi thuyền theo hướng xoay thực tế của tàu
+            Vector3 besideOffset = (shipTr != null)
+                ? (shipTr.right * 1.55f + shipTr.forward * 0.20f)
+                : new Vector3(1.55f, 0f, 0.20f);
+            Vector3 shipBesidePos = new Vector3(shipPos.x + besideOffset.x, padFloorY + eyeHeight, shipPos.z + besideOffset.z);
+            Vector3 runwayDeckPos = new Vector3(-24.0f, padFloorY + eyeHeight, 23.0f);
+
+            // Xuất hiện bên mạn phi thuyền, nhìn về phía buồng lái phi thuyền
+            playerCamera.transform.position = shipBesidePos;
+            Vector3 lookShipHatch = shipPos + Vector3.up * (eyeHeight - 0.2f);
+            playerCamera.transform.rotation = Quaternion.LookRotation(lookShipHatch - shipBesidePos);
             playerCamera.fieldOfView = 60f;
 
             yield return new WaitForSeconds(0.45f);
 
-            // Bước xuống bãi đáp
+            // Quay người từ mạn tàu hướng về phía đường băng dẫn vào căn cứ Citadel
+            Vector3 runwayLook = new Vector3(-10f, padFloorY + eyeHeight, 23f);
+            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(runwayLook - shipBesidePos), 0.65f));
+
+            // Đi bộ từ cạnh tàu dọc đường băng
             yield return StartCoroutine(MoveCameraFPS(
-                fromPos: shipDoorPos,
-                toPos: landingDeckPos,
-                lookTarget: new Vector3(-10f, eyeHeight + 0.10f, 23f),
-                duration: 1.4f,
+                fromPos: shipBesidePos,
+                toPos: runwayDeckPos,
+                lookTarget: runwayLook,
+                duration: 1.8f,
                 speedBob: 1.0f
             ));
             if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
 
             // ═════════════════════════════════════════════════════════════════════════
-            // BƯỚC 2: TIẾN ĐẾN BÀN PHÍM TẠI CỔNG TÂY (Walk to Keypad)
+            // BƯỚC 2: TIẾN ĐẾN ĐÚNG BÀN PHÍM AN NINH TẠI BỆ NGOÀI CỔNG
             // ═════════════════════════════════════════════════════════════════════════
-            Vector3 outsideGateApproach = new Vector3(-15.0f, eyeHeight + 0.10f, 22.4f);
-            Vector3 inFrontOfKeypad = new Vector3(-11.5f, eyeHeight + 0.10f, 21.6f);
-            Vector3 keypadScreenPos = (keypadTerminal != null) ? keypadTerminal.transform.position + Vector3.up * 1.15f : new Vector3(-10.65f, 1.25f, 21.25f);
+            Vector3 outsideGateApproach = new Vector3(-15.5f, eyeHeight, 22.0f);
+            Vector3 inFrontOfKeypad = new Vector3(-12.75f, eyeHeight, 20.81f);
+            Vector3 keypadScreenPos = (keypadTerminal != null)
+                ? keypadTerminal.transform.position + new Vector3(0f, 1.25f, 0f)
+                : new Vector3(-11.84f, 1.34f, 20.81f);
 
             // Đi dọc đường băng dẫn vào cổng
             yield return StartCoroutine(MoveCameraFPS(
-                fromPos: landingDeckPos,
+                fromPos: runwayDeckPos,
                 toPos: outsideGateApproach,
-                lookTarget: new Vector3(-10f, eyeHeight + 0.10f, 23f),
-                duration: 2.8f,
+                lookTarget: inFrontOfKeypad,
+                duration: 2.0f,
                 speedBob: 1.0f
             ));
             if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
 
-            // Tiến sát lại trước bàn phím an ninh
+            // Bước đến đứng thẳng trước màn hình console an ninh
             yield return StartCoroutine(MoveCameraFPS(
                 fromPos: outsideGateApproach,
                 toPos: inFrontOfKeypad,
                 lookTarget: keypadScreenPos,
-                duration: 1.6f,
-                speedBob: 0.85f
+                duration: 1.4f,
+                speedBob: 0.9f
             ));
             if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
 
             // ═════════════════════════════════════════════════════════════════════════
             // BƯỚC 3: NHẬP MẬT MÃ TẠI BÀN PHÍM (Enter Passcode)
-            // Camera hơi nghiêng về phía màn hình bàn phím, các nút bấm nhấp nháy bíp bíp
+            // Camera cúi nhẹ vào màn hình bàn phím an ninh
             // ═════════════════════════════════════════════════════════════════════════
-            // Cúi nhẹ góc nhìn vào màn hình console
             Quaternion lookKeypadRot = Quaternion.LookRotation(keypadScreenPos - inFrontOfKeypad);
             yield return StartCoroutine(RotateCameraTo(lookKeypadRot, 0.45f));
 
@@ -337,7 +370,7 @@ namespace SpaceCyberpunk
             // BƯỚC 4: CỬA MỞ RA VÀ BƯỚC VÀO TRONG (Outer Door Open & Step Inside)
             // ═════════════════════════════════════════════════════════════════════════
             // Quay mặt trở lại chính giữa vòm cửa
-            Vector3 doorCenterLook = new Vector3(-4f, eyeHeight, 23f);
+            Vector3 doorCenterLook = new Vector3(-4f, eyeHeight, 23.0f);
             Quaternion lookDoorCenter = Quaternion.LookRotation(doorCenterLook - inFrontOfKeypad);
             yield return StartCoroutine(RotateCameraTo(lookDoorCenter, 0.55f));
 
@@ -439,43 +472,64 @@ namespace SpaceCyberpunk
             yield return new WaitForSeconds(0.4f);
 
             // ═════════════════════════════════════════════════════════════════════════
-            // BƯỚC 7: BƯỚC VÀO TRONG, ĐI ĐẾN GHẾ CHỈ HUY VÀ NGỒI XUỐNG
-            // (Enter Command Room, Approach Chair & Sit Down)
+            // BƯỚC 7: BƯỚC VÀO TRONG, XOAY GHẾ LẠI VÀ NGỒI XUỐNG
+            // (Enter Command Room, Swivel Chair & Sit Down)
             // ═════════════════════════════════════════════════════════════════════════
             Vector3 chairWorldPos = (commanderChair != null) ? commanderChair.position : new Vector3(37.22f, 0.23f, 23.0f);
-            Vector3 standingInFrontOfChair = new Vector3(chairWorldPos.x - 0.45f, eyeHeight, chairWorldPos.z);
-            Vector3 seatedInChair = new Vector3(chairWorldPos.x - 0.25f, seatedHeight, chairWorldPos.z);
+            Vector3 approachChairStop = new Vector3(chairWorldPos.x - 1.55f, eyeHeight, chairWorldPos.z);
+            Vector3 standingAtChair = new Vector3(chairWorldPos.x - 0.40f, eyeHeight, chairWorldPos.z);
+            Vector3 seatedInChair = new Vector3(chairWorldPos.x - 0.20f, seatedHeight, chairWorldPos.z);
             Vector3 screensLook = new Vector3(40.35f, 2.25f, 23.0f);
 
-            // Bước qua cửa tiến vào bàn chỉ huy
+            // Bước qua cửa tiến đến trước khu vực ghế chỉ huy
             yield return StartCoroutine(MoveCameraFPS(
                 fromPos: inFrontOfEastDoor,
-                toPos: standingInFrontOfChair,
-                lookTarget: screensLook,
-                duration: 2.0f,
-                speedBob: 0.9f
+                toPos: approachChairStop,
+                lookTarget: chairWorldPos + Vector3.up * 1.0f,
+                duration: 1.6f,
+                speedBob: 0.95f
             ));
             if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
 
-            // Đứng đối diện màn hình, chuẩn bị ngồi xuống
-            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(screensLook - standingInFrontOfChair), 0.4f));
+            // ── XOAY GHẾ 1: Ghế xoay 180 độ quay về phía người chơi đang bước tới! ──
+            // Xoay từ 90 độ (hướng màn hình phía Đông) sang 270 độ (hướng Tây đối diện người chơi)
+            yield return StartCoroutine(SwivelChairRoutine(commanderChair, 90f, 270f, 0.75f, false));
 
-            // Hoạt họa ngồi xuống ghế (hạ độ cao từ 1.70m xuống 1.30m với độ nhún êm ái)
-            float sitDuration = 1.1f;
+            // Người chơi tiến lại sát ghế đã mở sẵn
+            yield return StartCoroutine(MoveCameraFPS(
+                fromPos: approachChairStop,
+                toPos: standingAtChair,
+                lookTarget: seatedInChair + Vector3.up * 0.2f,
+                duration: 0.85f,
+                speedBob: 0.8f
+            ));
+            if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
+
+            // Hoạt họa ngồi xuống ghế (hạ độ cao từ 1.70m xuống 1.30m với độ nhún đệm ghế êm ái)
+            float sitDuration = 0.95f;
             float sitElapsed = 0f;
             while (sitElapsed < sitDuration)
             {
                 sitElapsed += Time.deltaTime;
                 float st = Mathf.Clamp01(sitElapsed / sitDuration);
                 float smoothSit = Mathf.SmoothStep(0f, 1f, st);
-
-                // Thêm độ nảy nhẹ khi cơ thể chạm đệm ghế
                 float bounce = (st > 0.8f) ? Mathf.Sin((st - 0.8f) / 0.2f * Mathf.PI) * 0.025f : 0f;
 
-                playerCamera.transform.position = Vector3.Lerp(standingInFrontOfChair, seatedInChair, smoothSit) + Vector3.up * bounce;
-                playerCamera.transform.rotation = Quaternion.LookRotation(screensLook - playerCamera.transform.position);
+                playerCamera.transform.position = Vector3.Lerp(standingAtChair, seatedInChair, smoothSit) + Vector3.up * bounce;
+                playerCamera.transform.rotation = Quaternion.Slerp(
+                    Quaternion.LookRotation(seatedInChair - standingAtChair),
+                    Quaternion.Euler(0f, 270f, 0f),
+                    smoothSit
+                );
                 yield return null;
             }
+            playerCamera.transform.position = seatedInChair;
+
+            yield return new WaitForSeconds(0.25f);
+
+            // ── XOAY GHẾ 2: Người chơi đã ngồi xuống ghế -> Ghế và Camera cùng xoay 180 độ quay về màn hình! ──
+            // Xoay từ 270 độ sang 90 độ, đồng bộ góc nhìn Camera nhìn ra toàn cảnh màn hình Hologram
+            yield return StartCoroutine(SwivelChairRoutine(commanderChair, 270f, 90f, 1.05f, true));
 
             yield return new WaitForSeconds(0.35f);
 
@@ -518,37 +572,53 @@ namespace SpaceCyberpunk
             CreateSkipHUD();
 
             Vector3 chairWorldPos = (commanderChair != null) ? commanderChair.position : new Vector3(37.22f, 0.23f, 23.0f);
-            Vector3 seatedInChair = new Vector3(chairWorldPos.x - 0.25f, seatedHeight, chairWorldPos.z);
-            Vector3 standingInFrontOfChair = new Vector3(chairWorldPos.x - 0.45f, eyeHeight, chairWorldPos.z);
+            Vector3 seatedInChair = new Vector3(chairWorldPos.x - 0.20f, seatedHeight, chairWorldPos.z);
+            Vector3 standingAtChair = new Vector3(chairWorldPos.x - 0.40f, eyeHeight, chairWorldPos.z);
+            Vector3 approachChairStop = new Vector3(chairWorldPos.x - 1.55f, eyeHeight, chairWorldPos.z);
             Vector3 westLook = new Vector3(0f, eyeHeight, 23.0f); // Nhìn về hướng Tây (hướng lối ra)
 
+            playerCamera.transform.position = seatedInChair;
+            playerCamera.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+
             // ═════════════════════════════════════════════════════════════════════════
-            // BƯỚC 1: ĐỨNG DẬY KHỎI GHẾ CHỈ HUY (Stand Up & Turn Around)
+            // BƯỚC 1: XOAY GHẾ VỀ PHÍA CỬA VÀ ĐỨNG DẬY (Swivel Chair & Stand Up)
             // ═════════════════════════════════════════════════════════════════════════
+            // Ghế và camera xoay 180 độ từ hướng màn hình (90) về hướng cửa (270)
+            yield return StartCoroutine(SwivelChairRoutine(commanderChair, 90f, 270f, 0.75f, true));
+
+            // Đứng dậy khỏi ghế
             float standDuration = 0.85f;
             float standElapsed = 0f;
-            Vector3 startPos = playerCamera.transform.position;
-
             while (standElapsed < standDuration)
             {
                 standElapsed += Time.deltaTime;
                 float st = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(standElapsed / standDuration));
-                playerCamera.transform.position = Vector3.Lerp(startPos, standingInFrontOfChair, st);
+                playerCamera.transform.position = Vector3.Lerp(seatedInChair, standingAtChair, st);
                 yield return null;
             }
 
-            // Quay người 180 độ hướng ra cửa phòng
-            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(westLook - standingInFrontOfChair), 0.6f));
+            // Ghế xoay lại vị trí ban đầu (90 độ)
+            StartCoroutine(SwivelChairRoutine(commanderChair, 270f, 90f, 0.75f, false));
+
+            // Bước lùi ra khỏi bàn ghế chỉ huy
+            yield return StartCoroutine(MoveCameraFPS(
+                fromPos: standingAtChair,
+                toPos: approachChairStop,
+                lookTarget: westLook,
+                duration: 0.9f,
+                speedBob: 1.0f
+            ));
+            if (_skipRequested) { FastForwardToShip(onComplete); yield break; }
 
             // ═════════════════════════════════════════════════════════════════════════
             // BƯỚC 2: TIẾN ĐẾN CỬA PHÒNG CHỈ HUY & THAO TÁC MỞ CỬA RA NGOÀI
             // ═════════════════════════════════════════════════════════════════════════
-            Vector3 innerDoorExitApproach = new Vector3(31.5f, eyeHeight, 23.0f);
+            Vector3 innerDoorExitApproach = new Vector3(30.5f, eyeHeight, 23.0f);
             yield return StartCoroutine(MoveCameraFPS(
-                fromPos: standingInFrontOfChair,
+                fromPos: approachChairStop,
                 toPos: innerDoorExitApproach,
                 lookTarget: westLook,
-                duration: 1.5f,
+                duration: 1.4f,
                 speedBob: 1.1f
             ));
             if (_skipRequested) { FastForwardToShip(onComplete); yield break; }
@@ -565,7 +635,6 @@ namespace SpaceCyberpunk
             // BƯỚC 3: CHẠY BỘ / ĐI BỘ NHANH QUA SẢNH GIỮA (Jog Through Central Atrium)
             // ═════════════════════════════════════════════════════════════════════════
             Vector3 atriumCenterPos = new Vector3(14.0f, eyeHeight, 23.0f);
-            Vector3 corridorExitPos = new Vector3(-6.5f, eyeHeight, 23.0f);
             Vector3 outerDoorExitApproach = new Vector3(-8.5f, eyeHeight, 23.0f);
 
             yield return StartCoroutine(MoveCameraFPS(
@@ -597,16 +666,49 @@ namespace SpaceCyberpunk
             // ═════════════════════════════════════════════════════════════════════════
             // BƯỚC 4: BƯỚC RA NGOÀI BÃI ĐÁP VÀ TRỞ LẠI TÀU (Step Out & Board Ship)
             // ═════════════════════════════════════════════════════════════════════════
-            Transform pad = (station != null && station.landingPadCenter != null) ? station.landingPadCenter : null;
-            if (pad == null)
+            Transform exitPad = (station != null && station.landingPadCenter != null) ? station.landingPadCenter : null;
+            if (exitPad == null)
             {
                 var padGo = GameObject.Find("LandingPad_Center");
-                if (padGo != null) pad = padGo.transform;
+                if (padGo != null) exitPad = padGo.transform;
             }
-            Vector3 padPos = (pad != null) ? pad.position : new Vector3(-32f, 0.12f, 23f);
-            Vector3 landingPadRamp = (ship != null && Vector3.Distance(ship.transform.position, padPos) < 15f)
-                ? ship.transform.position + new Vector3(2.2f, eyeHeight, 0f)
-                : padPos + new Vector3(2.5f, eyeHeight, 0f);
+            Vector3 exitPadPos = (exitPad != null) ? exitPad.position : new Vector3(-32f, 0.12f, 23f);
+            float exitPadFloorY = exitPadPos.y + 0.72f;
+
+            Vector3 exitShipPos = (ship != null && Vector3.Distance(ship.transform.position, exitPadPos) < 25f)
+                ? ship.transform.position
+                : exitPadPos;
+            Transform exitShipTr = (ship != null && Vector3.Distance(ship.transform.position, exitPadPos) < 25f)
+                ? ship.transform
+                : null;
+
+            Vector3 exitBesideOffset = (exitShipTr != null)
+                ? (exitShipTr.right * 1.55f + exitShipTr.forward * 0.20f)
+                : new Vector3(1.55f, 0f, 0.20f);
+            Vector3 exitShipBesidePos = new Vector3(exitShipPos.x + exitBesideOffset.x, exitPadFloorY + eyeHeight, exitShipPos.z + exitBesideOffset.z);
+
+            // Chạy bộ dọc đường băng trở lại cạnh phi thuyền
+            yield return StartCoroutine(MoveCameraFPS(
+                fromPos: outerDoorExitApproach,
+                toPos: exitShipBesidePos,
+                lookTarget: exitShipPos + Vector3.up * 0.8f,
+                duration: 2.8f,
+                speedBob: 1.25f
+            ));
+            if (_skipRequested) { FastForwardToShip(onComplete); yield break; }
+
+            // Nhìn về phía cửa khoang / buồng lái tàu
+            Quaternion lookReturnShipRot = Quaternion.LookRotation((exitShipPos + Vector3.up * 0.8f) - exitShipBesidePos);
+            yield return StartCoroutine(RotateCameraTo(lookReturnShipRot, 0.55f));
+            yield return new WaitForSeconds(0.35f);
+
+            // Đóng cửa căn cứ lại sau lưng
+            if (westGateDoor != null)
+            {
+                westGateDoor.CloseDoor(unlock: true);
+            }
+
+            // Chuyển mượt về camera thứ 3 theo dõi tàu
             Vector3 targetShipCamPos;
             Quaternion targetShipCamRot;
 
@@ -623,22 +725,6 @@ namespace SpaceCyberpunk
                 targetShipCamRot = Quaternion.Euler(15f, 45f, 0f);
             }
 
-            yield return StartCoroutine(MoveCameraFPS(
-                fromPos: outerDoorExitApproach,
-                toPos: landingPadRamp,
-                lookTarget: landingPadRamp + Vector3.left * 5f,
-                duration: 2.6f,
-                speedBob: 1.25f
-            ));
-            if (_skipRequested) { FastForwardToShip(onComplete); yield break; }
-
-            // Đóng cửa căn cứ lại sau lưng
-            if (westGateDoor != null)
-            {
-                westGateDoor.CloseDoor(unlock: true);
-            }
-
-            // Chuyển mượt về camera thứ 3 theo dõi tàu
             float camReturnDuration = 1.0f;
             float camReturnElapsed = 0f;
             Vector3 startRampCamPos = playerCamera.transform.position;
@@ -666,7 +752,41 @@ namespace SpaceCyberpunk
         /// <summary>
         /// Di chuyển Camera mô phỏng bước chân góc nhìn thứ nhất (Head Bobbing & Footsteps)
         /// </summary>
-        private IEnumerator MoveCameraFPS(Vector3 fromPos, Vector3 toPos, Vector3 lookTarget, float duration, float speedBob)
+                private IEnumerator SwivelChairRoutine(Transform chairTr, float fromYaw, float toYaw, float duration, bool syncCamera)
+        {
+            if (chairTr == null) yield break;
+
+            float elapsed = 0f;
+            Quaternion startCamRot = (playerCamera != null) ? playerCamera.transform.rotation : Quaternion.identity;
+            Quaternion targetCamRot = Quaternion.Euler(0f, toYaw, 0f);
+
+            while (elapsed < duration)
+            {
+                if (_skipRequested) yield break;
+
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float smoothT = Mathf.SmoothStep(0f, 1f, t);
+                float curYaw = Mathf.Lerp(fromYaw, toYaw, smoothT);
+
+                chairTr.rotation = Quaternion.Euler(0f, curYaw, 0f);
+
+                if (syncCamera && playerCamera != null)
+                {
+                    playerCamera.transform.rotation = Quaternion.Slerp(startCamRot, targetCamRot, smoothT);
+                }
+
+                yield return null;
+            }
+
+            chairTr.rotation = Quaternion.Euler(0f, toYaw, 0f);
+            if (syncCamera && playerCamera != null)
+            {
+                playerCamera.transform.rotation = targetCamRot;
+            }
+        }
+
+private IEnumerator MoveCameraFPS(Vector3 fromPos, Vector3 toPos, Vector3 lookTarget, float duration, float speedBob)
         {
             float elapsed = 0f;
             float stepInterval = 0.42f / speedBob;
@@ -780,6 +900,7 @@ namespace SpaceCyberpunk
             _skipRequested = false;
             DestroySkipHUD();
 
+            if (commanderChair != null) commanderChair.rotation = Quaternion.Euler(0f, 90f, 0f);
             if (westGateDoor != null) westGateDoor.OpenDoor(locked: true);
             if (eastChamberDoor != null) eastChamberDoor.OpenDoor(locked: true);
 
@@ -807,6 +928,7 @@ namespace SpaceCyberpunk
             _skipRequested = false;
             DestroySkipHUD();
 
+            if (commanderChair != null) commanderChair.rotation = Quaternion.Euler(0f, 90f, 0f);
             if (westGateDoor != null) westGateDoor.CloseDoor(unlock: true);
 
             if (ship != null && cameraFollow != null)
