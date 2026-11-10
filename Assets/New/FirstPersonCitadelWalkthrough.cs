@@ -342,7 +342,6 @@ namespace SpaceCyberpunk
             l.spotAngle = spotAngle;
             return l;
         }
-        }
 
         /// <summary>
         /// Bắt đầu hành trình góc nhìn thứ nhất bước vào căn cứ
