@@ -14,17 +14,17 @@ namespace SpaceCyberpunk
 
         [Header("Khoảng cách & Góc nhìn")]
         [Tooltip("Khoảng cách phía sau tàu")]
-        public float distance = 8.5f;
+        public float distance = 12.5f;
         [Tooltip("Độ cao phía trên tàu")]
-        public float height = 2.8f;
+        public float height = 3.8f;
         [Tooltip("Tốc độ bám theo vị trí")]
         public float followSpeed = 10f;
         [Tooltip("Tốc độ xoay bám theo góc nhìn")]
         public float rotationSpeed = 8f;
 
         [Header("Hiệu ứng tốc độ cao (Speed Dynamic FOV)")]
-        public float normalFOV = 50f;
-        public float boostFOV = 68f;
+        public float normalFOV = 52f;
+        public float boostFOV = 70f;
         public float fovSmoothSpeed = 4f;
 
         private Camera _cam;
@@ -44,7 +44,7 @@ namespace SpaceCyberpunk
             transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * followSpeed);
 
             // 2. Hướng góc nhìn về phía trước đầu tàu một chút
-            Vector3 lookTarget = target.position + (target.forward * 4f);
+            Vector3 lookTarget = target.position + (target.forward * 5.5f) + (target.up * 0.4f);
             Quaternion targetRot = Quaternion.LookRotation(lookTarget - transform.position, target.up);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * rotationSpeed);
 

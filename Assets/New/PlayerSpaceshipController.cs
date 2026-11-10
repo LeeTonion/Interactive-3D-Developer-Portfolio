@@ -51,6 +51,12 @@ namespace SpaceCyberpunk
         public float maxBankAngle = 32f;
         public float bankSmoothing = 5f;
 
+        [Header("Cơ Chế Bay Tự Do Khi Va Chạm (Free Flight On Collision)")]
+        [Tooltip("Tắt tự động phanh lùi / thắng giật lùi và ngắt động cơ khi va chạm, cho phép phi thuyền lướt tự do")]
+        public bool disableCollisionBrake = true;
+        [Tooltip("Tắt cưỡng bức cân bằng góc nghiêng khi va đập, cho phép tàu di chuyển tự do mềm mại")]
+        public bool freeFlightOnCollision = true;
+
         [Header("Hệ Thống Tự Cân Bằng Sau Va Chạm (Gyro Auto-Stabilizer)")]
         [Tooltip("Tốc độ con quay hồi chuyển tự lấy lại thăng bằng phương ngang sau va chạm")]
         public float horizonStabilizeSpeed = 10f;
@@ -64,8 +70,12 @@ namespace SpaceCyberpunk
         [Header("Hệ Thống Vũ Khí & Giáp Chiến Đấu (Space Combat)")]
         public float fireInterval = 0.16f;
         public float laserDamage = 35f;
-        public float maxHealth = 200f;
-        public float shieldRegenRate = 12f;
+        public float maxHealth = 100f;
+        public float maxShield = 100f;
+        public float shieldRegenRate = 16f;
+        public float maxBoostEnergy = 100f;
+        public float boostDrainRate = 22f;
+        public float boostRegenRate = 18f;
 
         [Header("Hiệu Ứng Động Cơ Phản Lực (VFX)")]
         public Transform visualModel;
@@ -88,7 +98,13 @@ namespace SpaceCyberpunk
         private float _groundDistance;
 
         private float _currentHealth;
-        private float _displayedHealthRatio = 1f;
+        private float _currentShield;
+        private float _currentBoostEnergy;
+        private float _displayedHpRatio = 1f;
+        private float _displayedShieldRatio = 1f;
+        private float _displayedBoostRatio = 1f;
+        private float _displayedKmh = 0f;
+
         private float _nextFireTime;
         private float _lastDamageTime = -99f;
         private float _collisionRecoilTimer;
@@ -97,22 +113,42 @@ namespace SpaceCyberpunk
         private Vector3 _spawnPos = new Vector3(-65f, 28.7f, 45f);
         private Quaternion _spawnRot = Quaternion.Euler(0f, 115f, 0f);
 
-        // UI Canvas HUD Elements
-        private GameObject _combatHudRoot;
+        private PlayerSpaceshipShieldEffect _shieldEffect;
+        private SpaceshipTargetLockSystem _targetLockSystem;
+
+        // UI Canvas Sci-Fi HUD Elements (Theo thiết kế ảnh 1)
+        private GameObject _playerHudRoot;
+        private RectTransform _compassTapeRoot;
+        private RectTransform[] _compassTickLines;
+        private TMP_Text _compassArrow;
+        private GameObject _crosshairRoot;
+
+        // Bottom Left HP & SHD Bars
+        private Image _hpBarFill;
+        private Image _hpBarLag;
+        private Image _shdBarFill;
+        private Image _shdBarLag;
+        private TMP_Text _hpLabel;
+        private TMP_Text _shdLabel;
+
+        // Bottom Right SPEED & BOOST
+        private TMP_Text _speedLabelText;
+        private TMP_Text _speedBigNumberText;
+        private Image _boostBarFill;
+
+        // Warning Alert (Chỉ hiện khi bị tấn công)
+        private GameObject _warningCardRoot;
+        private TMP_Text _warningTitleText;
+        private TMP_Text _warningSubText;
         private Image _redScreenOverlay;
         private Image[] _redBorders;
-        private Image _hudOuterBorder;
-        private Image _damageLagBar;
-        private Image[] _healthCells;
-        private TMP_Text _healthValueText;
-        private TMP_Text _healthStatusText;
-        private Image _alertBannerBg;
-        private TMP_Text _alertSubText;
 
         public bool IsBoosting => _isBoosting;
         public bool IsHovering => _isHoveringOverGround;
         public float CurrentSpeedRatio => Mathf.Abs(_currentForwardSpeed) / boostSpeed;
-        public float HealthRatio => Mathf.Clamp01(_currentHealth / maxHealth);
+        public float HealthRatio => maxHealth > 0f ? Mathf.Clamp01(_currentHealth / maxHealth) : 0f;
+        public float ShieldRatio => maxShield > 0f ? Mathf.Clamp01(_currentShield / maxShield) : 0f;
+        public float BoostRatio => maxBoostEnergy > 0f ? Mathf.Clamp01(_currentBoostEnergy / maxBoostEnergy) : 0f;
 
         private void Awake()
         {
@@ -127,16 +163,31 @@ namespace SpaceCyberpunk
             _currentYaw = transform.eulerAngles.y;
             _currentPitch = 0f;
             _currentHealth = maxHealth;
-            _displayedHealthRatio = 1f;
+            _currentShield = maxShield;
+            _currentBoostEnergy = maxBoostEnergy;
+            _displayedHpRatio = 1f;
+            _displayedShieldRatio = 1f;
+            _displayedBoostRatio = 1f;
+
+            _shieldEffect = GetComponent<PlayerSpaceshipShieldEffect>();
+            if (_shieldEffect == null) _shieldEffect = gameObject.AddComponent<PlayerSpaceshipShieldEffect>();
+
+            _targetLockSystem = GetComponent<SpaceshipTargetLockSystem>();
+            if (_targetLockSystem == null) _targetLockSystem = gameObject.AddComponent<SpaceshipTargetLockSystem>();
+
+            if (GetComponent<SciFiRadarMinimap>() == null)
+            {
+                gameObject.AddComponent<SciFiRadarMinimap>();
+            }
 
             var col = GetComponent<BoxCollider>();
             if (col != null)
             {
                 col.isTrigger = false;
-                if (col.size == Vector3.one)
+                if (col.size == Vector3.one || col.size == new Vector3(3.2f, 1.4f, 4.2f))
                 {
-                    col.size = new Vector3(3.2f, 1.4f, 4.2f);
-                    col.center = new Vector3(0f, 0.5f, 0f);
+                    col.size = new Vector3(5.4f, 2.25f, 6.9f);
+                    col.center = new Vector3(0f, 0.68f, 0.15f);
                 }
             }
 
@@ -210,7 +261,7 @@ namespace SpaceCyberpunk
         {
             if (Time.timeScale == 0f)
             {
-                if (_combatHudRoot != null) _combatHudRoot.SetActive(false);
+                if (_playerHudRoot != null) _playerHudRoot.SetActive(false);
                 return;
             }
 
@@ -241,7 +292,17 @@ namespace SpaceCyberpunk
 
         private void ReadPlayerInput()
         {
-            _isBoosting = Input.GetKey(KeyCode.LeftShift);
+            bool wantsBoost = Input.GetKey(KeyCode.LeftShift);
+            if (wantsBoost && _currentBoostEnergy > 2f)
+            {
+                _isBoosting = true;
+                _currentBoostEnergy = Mathf.Max(0f, _currentBoostEnergy - boostDrainRate * Time.deltaTime);
+            }
+            else
+            {
+                _isBoosting = false;
+                _currentBoostEnergy = Mathf.Min(maxBoostEnergy, _currentBoostEnergy + boostRegenRate * Time.deltaTime);
+            }
 
             float forwardInput = 0f;
             if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) forwardInput = 1f;
@@ -280,23 +341,52 @@ namespace SpaceCyberpunk
 
         private void FireTwinCannons()
         {
-            Vector3 convergePoint = transform.position + transform.forward * 85f;
+            if (_targetLockSystem == null) _targetLockSystem = GetComponent<SpaceshipTargetLockSystem>();
 
-            Vector3 leftMuzzle = transform.position + transform.forward * 2.8f - transform.right * 1.35f + transform.up * 0.25f;
-            Vector3 rightMuzzle = transform.position + transform.forward * 2.8f + transform.right * 1.35f + transform.up * 0.25f;
+            Vector3 convergePoint = transform.position + transform.forward * 90f;
+            Transform homingTarget = null;
+
+            if (_targetLockSystem != null && _targetLockSystem.HasLockedTarget)
+            {
+                homingTarget = _targetLockSystem.CurrentLockedTarget;
+                if (_targetLockSystem.TryGetLockAimPoint(out Vector3 lockPoint))
+                {
+                    convergePoint = lockPoint;
+                }
+                else if (homingTarget != null)
+                {
+                    convergePoint = homingTarget.position;
+                }
+            }
+
+            // Tọa độ pháo kép mở rộng theo thân tàu phóng to 1.5x
+            Vector3 leftMuzzle = transform.position + transform.forward * 4.2f - transform.right * 2.05f + transform.up * 0.38f;
+            Vector3 rightMuzzle = transform.position + transform.forward * 4.2f + transform.right * 2.05f + transform.up * 0.38f;
 
             Vector3 leftDir = (convergePoint - leftMuzzle).normalized;
             Vector3 rightDir = (convergePoint - rightMuzzle).normalized;
 
-            SpaceLaserProjectile.SpawnBolt(leftMuzzle, leftDir, true, gameObject, 125f, laserDamage);
-            SpaceLaserProjectile.SpawnBolt(rightMuzzle, rightDir, true, gameObject, 125f, laserDamage);
+            SpaceLaserProjectile.SpawnBolt(leftMuzzle, leftDir, true, gameObject, 125f, laserDamage, homingTarget);
+            SpaceLaserProjectile.SpawnBolt(rightMuzzle, rightDir, true, gameObject, 125f, laserDamage, homingTarget);
         }
 
         private void UpdateShieldRegen()
         {
-            if (_currentHealth < maxHealth && Time.time - _lastDamageTime > 3.5f)
+            if (Time.time - _lastDamageTime > 3.5f)
             {
-                _currentHealth = Mathf.Min(maxHealth, _currentHealth + shieldRegenRate * Time.deltaTime);
+                if (_currentShield < maxShield)
+                {
+                    bool wasDepleted = _currentShield <= 0.05f;
+                    _currentShield = Mathf.Min(maxShield, _currentShield + shieldRegenRate * Time.deltaTime);
+                    if (wasDepleted && _shieldEffect != null)
+                    {
+                        _shieldEffect.TriggerShieldRestore();
+                    }
+                }
+                else if (_currentHealth < maxHealth)
+                {
+                    _currentHealth = Mathf.Min(maxHealth, _currentHealth + (shieldRegenRate * 0.6f) * Time.deltaTime);
+                }
             }
         }
 
@@ -306,10 +396,29 @@ namespace SpaceCyberpunk
             if (instantFull)
             {
                 _currentHealth = maxHealth;
+                _currentShield = maxShield;
+                _currentBoostEnergy = maxBoostEnergy;
+                if (_shieldEffect != null && _shieldEffect.IsDissolved)
+                {
+                    _shieldEffect.TriggerShieldRestore();
+                }
             }
             else
             {
-                _currentHealth = Mathf.Min(maxHealth, _currentHealth + rate * Time.deltaTime);
+                if (_currentHealth < maxHealth)
+                {
+                    _currentHealth = Mathf.Min(maxHealth, _currentHealth + rate * Time.deltaTime);
+                }
+                if (_currentShield < maxShield)
+                {
+                    bool wasDepleted = _currentShield <= 0.05f;
+                    _currentShield = Mathf.Min(maxShield, _currentShield + rate * Time.deltaTime);
+                    if (wasDepleted && _shieldEffect != null)
+                    {
+                        _shieldEffect.TriggerShieldRestore();
+                    }
+                }
+                _currentBoostEnergy = Mathf.Min(maxBoostEnergy, _currentBoostEnergy + rate * 1.5f * Time.deltaTime);
             }
             _lastDamageTime = -99f;
         }
@@ -319,7 +428,31 @@ namespace SpaceCyberpunk
             if (_isRespawning || AboutInfoStation.AnyStationActive) return;
 
             _lastDamageTime = Time.time;
-            _currentHealth = Mathf.Max(0f, _currentHealth - damage);
+
+            if (_currentShield > 0f)
+            {
+                float absorbed = Mathf.Min(_currentShield, damage);
+                _currentShield -= absorbed;
+                float leftover = damage - absorbed;
+
+                if (_shieldEffect != null)
+                {
+                    _shieldEffect.OnShieldHit(hitPoint, _currentShield / maxShield);
+                    if (_currentShield <= 0.05f)
+                    {
+                        _shieldEffect.TriggerShieldDissolve();
+                    }
+                }
+
+                if (leftover > 0f)
+                {
+                    _currentHealth = Mathf.Max(0f, _currentHealth - leftover);
+                }
+            }
+            else
+            {
+                _currentHealth = Mathf.Max(0f, _currentHealth - damage);
+            }
 
             if (_currentHealth <= 0f)
             {
@@ -342,7 +475,16 @@ namespace SpaceCyberpunk
             _impactPitchJolt = 0f;
             _currentYaw = _spawnRot.eulerAngles.y;
             _currentHealth = maxHealth;
-            _displayedHealthRatio = 1f;
+            _currentShield = maxShield;
+            _currentBoostEnergy = maxBoostEnergy;
+            _displayedHpRatio = 1f;
+            _displayedShieldRatio = 1f;
+            _displayedBoostRatio = 1f;
+
+            if (_shieldEffect != null)
+            {
+                _shieldEffect.SetDissolveInstant(0f);
+            }
 
             if (_rb != null)
             {
@@ -375,6 +517,11 @@ namespace SpaceCyberpunk
             _isRespawning = true;
             SpaceExplosionVFX.SpawnExplosion(transform.position, 5.2f, false, null);
             SpaceTrafficShipAI.ClearFleetHostileAlert();
+
+            if (_shieldEffect != null)
+            {
+                _shieldEffect.SetDissolveInstant(1f);
+            }
 
             if (visualModel != null) visualModel.gameObject.SetActive(false);
             if (_rb != null)
@@ -452,7 +599,7 @@ namespace SpaceCyberpunk
 
         private void ApplyPropulsionPhysics()
         {
-            if (_collisionRecoilTimer > 0f)
+            if (!disableCollisionBrake && _collisionRecoilTimer > 0f)
             {
                 _contactNormalSum = Vector3.zero;
                 return;
@@ -478,8 +625,12 @@ namespace SpaceCyberpunk
                 Vector3 contactNormal = _contactNormalSum.normalized;
                 if (Vector3.Dot(desiredVel, contactNormal) < 0f)
                 {
-                    desiredVel = Vector3.ProjectOnPlane(desiredVel, contactNormal) + contactNormal * 1.5f;
-                    _currentForwardSpeed *= 0.65f;
+                    desiredVel = Vector3.ProjectOnPlane(desiredVel, contactNormal);
+                    if (!disableCollisionBrake)
+                    {
+                        desiredVel += contactNormal * 1.5f;
+                        _currentForwardSpeed *= 0.65f;
+                    }
                 }
                 _contactNormalSum = Vector3.zero;
             }
@@ -502,8 +653,12 @@ namespace SpaceCyberpunk
                     float intoWall = Vector3.Dot(desiredVel, hitNormal);
                     if (intoWall < 0f && hits[i].distance < 2.1f)
                     {
-                        desiredVel = Vector3.ProjectOnPlane(desiredVel, hitNormal) + hitNormal * 2.0f;
-                        _currentForwardSpeed *= 0.5f;
+                        desiredVel = Vector3.ProjectOnPlane(desiredVel, hitNormal);
+                        if (!disableCollisionBrake)
+                        {
+                            desiredVel += hitNormal * 2.0f;
+                            _currentForwardSpeed *= 0.5f;
+                        }
                     }
                 }
             }
@@ -588,6 +743,20 @@ namespace SpaceCyberpunk
                 Vector3 normal = contact.normal;
                 _contactNormalSum += normal;
 
+                if (disableCollisionBrake)
+                {
+                    // Chế độ bay tự do: trượt mượt mà theo bề mặt phẳng của vật cản, không thắng giật lùi, không ngắt động cơ
+                    if (_rb != null && !_rb.isKinematic)
+                    {
+                        Vector3 vel = _rb.linearVelocity;
+                        if (Vector3.Dot(vel, normal) < 0f)
+                        {
+                            _rb.linearVelocity = Vector3.ProjectOnPlane(vel, normal);
+                        }
+                    }
+                    return;
+                }
+
                 if (Vector3.Dot(normal, Vector3.up) < 0.65f)
                 {
                     _collisionRecoilTimer = 0.24f;
@@ -659,29 +828,32 @@ namespace SpaceCyberpunk
             }
         }
 
-        // ─────────────────── SCI-FI CYBERPUNK CANVAS COMBAT HUD ───────────────────
-        private void EnsureCombatHUD()
+        // ─────────────────── SCI-FI CYBERPUNK CANVAS FLIGHT HUD (THEO THIẾT KẾ ẢNH 1) ───────────────────
+        private void EnsurePlayerSciFiHUD()
         {
-            if (_combatHudRoot != null) return;
+            if (_playerHudRoot != null) return;
 
             var canvas = GameObject.Find("Canvas");
             if (canvas == null) return;
 
-            var existing = canvas.transform.Find("CombatHUD_Root");
-            if (existing != null) Destroy(existing.gameObject);
+            var oldCombat = canvas.transform.Find("CombatHUD_Root");
+            if (oldCombat != null) Destroy(oldCombat.gameObject);
 
-            _combatHudRoot = new GameObject("CombatHUD_Root", typeof(RectTransform));
-            _combatHudRoot.transform.SetParent(canvas.transform, false);
-            _combatHudRoot.transform.SetAsFirstSibling();
+            var oldSciFi = canvas.transform.Find("PlayerSciFiHUD");
+            if (oldSciFi != null) Destroy(oldSciFi.gameObject);
 
-            var rootRt = _combatHudRoot.GetComponent<RectTransform>();
+            _playerHudRoot = new GameObject("PlayerSciFiHUD", typeof(RectTransform));
+            _playerHudRoot.transform.SetParent(canvas.transform, false);
+            _playerHudRoot.transform.SetAsFirstSibling();
+
+            var rootRt = _playerHudRoot.GetComponent<RectTransform>();
             rootRt.anchorMin = Vector2.zero;
             rootRt.anchorMax = Vector2.one;
             rootRt.offsetMin = Vector2.zero;
             rootRt.offsetMax = Vector2.zero;
 
-            // 1. Màn hình nháy đỏ & 4 viền cảnh báo khi sắp hết máu (Low Health Red Vignette)
-            _redScreenOverlay = CreateHudImage("RedScreenFlash", _combatHudRoot.transform, new Color(0.95f, 0.04f, 0.06f, 0f));
+            // 1. Màn hình nháy đỏ & 4 viền cảnh báo khi bị trúng đạn (Hit Vignette)
+            _redScreenOverlay = CreateHudImage("RedScreenFlash", _playerHudRoot.transform, new Color(0.95f, 0.04f, 0.06f, 0f));
             var overlayRt = _redScreenOverlay.rectTransform;
             overlayRt.anchorMin = Vector2.zero;
             overlayRt.anchorMax = Vector2.one;
@@ -691,7 +863,7 @@ namespace SpaceCyberpunk
             _redBorders = new Image[4];
             for (int i = 0; i < 4; i++)
             {
-                _redBorders[i] = CreateHudImage("RedEdge_" + i, _combatHudRoot.transform, new Color(1f, 0.05f, 0.08f, 0f));
+                _redBorders[i] = CreateHudImage("RedEdge_" + i, _playerHudRoot.transform, new Color(1f, 0.05f, 0.08f, 0f));
                 var brt = _redBorders[i].rectTransform;
                 if (i == 0) { brt.anchorMin = new Vector2(0, 1); brt.anchorMax = new Vector2(1, 1); brt.pivot = new Vector2(0.5f, 1f); brt.sizeDelta = new Vector2(0, 22f); }
                 if (i == 1) { brt.anchorMin = new Vector2(0, 0); brt.anchorMax = new Vector2(1, 0); brt.pivot = new Vector2(0.5f, 0f); brt.sizeDelta = new Vector2(0, 22f); }
@@ -699,107 +871,291 @@ namespace SpaceCyberpunk
                 if (i == 3) { brt.anchorMin = new Vector2(1, 0); brt.anchorMax = new Vector2(1, 1); brt.pivot = new Vector2(1f, 0.5f); brt.sizeDelta = new Vector2(22f, 0); }
             }
 
-            // 2. Bảng Cảnh báo Truy Sát Cyberpunk ở phía trên màn hình
-            var alertCard = CreateHudImage("WantedAlertBanner", _combatHudRoot.transform, new Color(0.05f, 0.07f, 0.12f, 0.92f));
-            _alertBannerBg = alertCard;
-            var alertRt = alertCard.rectTransform;
+            // 2. Thước đo la bàn trên đỉnh (Heading Compass Tape)
+            BuildCompassHeadingTape(_playerHudRoot.transform);
+
+            // 3. Tâm ngắm trung tâm (Reticle [ · ])
+            BuildCenterCrosshair(_playerHudRoot.transform);
+
+            // 4. Góc dưới trái: Cụm thanh HP & SHD
+            BuildBottomLeftHealthShieldBars(_playerHudRoot.transform);
+
+            // 5. Góc dưới phải: SPEED & BOOST
+            BuildBottomRightSpeedBoostBars(_playerHudRoot.transform);
+
+            // 6. Bảng cảnh báo: Chỉ hiện khi bị tấn công ("bị tấn công thì ms hiện cái cảnh báo")
+            BuildAttackWarningBanner(_playerHudRoot.transform);
+        }
+
+        private void BuildCompassHeadingTape(Transform parent)
+        {
+            var compassGo = new GameObject("CompassHeadingTape", typeof(RectTransform));
+            compassGo.transform.SetParent(parent, false);
+            _compassTapeRoot = compassGo.GetComponent<RectTransform>();
+            _compassTapeRoot.anchorMin = new Vector2(0.5f, 1f);
+            _compassTapeRoot.anchorMax = new Vector2(0.5f, 1f);
+            _compassTapeRoot.pivot = new Vector2(0.5f, 1f);
+            _compassTapeRoot.anchoredPosition = new Vector2(0f, -14f);
+            _compassTapeRoot.sizeDelta = new Vector2(460f, 26f);
+
+            // Mũi tên chỉ hướng chính giữa đỉnh 'v'
+            _compassArrow = CreateHudText("CenterArrow", compassGo.transform, "v", 12f, new Color(0.85f, 0.95f, 1f, 0.95f), TextAlignmentOptions.Center);
+            var arrowRt = _compassArrow.rectTransform;
+            arrowRt.anchorMin = new Vector2(0.5f, 1f);
+            arrowRt.anchorMax = new Vector2(0.5f, 1f);
+            arrowRt.pivot = new Vector2(0.5f, 1f);
+            arrowRt.anchoredPosition = new Vector2(0f, 0f);
+            arrowRt.sizeDelta = new Vector2(30f, 14f);
+
+            // Đường kẻ ngang mảnh chạy dọc thước đo
+            var baseLine = CreateHudImage("CompassBaseLine", compassGo.transform, new Color(0.7f, 0.85f, 1f, 0.45f));
+            baseLine.rectTransform.anchorMin = new Vector2(0f, 0f);
+            baseLine.rectTransform.anchorMax = new Vector2(1f, 0f);
+            baseLine.rectTransform.pivot = new Vector2(0.5f, 0f);
+            baseLine.rectTransform.sizeDelta = new Vector2(0f, 1.5f);
+            baseLine.rectTransform.anchoredPosition = new Vector2(0f, 12f);
+
+            // Các vạch chia độ trượt ngang (21 vạch)
+            int tickCount = 21;
+            _compassTickLines = new RectTransform[tickCount];
+            for (int i = 0; i < tickCount; i++)
+            {
+                var tickImg = CreateHudImage("Tick_" + i, compassGo.transform, new Color(0.75f, 0.9f, 1f, 0.65f));
+                var trt = tickImg.rectTransform;
+                trt.anchorMin = new Vector2(0.5f, 0f);
+                trt.anchorMax = new Vector2(0.5f, 0f);
+                trt.pivot = new Vector2(0.5f, 0f);
+                trt.sizeDelta = new Vector2(1.5f, (i % 2 == 0) ? 9f : 5f);
+                _compassTickLines[i] = trt;
+            }
+        }
+
+        private void BuildCenterCrosshair(Transform parent)
+        {
+            _crosshairRoot = new GameObject("CrosshairReticle", typeof(RectTransform));
+            _crosshairRoot.transform.SetParent(parent, false);
+            var crt = _crosshairRoot.GetComponent<RectTransform>();
+            crt.anchorMin = new Vector2(0.5f, 0.5f);
+            crt.anchorMax = new Vector2(0.5f, 0.5f);
+            crt.pivot = new Vector2(0.5f, 0.5f);
+            crt.anchoredPosition = Vector2.zero;
+            crt.sizeDelta = new Vector2(80f, 80f);
+
+            Color reticleColor = new Color(0.85f, 0.95f, 1f, 0.75f);
+
+            // Điểm chấm tròn nhỏ ngay tâm
+            var dot = CreateHudImage("CenterDot", _crosshairRoot.transform, reticleColor);
+            dot.rectTransform.anchoredPosition = Vector2.zero;
+            dot.rectTransform.sizeDelta = new Vector2(4f, 4f);
+
+            // 4 Góc ngoặc vuông [ · ]
+            float bracketDist = 32f;
+            float segLen = 14f;
+            float segThick = 2f;
+
+            CreateCornerBracket("TL", _crosshairRoot.transform, new Vector2(-bracketDist, bracketDist), segLen, segThick, true, true, reticleColor);
+            CreateCornerBracket("TR", _crosshairRoot.transform, new Vector2(bracketDist, bracketDist), segLen, segThick, false, true, reticleColor);
+            CreateCornerBracket("BL", _crosshairRoot.transform, new Vector2(-bracketDist, -bracketDist), segLen, segThick, true, false, reticleColor);
+            CreateCornerBracket("BR", _crosshairRoot.transform, new Vector2(bracketDist, -bracketDist), segLen, segThick, false, false, reticleColor);
+        }
+
+        private static void CreateCornerBracket(string name, Transform parent, Vector2 pos, float len, float thick, bool isLeft, bool isTop, Color color)
+        {
+            var h = CreateHudImage(name + "_H", parent, color);
+            h.rectTransform.sizeDelta = new Vector2(len, thick);
+            h.rectTransform.pivot = new Vector2(isLeft ? 0f : 1f, isTop ? 1f : 0f);
+            h.rectTransform.anchoredPosition = pos;
+
+            var v = CreateHudImage(name + "_V", parent, color);
+            v.rectTransform.sizeDelta = new Vector2(thick, len);
+            v.rectTransform.pivot = new Vector2(isLeft ? 0f : 1f, isTop ? 1f : 0f);
+            v.rectTransform.anchoredPosition = pos;
+        }
+
+        private void BuildBottomLeftHealthShieldBars(Transform parent)
+        {
+            var panel = new GameObject("BottomLeft_HP_SHD_Cluster", typeof(RectTransform));
+            panel.transform.SetParent(parent, false);
+            var prt = panel.GetComponent<RectTransform>();
+            prt.anchorMin = new Vector2(0f, 0f);
+            prt.anchorMax = new Vector2(0f, 0f);
+            prt.pivot = new Vector2(0f, 0f);
+            prt.anchoredPosition = new Vector2(40f, 32f);
+            prt.sizeDelta = new Vector2(260f, 48f);
+
+            // 1. Dòng HP
+            _hpLabel = CreateHudText("HP_Label", panel.transform, "HP", 14f, new Color(0.85f, 0.95f, 1f, 0.9f), TextAlignmentOptions.MidlineLeft);
+            var hpLblRt = _hpLabel.rectTransform;
+            hpLblRt.anchorMin = new Vector2(0f, 0.72f);
+            hpLblRt.anchorMax = new Vector2(0f, 0.72f);
+            hpLblRt.pivot = new Vector2(0f, 0.5f);
+            hpLblRt.anchoredPosition = new Vector2(0f, 0f);
+            hpLblRt.sizeDelta = new Vector2(36f, 18f);
+
+            var hpTrack = CreateHudImage("HP_Track", panel.transform, new Color(0.04f, 0.08f, 0.14f, 0.85f));
+            var hpTrackRt = hpTrack.rectTransform;
+            hpTrackRt.anchorMin = new Vector2(0f, 0.72f);
+            hpTrackRt.anchorMax = new Vector2(0f, 0.72f);
+            hpTrackRt.pivot = new Vector2(0f, 0.5f);
+            hpTrackRt.anchoredPosition = new Vector2(42f, 0f);
+            hpTrackRt.sizeDelta = new Vector2(185f, 11f);
+
+            var hpBorder = CreateHudImage("Border", hpTrack.transform, new Color(0.4f, 0.6f, 0.8f, 0.4f));
+            hpBorder.rectTransform.anchorMin = Vector2.zero;
+            hpBorder.rectTransform.anchorMax = Vector2.one;
+            hpBorder.rectTransform.offsetMin = new Vector2(-1f, -1f);
+            hpBorder.rectTransform.offsetMax = new Vector2(1f, 1f);
+            hpBorder.transform.SetAsFirstSibling();
+
+            _hpBarLag = CreateHudImage("HP_Lag", hpTrack.transform, new Color(1f, 0.35f, 0.2f, 0.55f));
+            _hpBarLag.rectTransform.anchorMin = Vector2.zero;
+            _hpBarLag.rectTransform.anchorMax = Vector2.one;
+            _hpBarLag.rectTransform.pivot = new Vector2(0f, 0.5f);
+            _hpBarLag.rectTransform.offsetMin = Vector2.zero;
+            _hpBarLag.rectTransform.offsetMax = Vector2.zero;
+
+            _hpBarFill = CreateHudImage("HP_Fill", hpTrack.transform, new Color(0.92f, 0.96f, 1f, 0.95f));
+            _hpBarFill.rectTransform.anchorMin = Vector2.zero;
+            _hpBarFill.rectTransform.anchorMax = Vector2.one;
+            _hpBarFill.rectTransform.pivot = new Vector2(0f, 0.5f);
+            _hpBarFill.rectTransform.offsetMin = Vector2.zero;
+            _hpBarFill.rectTransform.offsetMax = Vector2.zero;
+
+            // 2. Dòng SHD
+            _shdLabel = CreateHudText("SHD_Label", panel.transform, "SHD", 14f, new Color(0.25f, 0.88f, 1f, 0.95f), TextAlignmentOptions.MidlineLeft);
+            var shdLblRt = _shdLabel.rectTransform;
+            shdLblRt.anchorMin = new Vector2(0f, 0.28f);
+            shdLblRt.anchorMax = new Vector2(0f, 0.28f);
+            shdLblRt.pivot = new Vector2(0f, 0.5f);
+            shdLblRt.anchoredPosition = new Vector2(0f, 0f);
+            shdLblRt.sizeDelta = new Vector2(36f, 18f);
+
+            var shdTrack = CreateHudImage("SHD_Track", panel.transform, new Color(0.04f, 0.08f, 0.14f, 0.85f));
+            var shdTrackRt = shdTrack.rectTransform;
+            shdTrackRt.anchorMin = new Vector2(0f, 0.28f);
+            shdTrackRt.anchorMax = new Vector2(0f, 0.28f);
+            shdTrackRt.pivot = new Vector2(0f, 0.5f);
+            shdTrackRt.anchoredPosition = new Vector2(42f, 0f);
+            shdTrackRt.sizeDelta = new Vector2(185f, 11f);
+
+            var shdBorder = CreateHudImage("Border", shdTrack.transform, new Color(0.2f, 0.7f, 0.9f, 0.4f));
+            shdBorder.rectTransform.anchorMin = Vector2.zero;
+            shdBorder.rectTransform.anchorMax = Vector2.one;
+            shdBorder.rectTransform.offsetMin = new Vector2(-1f, -1f);
+            shdBorder.rectTransform.offsetMax = new Vector2(1f, 1f);
+            shdBorder.transform.SetAsFirstSibling();
+
+            _shdBarLag = CreateHudImage("SHD_Lag", shdTrack.transform, new Color(0.3f, 0.6f, 1f, 0.5f));
+            _shdBarLag.rectTransform.anchorMin = Vector2.zero;
+            _shdBarLag.rectTransform.anchorMax = Vector2.one;
+            _shdBarLag.rectTransform.pivot = new Vector2(0f, 0.5f);
+            _shdBarLag.rectTransform.offsetMin = Vector2.zero;
+            _shdBarLag.rectTransform.offsetMax = Vector2.zero;
+
+            _shdBarFill = CreateHudImage("SHD_Fill", shdTrack.transform, new Color(0.2f, 0.85f, 1f, 0.95f));
+            _shdBarFill.rectTransform.anchorMin = Vector2.zero;
+            _shdBarFill.rectTransform.anchorMax = Vector2.one;
+            _shdBarFill.rectTransform.pivot = new Vector2(0f, 0.5f);
+            _shdBarFill.rectTransform.offsetMin = Vector2.zero;
+            _shdBarFill.rectTransform.offsetMax = Vector2.zero;
+        }
+
+        private void BuildBottomRightSpeedBoostBars(Transform parent)
+        {
+            var panel = new GameObject("BottomRight_Speed_Boost_Cluster", typeof(RectTransform));
+            panel.transform.SetParent(parent, false);
+            var prt = panel.GetComponent<RectTransform>();
+            prt.anchorMin = new Vector2(1f, 0f);
+            prt.anchorMax = new Vector2(1f, 0f);
+            prt.pivot = new Vector2(1f, 0f);
+            prt.anchoredPosition = new Vector2(-40f, 32f);
+            prt.sizeDelta = new Vector2(260f, 48f);
+
+            // Dòng SPEED: {kmh} KM/H  {BigNumber}
+            _speedLabelText = CreateHudText("SpeedLabel", panel.transform, "SPEED: 742 KM/H", 13f, new Color(0.85f, 0.95f, 1f, 0.85f), TextAlignmentOptions.MidlineRight);
+            var sLblRt = _speedLabelText.rectTransform;
+            sLblRt.anchorMin = new Vector2(0f, 0.72f);
+            sLblRt.anchorMax = new Vector2(1f, 0.72f);
+            sLblRt.pivot = new Vector2(1f, 0.5f);
+            sLblRt.anchoredPosition = new Vector2(-54f, 0f);
+            sLblRt.sizeDelta = new Vector2(160f, 20f);
+
+            _speedBigNumberText = CreateHudText("SpeedBigNumber", panel.transform, "742", 24f, new Color(0.95f, 0.98f, 1f, 1f), TextAlignmentOptions.MidlineRight);
+            var sNumRt = _speedBigNumberText.rectTransform;
+            sNumRt.anchorMin = new Vector2(1f, 0.72f);
+            sNumRt.anchorMax = new Vector2(1f, 0.72f);
+            sNumRt.pivot = new Vector2(1f, 0.5f);
+            sNumRt.anchoredPosition = new Vector2(0f, 0f);
+            sNumRt.sizeDelta = new Vector2(50f, 26f);
+
+            // Dòng BOOST
+            var boostLabel = CreateHudText("BoostLabel", panel.transform, "BOOST", 13f, new Color(0.85f, 0.95f, 1f, 0.85f), TextAlignmentOptions.MidlineLeft);
+            var bLblRt = boostLabel.rectTransform;
+            bLblRt.anchorMin = new Vector2(1f, 0.28f);
+            bLblRt.anchorMax = new Vector2(1f, 0.28f);
+            bLblRt.pivot = new Vector2(1f, 0.5f);
+            bLblRt.anchoredPosition = new Vector2(-155f, 0f);
+            bLblRt.sizeDelta = new Vector2(50f, 18f);
+
+            var boostTrack = CreateHudImage("Boost_Track", panel.transform, new Color(0.04f, 0.08f, 0.14f, 0.85f));
+            var btrRt = boostTrack.rectTransform;
+            btrRt.anchorMin = new Vector2(1f, 0.28f);
+            btrRt.anchorMax = new Vector2(1f, 0.28f);
+            btrRt.pivot = new Vector2(1f, 0.5f);
+            btrRt.anchoredPosition = new Vector2(0f, 0f);
+            btrRt.sizeDelta = new Vector2(148f, 10f);
+
+            var bBorder = CreateHudImage("Border", boostTrack.transform, new Color(0.3f, 0.7f, 0.9f, 0.35f));
+            bBorder.rectTransform.anchorMin = Vector2.zero;
+            bBorder.rectTransform.anchorMax = Vector2.one;
+            bBorder.rectTransform.offsetMin = new Vector2(-1f, -1f);
+            bBorder.rectTransform.offsetMax = new Vector2(1f, 1f);
+            bBorder.transform.SetAsFirstSibling();
+
+            _boostBarFill = CreateHudImage("Boost_Fill", boostTrack.transform, new Color(0.2f, 0.85f, 1f, 0.95f));
+            _boostBarFill.rectTransform.anchorMin = Vector2.zero;
+            _boostBarFill.rectTransform.anchorMax = Vector2.one;
+            _boostBarFill.rectTransform.pivot = new Vector2(0f, 0.5f);
+            _boostBarFill.rectTransform.offsetMin = Vector2.zero;
+            _boostBarFill.rectTransform.offsetMax = Vector2.zero;
+        }
+
+        private void BuildAttackWarningBanner(Transform parent)
+        {
+            var card = CreateHudImage("AttackWarningCard", parent, new Color(0.06f, 0.03f, 0.04f, 0.92f));
+            _warningCardRoot = card.gameObject;
+            var alertRt = card.rectTransform;
             alertRt.anchorMin = new Vector2(0.5f, 1f);
             alertRt.anchorMax = new Vector2(0.5f, 1f);
             alertRt.pivot = new Vector2(0.5f, 1f);
-            alertRt.anchoredPosition = new Vector2(0f, -20f);
-            alertRt.sizeDelta = new Vector2(540f, 64f);
+            alertRt.anchoredPosition = new Vector2(0f, -54f);
+            alertRt.sizeDelta = new Vector2(520f, 56f);
 
-            var alertTopTrim = CreateHudImage("TopTrim", alertCard.transform, new Color(1f, 0.18f, 0.24f, 1f));
+            var alertTopTrim = CreateHudImage("TopTrim", card.transform, new Color(1f, 0.18f, 0.22f, 1f));
             alertTopTrim.rectTransform.anchorMin = new Vector2(0f, 1f);
             alertTopTrim.rectTransform.anchorMax = new Vector2(1f, 1f);
             alertTopTrim.rectTransform.pivot = new Vector2(0.5f, 1f);
-            alertTopTrim.rectTransform.sizeDelta = new Vector2(0f, 3.5f);
+            alertTopTrim.rectTransform.sizeDelta = new Vector2(0f, 3f);
 
-            var alertBottomTrim = CreateHudImage("BottomTrim", alertCard.transform, new Color(1f, 0.18f, 0.24f, 0.7f));
+            var alertBottomTrim = CreateHudImage("BottomTrim", card.transform, new Color(1f, 0.22f, 0.25f, 0.75f));
             alertBottomTrim.rectTransform.anchorMin = new Vector2(0.08f, 0f);
             alertBottomTrim.rectTransform.anchorMax = new Vector2(0.92f, 0f);
             alertBottomTrim.rectTransform.pivot = new Vector2(0.5f, 0f);
             alertBottomTrim.rectTransform.sizeDelta = new Vector2(0f, 2f);
 
-            var alertTitle = CreateHudText("AlertTitle", alertCard.transform, "[ ! ] BÁO ĐỘNG AN NINH - VÙNG ĐẤT PROJECT [ ! ]", 17f, new Color(1f, 0.28f, 0.32f, 1f), TextAlignmentOptions.Center);
-            alertTitle.rectTransform.anchorMin = new Vector2(0f, 0.45f);
-            alertTitle.rectTransform.anchorMax = new Vector2(1f, 0.95f);
-            alertTitle.rectTransform.offsetMin = Vector2.zero;
-            alertTitle.rectTransform.offsetMax = Vector2.zero;
+            _warningTitleText = CreateHudText("AlertTitle", card.transform, "[ ! ] CẢNH BÁO: TÀU ĐANG BỊ TẤN CÔNG [ ! ]", 15.5f, new Color(1f, 0.25f, 0.3f, 1f), TextAlignmentOptions.Center);
+            _warningTitleText.rectTransform.anchorMin = new Vector2(0f, 0.45f);
+            _warningTitleText.rectTransform.anchorMax = new Vector2(1f, 0.95f);
+            _warningTitleText.rectTransform.offsetMin = Vector2.zero;
+            _warningTitleText.rectTransform.offsetMax = Vector2.zero;
 
-            _alertSubText = CreateHudText("AlertSub", alertCard.transform, "HẠM ĐỘI ĐANG VÂY BẮT  |  RỜI KHỎI VÙNG ĐẤT PROJECT ĐỂ CẮT ĐUÔI", 12.5f, new Color(0.85f, 0.93f, 1f, 0.9f), TextAlignmentOptions.Center);
-            _alertSubText.rectTransform.anchorMin = new Vector2(0f, 0.06f);
-            _alertSubText.rectTransform.anchorMax = new Vector2(1f, 0.48f);
-            _alertSubText.rectTransform.offsetMin = Vector2.zero;
-            _alertSubText.rectTransform.offsetMax = Vector2.zero;
+            _warningSubText = CreateHudText("AlertSub", card.transform, "HỆ THỐNG KHIÊN BẢO VỆ ĐANG HẤP THỤ SÁT THƯƠNG", 12f, new Color(0.9f, 0.93f, 1f, 0.9f), TextAlignmentOptions.Center);
+            _warningSubText.rectTransform.anchorMin = new Vector2(0f, 0.08f);
+            _warningSubText.rectTransform.anchorMax = new Vector2(1f, 0.48f);
+            _warningSubText.rectTransform.offsetMin = Vector2.zero;
+            _warningSubText.rectTransform.offsetMax = Vector2.zero;
 
-            // 3. Thanh Máu Sci-Fi 12 Ô Năng Lượng ở góc dưới trái (Hull / Shield HUD Card)
-            var shieldCard = CreateHudImage("ShipShieldCard", _combatHudRoot.transform, new Color(0.03f, 0.07f, 0.13f, 0.92f));
-            var cardRt = shieldCard.rectTransform;
-            cardRt.anchorMin = new Vector2(0f, 0f);
-            cardRt.anchorMax = new Vector2(0f, 0f);
-            cardRt.pivot = new Vector2(0f, 0f);
-            cardRt.anchoredPosition = new Vector2(28f, 28f);
-            cardRt.sizeDelta = new Vector2(360f, 82f);
-
-            // Thanh neon trang trí cạnh trái & viền trên
-            _hudOuterBorder = CreateHudImage("LeftAccentBar", shieldCard.transform, new Color(0.15f, 0.95f, 1f, 1f));
-            _hudOuterBorder.rectTransform.anchorMin = new Vector2(0f, 0f);
-            _hudOuterBorder.rectTransform.anchorMax = new Vector2(0f, 1f);
-            _hudOuterBorder.rectTransform.pivot = new Vector2(0f, 0.5f);
-            _hudOuterBorder.rectTransform.sizeDelta = new Vector2(5f, 0f);
-
-            var topLine = CreateHudImage("TopLine", shieldCard.transform, new Color(0.15f, 0.95f, 1f, 0.45f));
-            topLine.rectTransform.anchorMin = new Vector2(0f, 1f);
-            topLine.rectTransform.anchorMax = new Vector2(1f, 1f);
-            topLine.rectTransform.pivot = new Vector2(0.5f, 1f);
-            topLine.rectTransform.sizeDelta = new Vector2(0f, 2f);
-
-            _healthStatusText = CreateHudText("StatusLabel", shieldCard.transform, "HULL & SHIELD INTEGRITY", 13.5f, new Color(0.55f, 0.92f, 1f, 0.95f), TextAlignmentOptions.MidlineLeft);
-            _healthStatusText.rectTransform.anchorMin = new Vector2(0f, 0.54f);
-            _healthStatusText.rectTransform.anchorMax = new Vector2(0.72f, 0.94f);
-            _healthStatusText.rectTransform.offsetMin = new Vector2(18f, 0f);
-            _healthStatusText.rectTransform.offsetMax = Vector2.zero;
-
-            _healthValueText = CreateHudText("PercentValue", shieldCard.transform, "100%", 21f, new Color(0.2f, 0.98f, 1f, 1f), TextAlignmentOptions.MidlineRight);
-            _healthValueText.rectTransform.anchorMin = new Vector2(0.68f, 0.52f);
-            _healthValueText.rectTransform.anchorMax = new Vector2(1f, 0.95f);
-            _healthValueText.rectTransform.offsetMin = Vector2.zero;
-            _healthValueText.rectTransform.offsetMax = new Vector2(-16f, 0f);
-
-            // Rãnh chứa thanh máu
-            var barTrack = CreateHudImage("BarTrack", shieldCard.transform, new Color(0.08f, 0.13f, 0.2f, 0.95f));
-            var trackRt = barTrack.rectTransform;
-            trackRt.anchorMin = new Vector2(0f, 0f);
-            trackRt.anchorMax = new Vector2(1f, 0f);
-            trackRt.pivot = new Vector2(0.5f, 0f);
-            trackRt.offsetMin = new Vector2(18f, 14f);
-            trackRt.offsetMax = new Vector2(-16f, 38f);
-
-            // Thanh tụt máu trễ màu cam/đỏ phía dưới (Damage Lag Fill)
-            _damageLagBar = CreateHudImage("DamageLagFill", barTrack.transform, new Color(1f, 0.35f, 0.15f, 0.55f));
-            _damageLagBar.rectTransform.anchorMin = new Vector2(0f, 0f);
-            _damageLagBar.rectTransform.anchorMax = new Vector2(1f, 1f);
-            _damageLagBar.rectTransform.pivot = new Vector2(0f, 0.5f);
-            _damageLagBar.rectTransform.offsetMin = new Vector2(2f, 2f);
-            _damageLagBar.rectTransform.offsetMax = new Vector2(-2f, -2f);
-
-            // 12 ô năng lượng phát sáng (Segmented Energy Cells)
-            int cellCount = 12;
-            _healthCells = new Image[cellCount];
-            float gap = 0.008f;
-            float cellW = (1f - gap * (cellCount + 1)) / cellCount;
-            for (int i = 0; i < cellCount; i++)
-            {
-                float xMin = gap + i * (cellW + gap);
-                float xMax = xMin + cellW;
-                var cell = CreateHudImage("Cell_" + i, barTrack.transform, new Color(0.15f, 0.95f, 1f, 1f));
-                cell.rectTransform.anchorMin = new Vector2(xMin, 0.12f);
-                cell.rectTransform.anchorMax = new Vector2(xMax, 0.88f);
-                cell.rectTransform.offsetMin = Vector2.zero;
-                cell.rectTransform.offsetMax = Vector2.zero;
-                _healthCells[i] = cell;
-            }
+            _warningCardRoot.SetActive(false); // Mặc định ẩn, chỉ hiện khi bị tấn công!
         }
 
         private static Image CreateHudImage(string name, Transform parent, Color color)
@@ -826,81 +1182,123 @@ namespace SpaceCyberpunk
             return tmp;
         }
 
+        private void UpdateCompassTape()
+        {
+            if (_compassTickLines == null) return;
+            float stepPx = 22f;
+            float yawMod = (_currentYaw * 1.5f) % stepPx;
+
+            int n = _compassTickLines.Length;
+            int half = n / 2;
+            for (int i = 0; i < n; i++)
+            {
+                int idx = i - half;
+                float x = idx * stepPx - yawMod;
+                float alpha = Mathf.Clamp01(1f - Mathf.Abs(x) / 220f);
+                _compassTickLines[i].anchoredPosition = new Vector2(x, 12f);
+                var img = _compassTickLines[i].GetComponent<Image>();
+                if (img != null) img.color = new Color(0.8f, 0.92f, 1f, 0.65f * alpha);
+            }
+        }
+
         private void UpdateCombatHUD()
         {
-            EnsureCombatHUD();
-            if (_combatHudRoot == null) return;
+            EnsurePlayerSciFiHUD();
+            if (_playerHudRoot == null) return;
 
-            bool showHud = SpaceTrafficShipAI.IsFleetHostile && !AboutInfoStation.AnyStationActive;
-            if (_combatHudRoot.activeSelf != showHud)
+            bool isPiloting = !AboutInfoStation.AnyStationActive;
+            if (_playerHudRoot.activeSelf != isPiloting)
             {
-                _combatHudRoot.SetActive(showHud);
+                _playerHudRoot.SetActive(isPiloting);
             }
-            if (!showHud) return;
+            if (!isPiloting) return;
 
-            float ratio = HealthRatio;
-            _displayedHealthRatio = Mathf.Lerp(_displayedHealthRatio, ratio, Time.deltaTime * 4.5f);
+            // 1. Cập nhật thước đo la bàn trên đỉnh
+            UpdateCompassTape();
 
-            // Màu theo mức máu: Xanh Cyan (>60%) -> Vàng Cam (35%-60%) -> Đỏ Nguy Kịch (<=35%)
-            Color themeColor;
-            if (ratio > 0.6f)
-                themeColor = new Color(0.15f, 0.95f, 1f, 1f);
-            else if (ratio > 0.35f)
-                themeColor = new Color(1f, 0.72f, 0.15f, 1f);
-            else
-                themeColor = new Color(1f, 0.16f, 0.22f, 1f);
+            // 2. Cập nhật thanh HP và SHD
+            float targetHpRatio = HealthRatio;
+            float targetShdRatio = ShieldRatio;
+            _displayedHpRatio = Mathf.Lerp(_displayedHpRatio, targetHpRatio, Time.deltaTime * 5f);
+            _displayedShieldRatio = Mathf.Lerp(_displayedShieldRatio, targetShdRatio, Time.deltaTime * 5f);
 
-            if (_hudOuterBorder != null) _hudOuterBorder.color = themeColor;
-            if (_healthValueText != null)
+            if (_hpBarFill != null)
             {
-                _healthValueText.text = $"{Mathf.CeilToInt(ratio * 100f)}%";
-                _healthValueText.color = themeColor;
+                _hpBarFill.rectTransform.anchorMax = new Vector2(Mathf.Clamp01(targetHpRatio), 1f);
             }
-            if (_healthStatusText != null)
+            if (_hpBarLag != null)
             {
-                _healthStatusText.text = ratio <= 0.35f ? "[ ! ] CRITICAL HULL DAMAGE" : "HULL & SHIELD INTEGRITY";
-                _healthStatusText.color = ratio <= 0.35f ? themeColor : new Color(0.65f, 0.92f, 1f, 0.95f);
+                _hpBarLag.rectTransform.anchorMax = new Vector2(Mathf.Clamp01(_displayedHpRatio), 1f);
             }
 
-            if (_damageLagBar != null)
+            if (_shdBarFill != null)
             {
-                _damageLagBar.rectTransform.anchorMax = new Vector2(Mathf.Clamp01(_displayedHealthRatio), 1f);
+                _shdBarFill.rectTransform.anchorMax = new Vector2(Mathf.Clamp01(targetShdRatio), 1f);
+            }
+            if (_shdBarLag != null)
+            {
+                _shdBarLag.rectTransform.anchorMax = new Vector2(Mathf.Clamp01(_displayedShieldRatio), 1f);
             }
 
-            if (_healthCells != null)
+            // 3. Cập nhật SPEED & BOOST
+            float currentSpeed = Mathf.Abs(_currentForwardSpeed);
+            float targetKmh = 0f;
+            if (currentSpeed > 0.5f)
             {
-                int n = _healthCells.Length;
-                for (int i = 0; i < n; i++)
+                float norm = Mathf.Clamp01(currentSpeed / boostSpeed);
+                targetKmh = Mathf.Lerp(120f, 742f, norm);
+            }
+            _displayedKmh = Mathf.Lerp(_displayedKmh, targetKmh, Time.deltaTime * 6f);
+            int kmhInt = Mathf.RoundToInt(_displayedKmh);
+
+            if (_speedLabelText != null)
+            {
+                _speedLabelText.text = $"SPEED: {kmhInt} KM/H";
+            }
+            if (_speedBigNumberText != null)
+            {
+                _speedBigNumberText.text = $"{kmhInt}";
+            }
+
+            float boostRatio = BoostRatio;
+            _displayedBoostRatio = Mathf.Lerp(_displayedBoostRatio, boostRatio, Time.deltaTime * 8f);
+            if (_boostBarFill != null)
+            {
+                _boostBarFill.rectTransform.anchorMax = new Vector2(Mathf.Clamp01(_displayedBoostRatio), 1f);
+                _boostBarFill.color = _isBoosting ? new Color(1f, 0.45f, 0.15f, 0.95f) : new Color(0.2f, 0.85f, 1f, 0.95f);
+            }
+
+            // 4. BẢNG CẢNH BÁO: CHỈ HIỆN KHI BỊ TẤN CÔNG ("bị tấn công thì ms hiện cái cảnh báo")
+            bool isUnderAttack = (Time.time - _lastDamageTime < 4.5f) || (SpaceTrafficShipAI.IsFleetHostile && (Time.time - _lastDamageTime < 10f));
+            if (_warningCardRoot != null)
+            {
+                if (_warningCardRoot.activeSelf != isUnderAttack)
                 {
-                    float cellStart = (float)i / n;
-                    float cellEnd = (float)(i + 1) / n;
-                    float fill = Mathf.Clamp01((ratio - cellStart) / (cellEnd - cellStart));
-                    if (fill > 0.02f)
+                    _warningCardRoot.SetActive(isUnderAttack);
+                }
+
+                if (isUnderAttack)
+                {
+                    if (_currentShield <= 0.05f)
                     {
-                        _healthCells[i].color = new Color(themeColor.r, themeColor.g, themeColor.b, 0.35f + 0.65f * fill);
+                        if (_warningTitleText != null) _warningTitleText.text = "[ ! ] NGUY CẤP: KHIÊN NĂNG LƯỢNG ĐÃ VỠ [ ! ]";
+                        if (_warningSubText != null) _warningSubText.text = "THÂN TÀU ĐANG CHỊU THIỆT HẠI TRỰC TIẾP!";
                     }
                     else
                     {
-                        _healthCells[i].color = new Color(0.15f, 0.22f, 0.3f, 0.25f);
+                        if (_warningTitleText != null) _warningTitleText.text = "[ ! ] CẢNH BÁO: TÀU ĐANG BỊ TẤN CÔNG [ ! ]";
+                        if (_warningSubText != null) _warningSubText.text = "HỆ THỐNG KHIÊN BẢO VỆ ĐANG HẤP THỤ SÁT THƯƠNG";
                     }
                 }
             }
 
-            // Cập nhật thông báo khoảng cách rút lui khỏi Vùng Đất Project
-            if (_alertSubText != null)
-            {
-                float dist = SpaceTrafficShipAI.GetPlayerDistanceFromProjectBase(transform);
-                float remain = Mathf.Max(0f, SpaceTrafficShipAI.ProjectZoneRadius - dist);
-                _alertSubText.text = $"HẠM ĐỘI ĐANG VÂY BẮT  |  CÁCH BIÊN GIỚI VÙNG PROJECT: {Mathf.CeilToInt(remain)}M";
-            }
-
-            // Nháy đỏ màn hình khi gần hết máu (<= 35%) hoặc vừa trúng đạn
-            float hitFlash = Mathf.Clamp01(1f - (Time.time - _lastDamageTime) / 0.25f) * 0.22f;
+            // Nháy đỏ màn hình khi bị trúng đạn hoặc nguy kịch
+            float hitFlash = Mathf.Clamp01(1f - (Time.time - _lastDamageTime) / 0.35f) * 0.28f;
             float lowHealthFlash = 0f;
-            if (ratio <= 0.35f && !_isRespawning)
+            if (targetHpRatio <= 0.35f && !_isRespawning)
             {
                 float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * 11f);
-                lowHealthFlash = 0.08f + pulse * 0.28f;
+                lowHealthFlash = 0.08f + pulse * 0.25f;
             }
             float redAlpha = Mathf.Max(hitFlash, lowHealthFlash);
             if (_redScreenOverlay != null)
@@ -908,7 +1306,7 @@ namespace SpaceCyberpunk
 
             if (_redBorders != null)
             {
-                float borderAlpha = Mathf.Clamp01(redAlpha * 2.1f);
+                float borderAlpha = Mathf.Clamp01(redAlpha * 2.2f);
                 for (int i = 0; i < _redBorders.Length; i++)
                 {
                     if (_redBorders[i] != null)

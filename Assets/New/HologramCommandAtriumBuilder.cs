@@ -1599,9 +1599,15 @@ namespace SpaceCyberpunk
                 }
                 if (cmdChair != null)
                 {
-                    cmdChair.localPosition = new Vector3(0f, 0.13f, -1.63f);
-                    cmdChair.localRotation = Quaternion.identity;
-                    cmdChair.localScale = new Vector3(0.72f, 0.72f, 0.72f);
+                    // GIỮ NGUYÊN TÙY CHỈNH CỦA USER: Không ghi đè nếu ghế đã tồn tại trong Scene
+                }
+                else if (pilotSeat != null)
+                {
+                    var c = Object.Instantiate(pilotSeat, centerDesk, false);
+                    c.name = "Commander_Pilot_Chair_Center";
+                    c.transform.localPosition = new Vector3(0f, 0.13f, -2.07f);
+                    c.transform.localRotation = Quaternion.identity;
+                    c.transform.localScale = new Vector3(0.72f, 0.72f, 0.72f);
                 }
             }
 
@@ -1626,125 +1632,101 @@ namespace SpaceCyberpunk
                 }
             };
 
-            // Left Wing Background Desk (Aft)
+            // Left Wing Background Desk (Aft) - BẢO VỆ TÙY CHỈNH THỦ CÔNG CỦA USER
             Transform leftDeskAft = wingsRoot.Find("Left_Wing_Asset_Desk");
             if (leftDeskAft == null && deskPrefab != null)
             {
                 var d = Object.Instantiate(deskPrefab, wingsRoot, false);
                 d.name = "Left_Wing_Asset_Desk";
                 leftDeskAft = d.transform;
-            }
-            if (leftDeskAft != null)
-            {
-                leftDeskAft.localPosition = new Vector3(-4.31f, 0.06f, -2.17f);
+                leftDeskAft.localPosition = new Vector3(-4.39f, 0.12f, -2.25f);
                 leftDeskAft.localRotation = Quaternion.Euler(0f, 145f, 0f);
                 leftDeskAft.localScale = new Vector3(0.85f, 0.85f, 0.85f);
                 assignDeskMonitorMat(leftDeskAft.gameObject, deskTelemetryMat);
             }
 
-            // Left Wing Foreground Desk (Fore)
+            // Left Wing Foreground Desk (Fore) - BẢO VỆ TÙY CHỈNH THỦ CÔNG CỦA USER
             Transform leftDeskFore = wingsRoot.Find("Left_Wing_Asset_Desk_Fore");
             if (leftDeskFore == null && deskPrefab != null)
             {
                 var d = Object.Instantiate(deskPrefab, wingsRoot, false);
                 d.name = "Left_Wing_Asset_Desk_Fore";
                 leftDeskFore = d.transform;
-            }
-            if (leftDeskFore != null)
-            {
-                leftDeskFore.localPosition = new Vector3(-6.47f, -0.22f, -6.20f);
+                leftDeskFore.localPosition = new Vector3(-6.47f, 0.06f, -6.20f);
                 leftDeskFore.localRotation = Quaternion.Euler(0f, 90f, 0f);
                 leftDeskFore.localScale = new Vector3(0.85f, 0.85f, 0.85f);
                 assignDeskMonitorMat(leftDeskFore.gameObject, deskTelemetryMat);
             }
 
-            // Right Wing Background Desk (Aft)
+            // Right Wing Background Desk (Aft) - BẢO VỆ TÙY CHỈNH THỦ CÔNG CỦA USER
             Transform rightDeskAft = wingsRoot.Find("Right_Wing_Asset_Desk");
             if (rightDeskAft == null && deskPrefab != null)
             {
                 var d = Object.Instantiate(deskPrefab, wingsRoot, false);
                 d.name = "Right_Wing_Asset_Desk";
                 rightDeskAft = d.transform;
-            }
-            if (rightDeskAft != null)
-            {
-                rightDeskAft.localPosition = new Vector3(4.48f, 0.37f, -2.29f);
+                rightDeskAft.localPosition = new Vector3(4.33f, 0.15f, -2.19f);
                 rightDeskAft.localRotation = Quaternion.Euler(0f, 215f, 0f);
                 rightDeskAft.localScale = new Vector3(0.85f, 0.85f, 0.85f);
                 assignDeskMonitorMat(rightDeskAft.gameObject, deskDiagnosticsMat);
             }
 
-            // Right Wing Foreground Desk (Fore)
+            // Right Wing Foreground Desk (Fore) - BẢO VỆ TÙY CHỈNH THỦ CÔNG CỦA USER
             Transform rightDeskFore = wingsRoot.Find("Right_Wing_Asset_Desk_Fore");
             if (rightDeskFore == null && deskPrefab != null)
             {
                 var d = Object.Instantiate(deskPrefab, wingsRoot, false);
                 d.name = "Right_Wing_Asset_Desk_Fore";
                 rightDeskFore = d.transform;
-            }
-            if (rightDeskFore != null)
-            {
-                rightDeskFore.localPosition = new Vector3(6.62f, -0.05f, -6.19f);
+                rightDeskFore.localPosition = new Vector3(6.62f, 0.07f, -6.07f);
                 rightDeskFore.localRotation = Quaternion.Euler(0f, 270f, 0f);
                 rightDeskFore.localScale = new Vector3(0.85f, 0.85f, 0.85f);
                 assignDeskMonitorMat(rightDeskFore.gameObject, deskDiagnosticsMat);
             }
 
-            // Officer Chairs
+            // Officer Chairs - BẢO VỆ TÙY CHỈNH THỦ CÔNG CỦA USER
             Transform chairLAft = wingsRoot.Find("Officer_Chair_Left_Aft");
             if (chairLAft == null && pilotSeat != null)
             {
                 var c = Object.Instantiate(pilotSeat, wingsRoot, false);
                 c.name = "Officer_Chair_Left_Aft";
                 chairLAft = c.transform;
-            }
-            if (chairLAft != null)
-            {
-                chairLAft.localPosition = new Vector3(-3.34f, 0.05f, -3.63f);
+                chairLAft.localPosition = new Vector3(-3.42f, 0.11f, -3.71f);
                 chairLAft.localRotation = Quaternion.Euler(0f, 317.47f, 0f);
                 chairLAft.localScale = new Vector3(0.85f, 0.85f, 0.85f);
             }
 
-            // Officer Chair Left Fore
+            // Officer Chair Left Fore - BẢO VỆ TÙY CHỈNH THỦ CÔNG CỦA USER
             Transform chairLFore = wingsRoot.Find("Officer_Chair_Left_Fore");
             if (chairLFore == null && pilotSeat != null)
             {
                 var c = Object.Instantiate(pilotSeat, wingsRoot, false);
                 c.name = "Officer_Chair_Left_Fore";
                 chairLFore = c.transform;
-            }
-            if (chairLFore != null)
-            {
-                chairLFore.localPosition = new Vector3(-4.63f, 0.05f, -6.62f);
+                chairLFore.localPosition = new Vector3(-4.63f, 0.33f, -6.62f);
                 chairLFore.localRotation = Quaternion.Euler(0f, 271.78f, 0f);
                 chairLFore.localScale = new Vector3(0.85f, 0.85f, 0.85f);
             }
 
-            // Officer Chair Right Aft
+            // Officer Chair Right Aft - BẢO VỆ TÙY CHỈNH THỦ CÔNG CỦA USER
             Transform chairRAft = wingsRoot.Find("Officer_Chair_Right_Aft");
             if (chairRAft == null && pilotSeat != null)
             {
                 var c = Object.Instantiate(pilotSeat, wingsRoot, false);
                 c.name = "Officer_Chair_Right_Aft";
                 chairRAft = c.transform;
-            }
-            if (chairRAft != null)
-            {
                 chairRAft.localPosition = new Vector3(3.50f, 0.05f, -3.73f);
                 chairRAft.localRotation = Quaternion.Euler(0f, 37.82f, 0f);
                 chairRAft.localScale = new Vector3(0.85f, 0.85f, 0.85f);
             }
 
-            // Officer Chair Right Fore
+            // Officer Chair Right Fore - BẢO VỆ TÙY CHỈNH THỦ CÔNG CỦA USER
             Transform chairRFore = wingsRoot.Find("Officer_Chair_Right_Fore");
             if (chairRFore == null && pilotSeat != null)
             {
                 var c = Object.Instantiate(pilotSeat, wingsRoot, false);
                 c.name = "Officer_Chair_Right_Fore";
                 chairRFore = c.transform;
-            }
-            if (chairRFore != null)
-            {
                 chairRFore.localPosition = new Vector3(5.12f, 0.05f, -6.33f);
                 chairRFore.localRotation = Quaternion.Euler(0f, 85.10f, 0f);
                 chairRFore.localScale = new Vector3(0.85f, 0.85f, 0.85f);

@@ -26,7 +26,7 @@ namespace SpaceCyberpunk
         [Tooltip("Khoảng cách tối đa tính từ Căn cứ Project — ra khỏi vùng này sẽ hết cảnh báo truy sát")]
         public static float ProjectZoneRadius = 270f;   
 
-        private static readonly List<SpaceTrafficShipAI> ActiveShips = new List<SpaceTrafficShipAI>();
+        public static readonly List<SpaceTrafficShipAI> ActiveShips = new List<SpaceTrafficShipAI>();
 
         [Header("Thông Số Bay Tuần Tra & Chiến Thuật")]
         public int tacticalSlotIndex = 0;

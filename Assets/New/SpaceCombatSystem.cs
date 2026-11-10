@@ -20,11 +20,13 @@ namespace SpaceCyberpunk
         public float damage = 35f;
         public float lifeTime = 2.8f;
         public GameObject owner;
+        public Transform homingTarget;
+        public float homingTurnSpeed = 16f;
 
         private float _spawnTime;
         private Vector3 _prevPos;
 
-        public static void SpawnBolt(Vector3 pos, Vector3 dir, bool fromPlayer, GameObject shooter, float boltSpeed = 115f, float boltDamage = 35f)
+        public static void SpawnBolt(Vector3 pos, Vector3 dir, bool fromPlayer, GameObject shooter, float boltSpeed = 115f, float boltDamage = 35f, Transform target = null)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             go.name = fromPlayer ? "Player_LaserBolt" : "Enemy_LaserBolt";
@@ -65,6 +67,7 @@ namespace SpaceCyberpunk
             proj.speed = boltSpeed;
             proj.damage = boltDamage;
             proj.owner = shooter;
+            proj.homingTarget = target;
         }
 
         private void Start()
@@ -82,6 +85,19 @@ namespace SpaceCyberpunk
             }
 
             Vector3 moveDir = transform.up;
+
+            // Cơ chế đạn tầm nhiệt bám theo mục tiêu đã bị khóa
+            if (homingTarget != null)
+            {
+                Vector3 toTarget = homingTarget.position - transform.position;
+                if (toTarget.sqrMagnitude > 0.1f)
+                {
+                    Vector3 desiredDir = toTarget.normalized;
+                    moveDir = Vector3.RotateTowards(moveDir, desiredDir, homingTurnSpeed * Time.deltaTime, 0f);
+                    transform.rotation = Quaternion.LookRotation(moveDir) * Quaternion.Euler(90f, 0f, 0f);
+                }
+            }
+
             float step = speed * Time.deltaTime;
             Vector3 nextPos = transform.position + moveDir * step;
 
