@@ -35,22 +35,37 @@ namespace SpaceCyberpunk
         public CitadelDoorButtonPanel innerDoorPanel;
         public Transform commanderChair;
 
-        [Header("Movement Settings")]
-        public float walkSpeed = 3.6f;
-        public float runSpeed = 5.2f;
+        [Header("Movement Settings (Realistic Human Walking)")]
+        [Tooltip("Vận tốc đi bộ ổn định chuẩn người thật (~3.2 m/s)")]
+        public float walkSpeed = 3.2f;
+        [Tooltip("Vận tốc tiếp cận cẩn thận khi lại gần bệ máy / ghế (~2.0 m/s)")]
+        public float approachSpeed = 2.0f;
+        [Tooltip("Vận tốc chạy bộ khi ra ngoài (~5.0 m/s)")]
+        public float jogSpeed = 5.0f;
+        [Tooltip("Độ cao tầm mắt người chơi khi đứng")]
         public float eyeHeight = 1.70f;
+        [Tooltip("Độ cao tầm mắt khi ngồi ghế")]
         public float seatedHeight = 1.30f;
-        public float headBobFrequency = 8.5f;
-        public float headBobAmplitude = 0.045f;
+        [Tooltip("Độ nhấp nhô cao độ bước chân (Vertical Bobbing)")]
+        public float headBobAmplitudeY = 0.035f;
+        [Tooltip("Độ lắc lư nhẹ trái-phải tự nhiên khi dồn trọng tâm (Lateral Sway)")]
+        public float headBobAmplitudeX = 0.024f;
+        [Tooltip("Góc nghiêng đầu tự nhiên theo bước đi (Head Roll)")]
+        public float headBobRollAngle = 0.55f;
+        [Tooltip("Độ dài 1 sải bước chân người lớn (~1.40m cho 2 bước)")]
+        public float stepStrideLength = 1.40f;
 
         private AudioSource _audioSource;
         private AudioClip _footstepClip1;
         private AudioClip _footstepClip2;
         private AudioClip _doorWhooshClip;
+        private AudioClip _cyberUplinkClip;
 
         private Coroutine _activeRoutine;
         private GameObject _skipHUD;
-        private float _bobTimer = 0f;
+        private float _strideDistance = 0f;
+        private bool _stepAlt = false;
+        private float _nextStepDistance = 0.35f;
         private bool _skipRequested = false;
 
         public bool IsActive => _activeRoutine != null;
@@ -92,6 +107,9 @@ namespace SpaceCyberpunk
 
             // Âm thanh khí nén cửa mở (Pneumatic Door Whoosh)
             _doorWhooshClip = CreateWhooshClip(0.45f);
+
+            // Âm thanh kích hoạt kết nối Cyber Uplink hiển thị Hologram
+            _cyberUplinkClip = CreateCyberUplinkClip(0.65f);
         }
 
         private static AudioClip CreateStepClip(float freq, float duration, float volume)
@@ -129,6 +147,27 @@ namespace SpaceCyberpunk
             return clip;
         }
 
+        private static AudioClip CreateCyberUplinkClip(float duration)
+        {
+            int sampleRate = 44100;
+            int samples = (int)(sampleRate * duration);
+            float[] data = new float[samples];
+            for (int i = 0; i < samples; i++)
+            {
+                float t = (float)i / sampleRate;
+                float progress = (float)i / samples;
+                float freq = Mathf.Lerp(440f, 1320f, Mathf.Sqrt(progress));
+                float env = Mathf.Sin(progress * Mathf.PI);
+                float tone1 = Mathf.Sin(2f * Mathf.PI * freq * t) * 0.55f;
+                float tone2 = Mathf.Sin(2f * Mathf.PI * (freq * 1.5f) * t) * 0.30f;
+                float noise = UnityEngine.Random.Range(-0.1f, 0.1f) * env;
+                data[i] = (tone1 + tone2 + noise) * env * 0.32f;
+            }
+            var clip = AudioClip.Create("Cyber_Uplink_Chime", samples, 1, sampleRate, false);
+            clip.SetData(data, 0);
+            return clip;
+        }
+
         public void PlayFootstep(bool alternate)
         {
             if (_audioSource != null)
@@ -142,6 +181,14 @@ namespace SpaceCyberpunk
             if (_audioSource != null && _doorWhooshClip != null)
             {
                 _audioSource.PlayOneShot(_doorWhooshClip);
+            }
+        }
+
+        public void PlayCyberUplinkSound()
+        {
+            if (_audioSource != null && _cyberUplinkClip != null)
+            {
+                _audioSource.PlayOneShot(_cyberUplinkClip);
             }
         }
 
@@ -270,6 +317,11 @@ namespace SpaceCyberpunk
             // Khởi tạo HUD Skip
             CreateSkipHUD();
 
+            // Reset nhịp bước chân
+            _strideDistance = 0f;
+            _nextStepDistance = stepStrideLength * 0.25f;
+            _stepAlt = false;
+
             // ═════════════════════════════════════════════════════════════════════════
             // BƯỚC 1: XUỐNG TÀU (Disembark Ship)
             // Xuất hiện ngay bên cạnh phi thuyền (bên mạn phải/cửa khoang phi thuyền)
@@ -290,32 +342,33 @@ namespace SpaceCyberpunk
                 ? ship.transform
                 : null;
 
-            // Xuất hiện bên cạnh phi thuyền theo hướng xoay thực tế của tàu
+            // Xuất hiện bên cạnh phi thuyền ở cự ly an toàn (cách tâm tàu 2.75m, không chạm vỏ tàu)
             Vector3 besideOffset = (shipTr != null)
-                ? (shipTr.right * 1.55f + shipTr.forward * 0.20f)
-                : new Vector3(1.55f, 0f, 0.20f);
+                ? (shipTr.right * 2.75f + shipTr.forward * 0.40f)
+                : new Vector3(2.75f, 0f, 0.40f);
             Vector3 shipBesidePos = new Vector3(shipPos.x + besideOffset.x, padFloorY + eyeHeight, shipPos.z + besideOffset.z);
             Vector3 runwayDeckPos = new Vector3(-24.0f, padFloorY + eyeHeight, 23.0f);
 
-            // Xuất hiện bên mạn phi thuyền, nhìn về phía buồng lái phi thuyền
+            // Xuất hiện bên mạn phi thuyền, nhìn về phía buồng lái phi thuyền ở khoảng cách rõ nét
             playerCamera.transform.position = shipBesidePos;
-            Vector3 lookShipHatch = shipPos + Vector3.up * (eyeHeight - 0.2f);
+            Vector3 lookShipHatch = shipPos + (shipTr != null ? shipTr.forward * 0.60f : Vector3.zero) + Vector3.up * 1.0f;
             playerCamera.transform.rotation = Quaternion.LookRotation(lookShipHatch - shipBesidePos);
             playerCamera.fieldOfView = 60f;
 
-            yield return new WaitForSeconds(0.45f);
+            yield return new WaitForSeconds(0.40f);
 
             // Quay người từ mạn tàu hướng về phía đường băng dẫn vào căn cứ Citadel
             Vector3 runwayLook = new Vector3(-10f, padFloorY + eyeHeight, 23f);
-            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(runwayLook - shipBesidePos), 0.65f));
+            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(runwayLook - shipBesidePos), 0.60f));
 
-            // Đi bộ từ cạnh tàu dọc đường băng
+            // Đi bộ từ cạnh tàu dọc đường băng với vận tốc ổn định
             yield return StartCoroutine(MoveCameraFPS(
                 fromPos: shipBesidePos,
                 toPos: runwayDeckPos,
                 lookTarget: runwayLook,
-                duration: 1.8f,
-                speedBob: 1.0f
+                speed: walkSpeed,
+                easeStart: true,
+                easeEnd: false
             ));
             if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
 
@@ -328,23 +381,25 @@ namespace SpaceCyberpunk
                 ? keypadTerminal.transform.position + new Vector3(0f, 1.25f, 0f)
                 : new Vector3(-11.84f, 1.34f, 20.81f);
 
-            // Đi dọc đường băng dẫn vào cổng
+            // Đi dọc đường băng dẫn vào tiếp cận cổng
             yield return StartCoroutine(MoveCameraFPS(
                 fromPos: runwayDeckPos,
                 toPos: outsideGateApproach,
                 lookTarget: inFrontOfKeypad,
-                duration: 2.0f,
-                speedBob: 1.0f
+                speed: walkSpeed,
+                easeStart: false,
+                easeEnd: false
             ));
             if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
 
-            // Bước đến đứng thẳng trước màn hình console an ninh
+            // Bước chậm lại tiếp cận đứng thẳng trước màn hình console an ninh
             yield return StartCoroutine(MoveCameraFPS(
                 fromPos: outsideGateApproach,
                 toPos: inFrontOfKeypad,
                 lookTarget: keypadScreenPos,
-                duration: 1.4f,
-                speedBob: 0.9f
+                speed: approachSpeed,
+                easeStart: false,
+                easeEnd: true
             ));
             if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
 
@@ -353,7 +408,7 @@ namespace SpaceCyberpunk
             // Camera cúi nhẹ vào màn hình bàn phím an ninh
             // ═════════════════════════════════════════════════════════════════════════
             Quaternion lookKeypadRot = Quaternion.LookRotation(keypadScreenPos - inFrontOfKeypad);
-            yield return StartCoroutine(RotateCameraTo(lookKeypadRot, 0.45f));
+            yield return StartCoroutine(RotateCameraTo(lookKeypadRot, 0.40f));
 
             if (keypadTerminal != null)
             {
@@ -364,88 +419,96 @@ namespace SpaceCyberpunk
                 yield return new WaitForSeconds(1.5f);
             }
 
-            yield return new WaitForSeconds(0.3f);
+            yield return new WaitForSeconds(0.25f);
 
             // ═════════════════════════════════════════════════════════════════════════
-            // BƯỚC 4: CỬA MỞ RA VÀ BƯỚC VÀO TRONG (Outer Door Open & Step Inside)
+            // BƯỚC 4: BƯỚC RA GIỮA VÒM CỬA, CỬA MỞ RA VÀ BƯỚC THẲNG VÀO TRONG
+            // (Step to Center of Doorway, Door Opens & Walk Straight Inside)
             // ═════════════════════════════════════════════════════════════════════════
-            // Quay mặt trở lại chính giữa vòm cửa
-            Vector3 doorCenterLook = new Vector3(-4f, eyeHeight, 23.0f);
-            Quaternion lookDoorCenter = Quaternion.LookRotation(doorCenterLook - inFrontOfKeypad);
-            yield return StartCoroutine(RotateCameraTo(lookDoorCenter, 0.55f));
+            // Điểm chính giữa vòm cửa bên ngoài (Tọa độ Z = 23.0f chuẩn tâm vòm cửa)
+            Vector3 doorwayOutsideCenter = new Vector3(-11.50f, eyeHeight, 23.00f);
+            Vector3 doorCorridorLook = new Vector3(0f, eyeHeight, 23.00f); // Hướng nhìn thẳng vào tâm hành lang
 
-            // Kích hoạt cửa trượt mở hoàn toàn + hiệu ứng xả khí nén
+            // Bước từ bệ bàn phím ra ĐỨNG NGAY GIỮA CỬA
+            yield return StartCoroutine(MoveCameraFPS(
+                fromPos: inFrontOfKeypad,
+                toPos: doorwayOutsideCenter,
+                lookTarget: doorCorridorLook,
+                speed: walkSpeed,
+                easeStart: true,
+                easeEnd: true
+            ));
+            if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
+
+            // Đứng ngay chính giữa cửa, hướng mắt nhìn thẳng vào trong
+            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(doorCorridorLook - doorwayOutsideCenter), 0.35f));
+
+            // Kích hoạt cửa trượt mở hoàn toàn từ chính diện + hiệu ứng xả khí nén
             if (westGateDoor != null)
             {
                 PlayDoorWhoosh();
                 westGateDoor.OpenDoor(locked: true);
             }
-            yield return new WaitForSeconds(0.75f);
+            yield return new WaitForSeconds(0.65f);
 
-            // Bước qua cửa vào hầm thông gió
-            Vector3 insideThresholdPos = new Vector3(-6.5f, eyeHeight, 23.0f);
-            yield return StartCoroutine(MoveCameraFPS(
-                fromPos: inFrontOfKeypad,
-                toPos: insideThresholdPos,
-                lookTarget: new Vector3(10f, eyeHeight, 23f),
-                duration: 1.6f,
-                speedBob: 1.0f
+            // Bước thẳng xuyên qua tâm cửa vào trong (tất cả các điểm đều nằm trên trục Z = 23.0f chính giữa cửa!)
+            Vector3[] entrancePath = new Vector3[]
+            {
+                new Vector3(-9.20f, eyeHeight, 23.00f), // Ngay ngưỡng cửa
+                new Vector3(-6.50f, eyeHeight, 23.00f), // Hầm thông gió
+                new Vector3(14.00f, eyeHeight, 23.00f)  // Tiến vào tâm sảnh lớn Rotunda
+            };
+
+            yield return StartCoroutine(MoveCameraPathFPS(
+                waypoints: entrancePath,
+                lookTarget: new Vector3(30f, eyeHeight, 23.00f),
+                speed: walkSpeed
             ));
             if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
 
             // ═════════════════════════════════════════════════════════════════════════
-            // BƯỚC 5: ĐI VÀO SẢNH GIỮA, QUAY TRÁI QUAY PHẢI ĐỂ TÌM PHÒNG CHÍNH
-            // (Walk to Central Atrium & Look Left, Look Right)
+            // BƯỚC 5: ĐỨNG TẠI SẢNH GIỮA, QUAY TRÁI QUAY PHẢI ĐỂ TÌM PHÒNG CHÍNH
+            // (Central Atrium & Look Left, Look Right)
             // ═════════════════════════════════════════════════════════════════════════
             Vector3 atriumCenterPos = new Vector3(14.0f, eyeHeight, 23.0f);
-
-            // Đi dọc hành lang tiến vào trung tâm sảnh lớn Rotunda
-            yield return StartCoroutine(MoveCameraFPS(
-                fromPos: insideThresholdPos,
-                toPos: atriumCenterPos,
-                lookTarget: new Vector3(30f, eyeHeight, 23f),
-                duration: 3.2f,
-                speedBob: 1.0f
-            ));
-            if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
-
-            // Dừng chân ở tâm sảnh lớn
-            yield return new WaitForSeconds(0.35f);
+            yield return new WaitForSeconds(0.30f);
 
             // 5a. Quay đầu sang TRÁI (nhìn về cụm Mission Control / Cánh Bắc)
             Vector3 lookLeftAtrium = atriumCenterPos + new Vector3(8f, 0.6f, 15f);
-            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(lookLeftAtrium - atriumCenterPos), 0.75f));
-            yield return new WaitForSeconds(0.95f); // Dừng lại nhìn quan sát
+            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(lookLeftAtrium - atriumCenterPos), 0.70f));
+            yield return new WaitForSeconds(0.85f);
 
             // 5b. Quay đầu sang PHẢI (nhìn về Cánh Nam / dàn Server & Máy chiếu tinh thể)
             Vector3 lookRightAtrium = atriumCenterPos + new Vector3(8f, 0.5f, -15f);
-            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(lookRightAtrium - atriumCenterPos), 1.15f));
-            yield return new WaitForSeconds(0.95f); // Dừng lại nhìn quan sát
+            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(lookRightAtrium - atriumCenterPos), 1.05f));
+            yield return new WaitForSeconds(0.85f);
 
             // 5c. Quay thẳng về PHÍA TRƯỚC: Phát hiện cửa căn phòng chính Cánh Đông!
             Vector3 eastDoorLook = new Vector3(30f, eyeHeight, 23f);
-            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(eastDoorLook - atriumCenterPos), 0.85f));
-            yield return new WaitForSeconds(0.45f);
+            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(eastDoorLook - atriumCenterPos), 0.75f));
+            yield return new WaitForSeconds(0.35f);
 
             // ═════════════════════════════════════════════════════════════════════════
-            // BƯỚC 6: TIẾN ĐẾN CỬA PHÒNG CHÍNH VÀ NHẤN NÚT MỞ CỬA (Approach & Press Inner Door Button)
+            // BƯỚC 6: TIẾN ĐẾN CỬA PHÒNG CHÍNH VÀ NHẤN NÚT MỞ CỬA
+            // (Approach & Press Inner Door Button)
             // ═════════════════════════════════════════════════════════════════════════
             Vector3 inFrontOfEastDoor = new Vector3(28.2f, eyeHeight, 22.3f);
             Vector3 innerDoorButtonPos = (innerDoorPanel != null) ? innerDoorPanel.transform.position : new Vector3(29.35f, 1.25f, 21.35f);
 
-            // Bước đến trước cửa phòng chỉ huy
+            // Bước đều chân đến trước cửa phòng chỉ huy
             yield return StartCoroutine(MoveCameraFPS(
                 fromPos: atriumCenterPos,
                 toPos: inFrontOfEastDoor,
                 lookTarget: innerDoorButtonPos,
-                duration: 2.6f,
-                speedBob: 1.0f
+                speed: walkSpeed,
+                easeStart: true,
+                easeEnd: true
             ));
             if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
 
             // Liếc nhìn nút bấm mở cửa
             Quaternion lookButtonRot = Quaternion.LookRotation(innerDoorButtonPos - inFrontOfEastDoor);
-            yield return StartCoroutine(RotateCameraTo(lookButtonRot, 0.45f));
+            yield return StartCoroutine(RotateCameraTo(lookButtonRot, 0.40f));
 
             // Thao tác nhấn nút (âm thanh bấm nút + đèn nút xanh)
             if (innerDoorPanel != null)
@@ -469,7 +532,7 @@ namespace SpaceCyberpunk
                 yield return new WaitForSeconds(0.6f);
             }
 
-            yield return new WaitForSeconds(0.4f);
+            yield return new WaitForSeconds(0.35f);
 
             // ═════════════════════════════════════════════════════════════════════════
             // BƯỚC 7: BƯỚC VÀO TRONG, XOAY GHẾ LẠI VÀ NGỒI XUỐNG
@@ -486,27 +549,28 @@ namespace SpaceCyberpunk
                 fromPos: inFrontOfEastDoor,
                 toPos: approachChairStop,
                 lookTarget: chairWorldPos + Vector3.up * 1.0f,
-                duration: 1.6f,
-                speedBob: 0.95f
+                speed: walkSpeed,
+                easeStart: true,
+                easeEnd: true
             ));
             if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
 
             // ── XOAY GHẾ 1: Ghế xoay 180 độ quay về phía người chơi đang bước tới! ──
-            // Xoay từ 90 độ (hướng màn hình phía Đông) sang 270 độ (hướng Tây đối diện người chơi)
             yield return StartCoroutine(SwivelChairRoutine(commanderChair, 90f, 270f, 0.75f, false));
 
-            // Người chơi tiến lại sát ghế đã mở sẵn
+            // Người chơi bước tới sát ghế đã mở sẵn
             yield return StartCoroutine(MoveCameraFPS(
                 fromPos: approachChairStop,
                 toPos: standingAtChair,
                 lookTarget: seatedInChair + Vector3.up * 0.2f,
-                duration: 0.85f,
-                speedBob: 0.8f
+                speed: approachSpeed,
+                easeStart: false,
+                easeEnd: true
             ));
             if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
 
             // Hoạt họa ngồi xuống ghế (hạ độ cao từ 1.70m xuống 1.30m với độ nhún đệm ghế êm ái)
-            float sitDuration = 0.95f;
+            float sitDuration = 0.90f;
             float sitElapsed = 0f;
             while (sitElapsed < sitDuration)
             {
@@ -525,41 +589,28 @@ namespace SpaceCyberpunk
             }
             playerCamera.transform.position = seatedInChair;
 
-            yield return new WaitForSeconds(0.25f);
+            yield return new WaitForSeconds(0.20f);
 
             // ── XOAY GHẾ 2: Người chơi đã ngồi xuống ghế -> Ghế và Camera cùng xoay 180 độ quay về màn hình! ──
-            // Xoay từ 270 độ sang 90 độ, đồng bộ góc nhìn Camera nhìn ra toàn cảnh màn hình Hologram
-            yield return StartCoroutine(SwivelChairRoutine(commanderChair, 270f, 90f, 1.05f, true));
+            yield return StartCoroutine(SwivelChairRoutine(commanderChair, 270f, 90f, 1.00f, true));
 
-            yield return new WaitForSeconds(0.35f);
+            yield return new WaitForSeconds(0.20f);
 
             // ═════════════════════════════════════════════════════════════════════════
-            // BƯỚC 8: CHUYỂN VÀO GÓC NHÌN CHỌN BẢNG PORTFOLIO (Interactive Slide Viewing)
+            // BƯỚC 8: HIỆU ỨNG CHUYỂN CẢNH CYBER ĐẾN CAMERA XEM BẢNG PORTFOLIO
+            // (Sci-Fi Cyber Uplink Cinematic Transition FX)
             // ═════════════════════════════════════════════════════════════════════════
             Vector3 kioskViewPos = (station != null && station.cameraViewPoint != null) ? station.cameraViewPoint.position : new Vector3(32.5f, 2.65f, 23.0f);
             Vector3 kioskLookPos = (station != null && station.cameraLookTarget != null) ? station.cameraLookTarget.position : new Vector3(40.35f, 2.25f, 23.0f);
             float targetFov = (station != null) ? station.viewFov : 52f;
 
-            // Camera nhẹ nhàng hòa nhập vào góc nhìn toàn cảnh tương tác 5 bảng
-            float transDuration = 0.85f;
-            float transElapsed = 0f;
-            Vector3 startTransPos = playerCamera.transform.position;
-            Quaternion startTransRot = playerCamera.transform.rotation;
-            float startFov = playerCamera.fieldOfView;
-
-            while (transElapsed < transDuration)
+            // Kích hoạt hiệu ứng chuyển cảnh Cyber Optical Flare & Scanlines HUD
+            yield return StartCoroutine(PerformCyberTransitionFX(onPeakFlash: () =>
             {
-                transElapsed += Time.deltaTime;
-                float tt = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(transElapsed / transDuration));
-                playerCamera.transform.position = Vector3.Lerp(startTransPos, kioskViewPos, tt);
-                playerCamera.transform.rotation = Quaternion.Slerp(startTransRot, Quaternion.LookRotation(kioskLookPos - kioskViewPos), tt);
-                playerCamera.fieldOfView = Mathf.Lerp(startFov, targetFov, tt);
-                yield return null;
-            }
-
-            playerCamera.transform.position = kioskViewPos;
-            playerCamera.transform.rotation = Quaternion.LookRotation(kioskLookPos - kioskViewPos);
-            playerCamera.fieldOfView = targetFov;
+                playerCamera.transform.position = kioskViewPos;
+                playerCamera.transform.rotation = Quaternion.LookRotation(kioskLookPos - kioskViewPos);
+                playerCamera.fieldOfView = targetFov;
+            }));
 
             DestroySkipHUD();
             _activeRoutine = null;
@@ -577,8 +628,13 @@ namespace SpaceCyberpunk
             Vector3 approachChairStop = new Vector3(chairWorldPos.x - 1.55f, eyeHeight, chairWorldPos.z);
             Vector3 westLook = new Vector3(0f, eyeHeight, 23.0f); // Nhìn về hướng Tây (hướng lối ra)
 
-            playerCamera.transform.position = seatedInChair;
-            playerCamera.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+            // Hiệu ứng chuyển cảnh Cyber ngược từ góc nhìn xem bảng về lại góc nhìn ghế ngồi
+            yield return StartCoroutine(PerformCyberTransitionFX(onPeakFlash: () =>
+            {
+                playerCamera.transform.position = seatedInChair;
+                playerCamera.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+                playerCamera.fieldOfView = 60f;
+            }));
 
             // ═════════════════════════════════════════════════════════════════════════
             // BƯỚC 1: XOAY GHẾ VỀ PHÍA CỬA VÀ ĐỨNG DẬY (Swivel Chair & Stand Up)
@@ -605,8 +661,9 @@ namespace SpaceCyberpunk
                 fromPos: standingAtChair,
                 toPos: approachChairStop,
                 lookTarget: westLook,
-                duration: 0.9f,
-                speedBob: 1.0f
+                speed: walkSpeed,
+                easeStart: true,
+                easeEnd: false
             ));
             if (_skipRequested) { FastForwardToShip(onComplete); yield break; }
 
@@ -618,8 +675,9 @@ namespace SpaceCyberpunk
                 fromPos: approachChairStop,
                 toPos: innerDoorExitApproach,
                 lookTarget: westLook,
-                duration: 1.4f,
-                speedBob: 1.1f
+                speed: jogSpeed,
+                easeStart: false,
+                easeEnd: true
             ));
             if (_skipRequested) { FastForwardToShip(onComplete); yield break; }
 
@@ -629,29 +687,26 @@ namespace SpaceCyberpunk
                 PlayDoorWhoosh();
                 eastChamberDoor.OpenDoor(locked: true);
             }
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.40f);
 
             // ═════════════════════════════════════════════════════════════════════════
             // BƯỚC 3: CHẠY BỘ / ĐI BỘ NHANH QUA SẢNH GIỮA (Jog Through Central Atrium)
             // ═════════════════════════════════════════════════════════════════════════
             Vector3 atriumCenterPos = new Vector3(14.0f, eyeHeight, 23.0f);
-            Vector3 outerDoorExitApproach = new Vector3(-8.5f, eyeHeight, 23.0f);
+            Vector3 insideThresholdExit = new Vector3(-6.5f, eyeHeight, 23.0f);
+            Vector3 doorwayOutsideCenter = new Vector3(-11.50f, eyeHeight, 23.00f);
 
-            yield return StartCoroutine(MoveCameraFPS(
-                fromPos: innerDoorExitApproach,
-                toPos: atriumCenterPos,
-                lookTarget: westLook,
-                duration: 2.2f,
-                speedBob: 1.25f
-            ));
-            if (_skipRequested) { FastForwardToShip(onComplete); yield break; }
+            // Chạy thẳng từ cửa Đông qua tâm sảnh Rotunda đến hầm thông gió
+            Vector3[] atriumExitPath = new Vector3[]
+            {
+                atriumCenterPos,
+                insideThresholdExit
+            };
 
-            yield return StartCoroutine(MoveCameraFPS(
-                fromPos: atriumCenterPos,
-                toPos: outerDoorExitApproach,
+            yield return StartCoroutine(MoveCameraPathFPS(
+                waypoints: atriumExitPath,
                 lookTarget: westLook,
-                duration: 2.4f,
-                speedBob: 1.25f
+                speed: jogSpeed
             ));
             if (_skipRequested) { FastForwardToShip(onComplete); yield break; }
 
@@ -661,7 +716,18 @@ namespace SpaceCyberpunk
                 PlayDoorWhoosh();
                 westGateDoor.OpenDoor(locked: true);
             }
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.40f);
+
+            // Bước THẲNG QUA TÂM CỬA CỔNG TÂY ra vị trí chính giữa bên ngoài (Z = 23.0f chuẩn tâm cửa)
+            yield return StartCoroutine(MoveCameraFPS(
+                fromPos: insideThresholdExit,
+                toPos: doorwayOutsideCenter,
+                lookTarget: westLook,
+                speed: jogSpeed,
+                easeStart: false,
+                easeEnd: false
+            ));
+            if (_skipRequested) { FastForwardToShip(onComplete); yield break; }
 
             // ═════════════════════════════════════════════════════════════════════════
             // BƯỚC 4: BƯỚC RA NGOÀI BÃI ĐÁP VÀ TRỞ LẠI TÀU (Step Out & Board Ship)
@@ -683,24 +749,25 @@ namespace SpaceCyberpunk
                 : null;
 
             Vector3 exitBesideOffset = (exitShipTr != null)
-                ? (exitShipTr.right * 1.55f + exitShipTr.forward * 0.20f)
-                : new Vector3(1.55f, 0f, 0.20f);
+                ? (exitShipTr.right * 2.75f + exitShipTr.forward * 0.40f)
+                : new Vector3(2.75f, 0f, 0.40f);
             Vector3 exitShipBesidePos = new Vector3(exitShipPos.x + exitBesideOffset.x, exitPadFloorY + eyeHeight, exitShipPos.z + exitBesideOffset.z);
 
             // Chạy bộ dọc đường băng trở lại cạnh phi thuyền
             yield return StartCoroutine(MoveCameraFPS(
-                fromPos: outerDoorExitApproach,
+                fromPos: doorwayOutsideCenter,
                 toPos: exitShipBesidePos,
                 lookTarget: exitShipPos + Vector3.up * 0.8f,
-                duration: 2.8f,
-                speedBob: 1.25f
+                speed: jogSpeed,
+                easeStart: false,
+                easeEnd: true
             ));
             if (_skipRequested) { FastForwardToShip(onComplete); yield break; }
 
             // Nhìn về phía cửa khoang / buồng lái tàu
             Quaternion lookReturnShipRot = Quaternion.LookRotation((exitShipPos + Vector3.up * 0.8f) - exitShipBesidePos);
-            yield return StartCoroutine(RotateCameraTo(lookReturnShipRot, 0.55f));
-            yield return new WaitForSeconds(0.35f);
+            yield return StartCoroutine(RotateCameraTo(lookReturnShipRot, 0.50f));
+            yield return new WaitForSeconds(0.30f);
 
             // Đóng cửa căn cứ lại sau lưng
             if (westGateDoor != null)
@@ -749,10 +816,7 @@ namespace SpaceCyberpunk
             onComplete?.Invoke();
         }
 
-        /// <summary>
-        /// Di chuyển Camera mô phỏng bước chân góc nhìn thứ nhất (Head Bobbing & Footsteps)
-        /// </summary>
-                private IEnumerator SwivelChairRoutine(Transform chairTr, float fromYaw, float toYaw, float duration, bool syncCamera)
+        private IEnumerator SwivelChairRoutine(Transform chairTr, float fromYaw, float toYaw, float duration, bool syncCamera)
         {
             if (chairTr == null) yield break;
 
@@ -786,12 +850,98 @@ namespace SpaceCyberpunk
             }
         }
 
-private IEnumerator MoveCameraFPS(Vector3 fromPos, Vector3 toPos, Vector3 lookTarget, float duration, float speedBob)
+        /// <summary>
+        /// Hiệu ứng chuyển cảnh Sci-Fi Cyber Uplink khi ngồi vào ghế chỉ huy:
+        /// Lóe sáng Neon Cyan, viền khung Letterbox, HUD trạng thái đồng bộ và tan biến hé lộ 5 màn hình Portfolio.
+        /// </summary>
+        private IEnumerator PerformCyberTransitionFX(Action onPeakFlash)
         {
+            PlayCyberUplinkSound();
+
+            GameObject fxCanvasGo = new GameObject("Cyber_Transition_Overlay_FX");
+            var canvas = fxCanvasGo.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 1000;
+            var cs = fxCanvasGo.AddComponent<CanvasScaler>();
+            cs.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            cs.referenceResolution = new Vector2(1920, 1080);
+            fxCanvasGo.AddComponent<GraphicRaycaster>();
+
+            // Nền Flash lóe sáng phát quang Neon Cyan
+            var flashGo = new GameObject("Cyber_Flash");
+            flashGo.transform.SetParent(fxCanvasGo.transform, false);
+            var flashRt = flashGo.AddComponent<RectTransform>();
+            flashRt.anchorMin = Vector2.zero;
+            flashRt.anchorMax = Vector2.one;
+            flashRt.sizeDelta = Vector2.zero;
+            var flashImg = flashGo.AddComponent<Image>();
+            flashImg.color = new Color(0f, 0.95f, 1f, 0f);
+
+            // Dòng chữ HUD đồng bộ giao diện
+            var textGo = new GameObject("Uplink_Status_Text");
+            textGo.transform.SetParent(fxCanvasGo.transform, false);
+            var textRt = textGo.AddComponent<RectTransform>();
+            textRt.anchorMin = new Vector2(0.5f, 0.5f);
+            textRt.anchorMax = new Vector2(0.5f, 0.5f);
+            textRt.sizeDelta = new Vector2(900f, 80f);
+            var tmp = textGo.AddComponent<TextMeshProUGUI>();
+            tmp.text = "<color=#00e5ff><b>◆ SYSTEM UPLINK SYNCHRONIZED ◆</b></color>\n<size=16><color=#ffffffcc>COMMAND DISPLAY ONLINE</color></size>";
+            tmp.fontSize = 22;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.fontStyle = FontStyles.Bold;
+            tmp.color = new Color(1f, 1f, 1f, 0f);
+
+            // Giai đoạn 1: Flash lóe sáng rực rỡ (0.28s)
+            float inDuration = 0.28f;
+            float inElapsed = 0f;
+            while (inElapsed < inDuration)
+            {
+                inElapsed += Time.deltaTime;
+                float p = Mathf.Clamp01(inElapsed / inDuration);
+                float alpha = Mathf.SmoothStep(0f, 0.92f, p);
+                flashImg.color = new Color(0.04f, 0.85f, 1f, alpha);
+                tmp.color = new Color(1f, 1f, 1f, p);
+                yield return null;
+            }
+
+            // Đỉnh điểm Flash: Thực hiện hành động chuyển đổi (đặt vị trí Camera)
+            onPeakFlash?.Invoke();
+
+            yield return new WaitForSeconds(0.06f);
+
+            // Giai đoạn 2: Lóe sáng tan dần hé lộ các bảng Hologram (0.36s)
+            float outDuration = 0.36f;
+            float outElapsed = 0f;
+            while (outElapsed < outDuration)
+            {
+                outElapsed += Time.deltaTime;
+                float p = Mathf.Clamp01(outElapsed / outDuration);
+                float alpha = Mathf.Lerp(0.92f, 0f, p * p);
+                flashImg.color = new Color(0.04f, 0.85f, 1f, alpha);
+                tmp.color = new Color(1f, 1f, 1f, 1f - p);
+                yield return null;
+            }
+
+            Destroy(fxCanvasGo);
+        }
+
+        /// <summary>
+        /// Di chuyển Camera mô phỏng bước chân góc nhìn thứ nhất (Head Bobbing & Sway):
+        /// Vận tốc ổn định theo mét/giây, lắc lư nhẹ trái-phải (Lateral Sway),
+        /// nhấp nhô dọc (Vertical Bob) và nghiêng đầu nhẹ theo hệ trục cục bộ của Camera.
+        /// </summary>
+        private IEnumerator MoveCameraFPS(Vector3 fromPos, Vector3 toPos, Vector3 lookTarget, float speed, bool easeStart = false, bool easeEnd = false)
+        {
+            float distance = Vector3.Distance(fromPos, toPos);
+            if (distance < 0.01f)
+            {
+                playerCamera.transform.position = toPos;
+                yield break;
+            }
+
+            float duration = distance / Mathf.Max(0.5f, speed);
             float elapsed = 0f;
-            float stepInterval = 0.42f / speedBob;
-            float nextStepTime = stepInterval * 0.5f;
-            bool stepAlt = false;
+            Vector3 lastPos = fromPos;
 
             while (elapsed < duration)
             {
@@ -799,37 +949,76 @@ private IEnumerator MoveCameraFPS(Vector3 fromPos, Vector3 toPos, Vector3 lookTa
 
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / duration);
-                float smoothT = Mathf.SmoothStep(0f, 1f, t);
 
-                _bobTimer += Time.deltaTime * headBobFrequency * speedBob;
-                float bobY = Mathf.Sin(_bobTimer) * headBobAmplitude * speedBob;
-                float bobX = Mathf.Cos(_bobTimer * 0.5f) * headBobAmplitude * 0.4f * speedBob;
+                // Tính toán đường cong gia tốc chỉ ở điểm đầu hoặc điểm dừng chân
+                float moveT = t;
+                if (easeStart && easeEnd) moveT = Mathf.SmoothStep(0f, 1f, t);
+                else if (easeStart) moveT = Mathf.Sin(t * Mathf.PI * 0.5f);
+                else if (easeEnd) moveT = 1f - Mathf.Cos(t * Mathf.PI * 0.5f);
 
-                Vector3 currentBasePos = Vector3.Lerp(fromPos, toPos, smoothT);
-                playerCamera.transform.position = currentBasePos + new Vector3(bobX, bobY, 0f);
+                Vector3 currentBasePos = Vector3.Lerp(fromPos, toPos, moveT);
+                float stepDelta = Vector3.Distance(currentBasePos, lastPos);
+                lastPos = currentBasePos;
+                _strideDistance += stepDelta;
 
+                // 1. Chu kỳ bước chân tính theo quãng đường thực tế di chuyển
+                float strideCycle = (_strideDistance / stepStrideLength) * Mathf.PI * 2f;
+
+                // 2. Nhấp nhô trục dọc (2 chu kỳ mỗi sải bước, 1 lần mỗi khi chân chạm đất)
+                float vertBob = -Mathf.Abs(Mathf.Sin(strideCycle)) * headBobAmplitudeY;
+
+                // 3. Lắc lư nhẹ trái - phải (1 chu kỳ mỗi sải bước: chuyển trọng tâm từ trái sang phải)
+                float horizSway = Mathf.Sin(strideCycle * 0.5f) * headBobAmplitudeX;
+
+                // 4. Nghiêng đầu tự nhiên theo trọng tâm bước đi
+                float headRoll = -Mathf.Sin(strideCycle * 0.5f) * headBobRollAngle;
+
+                // Áp dụng trực tiếp theo hệ trục Camera: ngang = Camera.right, dọc = Vector3.up
+                Vector3 bobOffset = playerCamera.transform.right * horizSway + Vector3.up * vertBob;
+                playerCamera.transform.position = currentBasePos + bobOffset;
+
+                // Hướng mắt nhìn về mục tiêu một cách ổn định, mượt mà
                 Vector3 curLookDir = (lookTarget - playerCamera.transform.position).normalized;
                 if (curLookDir.sqrMagnitude > 0.001f)
                 {
+                    Quaternion baseLookRot = Quaternion.LookRotation(curLookDir, Vector3.up);
                     playerCamera.transform.rotation = Quaternion.Slerp(
                         playerCamera.transform.rotation,
-                        Quaternion.LookRotation(curLookDir, Vector3.up),
-                        Time.deltaTime * 10f
+                        baseLookRot * Quaternion.Euler(0f, 0f, headRoll),
+                        Time.deltaTime * 12f
                     );
                 }
 
-                // Phát tiếng bước chân
-                if (elapsed >= nextStepTime)
+                // Phát tiếng bước chân kim loại khi chân chạm sàn
+                if (_strideDistance >= _nextStepDistance)
                 {
-                    PlayFootstep(stepAlt);
-                    stepAlt = !stepAlt;
-                    nextStepTime += stepInterval;
+                    PlayFootstep(_stepAlt);
+                    _stepAlt = !_stepAlt;
+                    _nextStepDistance += stepStrideLength * 0.5f;
                 }
 
                 yield return null;
             }
 
             playerCamera.transform.position = toPos;
+        }
+
+        /// <summary>
+        /// Di chuyển liên tục qua chuỗi các điểm Waypoint với tốc độ ổn định không khựng giữa đường
+        /// </summary>
+        private IEnumerator MoveCameraPathFPS(Vector3[] waypoints, Vector3 lookTarget, float speed)
+        {
+            if (waypoints == null || waypoints.Length == 0) yield break;
+
+            for (int i = 0; i < waypoints.Length; i++)
+            {
+                if (_skipRequested) yield break;
+                Vector3 start = (i == 0) ? playerCamera.transform.position : waypoints[i - 1];
+                Vector3 target = waypoints[i];
+                bool isFirst = (i == 0);
+                bool isLast = (i == waypoints.Length - 1);
+                yield return StartCoroutine(MoveCameraFPS(start, target, lookTarget, speed, easeStart: isFirst, easeEnd: isLast));
+            }
         }
 
         private IEnumerator RotateCameraTo(Quaternion targetRot, float duration)
