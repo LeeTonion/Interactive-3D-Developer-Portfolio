@@ -39,6 +39,12 @@ namespace SpaceCyberpunk
 
         private void Update()
         {
+            if (CitadelAutomaticDoor.IsWestGateBreached)
+            {
+                if (!IsAccessGranted) TriggerTerminalBreachOverride();
+                return;
+            }
+
             if (IsAccessGranted || _isEnteringSequence) return;
 
             Camera cam = Camera.main;
@@ -301,6 +307,12 @@ namespace SpaceCyberpunk
 
         public void ResetTerminal()
         {
+            if (CitadelAutomaticDoor.IsWestGateBreached)
+            {
+                TriggerTerminalBreachOverride();
+                return;
+            }
+
             IsAccessGranted = false;
             if (codeDisplayText != null)
             {
@@ -316,6 +328,27 @@ namespace SpaceCyberpunk
             {
                 terminalScreenLight.color = ColorAmber;
                 terminalScreenLight.intensity = 1.2f;
+            }
+        }
+
+        public void TriggerTerminalBreachOverride()
+        {
+            IsAccessGranted = true;
+            _isEnteringSequence = false;
+            if (codeDisplayText != null)
+            {
+                codeDisplayText.text = "[ OVERRIDE ]";
+                codeDisplayText.color = ColorLocked;
+            }
+            if (statusText != null)
+            {
+                statusText.text = "<color=#ff3333><b>GATE BREACH DETECTED</b>\nLOCK OFFLINE // DIRECT ACCESS</color>";
+                statusText.color = ColorLocked;
+            }
+            if (terminalScreenLight != null)
+            {
+                terminalScreenLight.color = ColorLocked;
+                terminalScreenLight.intensity = 2.5f;
             }
         }
 

@@ -1882,28 +1882,34 @@ namespace SpaceCyberpunk
                 l.spotAngle = lAngle;
             };
 
-            // 1. High-Bay Central Ambient Fill (Soft, clear ice-white/blue)
-            spawnPointLight("Chamber_Center_Fill", new Vector3(35.0f, 5.8f, 23.0f), new Color(0.88f, 0.94f, 1.0f), 2.0f, 22.0f);
+            // 1. High-Bay Central Ambient Fill (Tăng cường độ sáng rõ nét)
+            spawnPointLight("Chamber_Center_Fill", new Vector3(35.0f, 5.8f, 23.0f), new Color(0.92f, 0.96f, 1.0f), 3.8f, 24.0f);
+
+            // 1b. Video Wall Fill (Chiếu sáng rực rỡ khu vực bảng Hologram)
+            spawnPointLight("Chamber_VideoWall_Fill", new Vector3(39.0f, 5.5f, 23.0f), new Color(0.90f, 0.96f, 1.0f), 3.6f, 18.0f);
 
             // 2. North Wall Architectural Sconces (Vibrant cyan wash over hexagonal pipes & wall panels)
-            spawnPointLight("NorthWall_Accent_A", new Vector3(31.5f, 3.6f, 28.2f), new Color(0.15f, 0.85f, 1.0f), 2.8f, 8.5f);
-            spawnPointLight("NorthWall_Accent_B", new Vector3(37.0f, 3.6f, 28.2f), new Color(0.15f, 0.85f, 1.0f), 2.8f, 8.5f);
+            spawnPointLight("NorthWall_Accent_A", new Vector3(31.5f, 3.6f, 28.2f), new Color(0.20f, 0.90f, 1.0f), 3.2f, 9.5f);
+            spawnPointLight("NorthWall_Accent_B", new Vector3(37.0f, 3.6f, 28.2f), new Color(0.20f, 0.90f, 1.0f), 3.2f, 9.5f);
 
             // 3. South Wall Architectural Sconces (Warm amber complementary contrast glow)
-            spawnPointLight("SouthWall_Accent_A", new Vector3(31.5f, 3.6f, 17.8f), new Color(1.0f, 0.68f, 0.22f), 2.8f, 8.5f);
-            spawnPointLight("SouthWall_Accent_B", new Vector3(37.0f, 3.6f, 17.8f), new Color(1.0f, 0.68f, 0.22f), 2.8f, 8.5f);
+            spawnPointLight("SouthWall_Accent_A", new Vector3(31.5f, 3.6f, 17.8f), new Color(1.0f, 0.72f, 0.28f), 3.2f, 9.5f);
+            spawnPointLight("SouthWall_Accent_B", new Vector3(37.0f, 3.6f, 17.8f), new Color(1.0f, 0.72f, 0.28f), 3.2f, 9.5f);
 
             // 4. Console Workstation Downlights (Focused task illumination for desks & keyboards)
-            spawnSpotLight("TaskLight_North_Fore", new Vector3(33.0f, 4.4f, 28.0f), new Vector3(85f, 0f, 0f), new Color(0.92f, 0.96f, 1.0f), 2.6f, 6.5f, 70f);
-            spawnSpotLight("TaskLight_North_Aft", new Vector3(37.2f, 4.4f, 26.5f), new Vector3(85f, 0f, 0f), new Color(0.92f, 0.96f, 1.0f), 2.6f, 6.5f, 70f);
-            spawnSpotLight("TaskLight_South_Fore", new Vector3(33.0f, 4.4f, 18.0f), new Vector3(85f, 0f, 0f), new Color(0.92f, 0.96f, 1.0f), 2.6f, 6.5f, 70f);
-            spawnSpotLight("TaskLight_South_Aft", new Vector3(37.2f, 4.4f, 19.5f), new Vector3(85f, 0f, 0f), new Color(0.92f, 0.96f, 1.0f), 2.6f, 6.5f, 70f);
+            spawnSpotLight("TaskLight_North_Fore", new Vector3(33.0f, 4.4f, 28.0f), new Vector3(85f, 0f, 0f), new Color(0.95f, 0.98f, 1.0f), 3.0f, 7.5f, 75f);
+            spawnSpotLight("TaskLight_North_Aft", new Vector3(37.2f, 4.4f, 26.5f), new Vector3(85f, 0f, 0f), new Color(0.95f, 0.98f, 1.0f), 3.0f, 7.5f, 75f);
+            spawnSpotLight("TaskLight_South_Fore", new Vector3(33.0f, 4.4f, 18.0f), new Vector3(85f, 0f, 0f), new Color(0.95f, 0.98f, 1.0f), 3.0f, 7.5f, 75f);
+            spawnSpotLight("TaskLight_South_Aft", new Vector3(37.2f, 4.4f, 19.5f), new Vector3(85f, 0f, 0f), new Color(0.95f, 0.98f, 1.0f), 3.0f, 7.5f, 75f);
+
+            // 4b. Overhead Downlight for Commander Chair & Center Console
+            spawnSpotLight("Chamber_Commander_Desk_Spot", new Vector3(37.0f, 5.2f, 23.0f), new Vector3(90f, 0f, 0f), new Color(0.96f, 0.98f, 1.0f), 3.5f, 8.5f, 80f);
 
             // 5. Entrance Walkway Runner Downlight
-            spawnSpotLight("Walkway_Entry_Downlight", new Vector3(28.0f, 4.5f, 23.0f), new Vector3(90f, 0f, 0f), new Color(0.85f, 0.95f, 1.0f), 2.2f, 7.0f, 75f);
+            spawnSpotLight("Walkway_Entry_Downlight", new Vector3(28.0f, 4.5f, 23.0f), new Vector3(90f, 0f, 0f), new Color(0.90f, 0.96f, 1.0f), 3.0f, 8.0f, 80f);
 
             // 6. Video Wall Backing Halo Glow & Key Spotlight on Main Screen
-            spawnPointLight("VideoWall_Backing_Halo", new Vector3(40.8f, 3.8f, 23.0f), new Color(0.1f, 0.7f, 1.0f), 2.0f, 7.0f);
+            spawnPointLight("VideoWall_Backing_Halo", new Vector3(40.8f, 3.8f, 23.0f), new Color(0.15f, 0.85f, 1.0f), 2.8f, 9.0f);
 
             var screenSpotGo = new GameObject("Chamber_Screen_Spotlight");
             screenSpotGo.transform.SetParent(lightGroup.transform, false);
@@ -1911,10 +1917,10 @@ namespace SpaceCyberpunk
             screenSpotGo.transform.rotation = Quaternion.Euler(50f, 90f, 0f);
             var ss = screenSpotGo.AddComponent<Light>();
             ss.type = LightType.Spot;
-            ss.range = 10f;
-            ss.spotAngle = 65f;
-            ss.intensity = 3.2f;
-            ss.color = new Color(0.95f, 0.98f, 1.0f);
+            ss.range = 12f;
+            ss.spotAngle = 75f;
+            ss.intensity = 4.8f;
+            ss.color = new Color(0.96f, 0.98f, 1.0f);
 
             // ─────────────────────────────────────────────────────────────────
             // G. EXACT CAMERA VIEWPOINT & LOOK TARGET (LOCKED & PRESERVED)

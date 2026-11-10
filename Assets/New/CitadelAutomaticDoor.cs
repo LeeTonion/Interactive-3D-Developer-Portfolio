@@ -35,6 +35,17 @@ namespace SpaceCyberpunk
         public float triggerDistance = 16.0f;
         public float closeDistance = 22.0f;
 
+        [Header("Destructible Gate Settings (Bắn thủng cửa)")]
+        [Tooltip("Lượng máu tối đa của cửa căn cứ trước khi bị bắn nổ thủng")]
+        public float maxHealth = 220f;
+        [Tooltip("Máu hiện tại")]
+        public float currentHealth = 220f;
+        [Tooltip("Trạng thái cổng đã bị bắn thủng / phá hủy hoàn toàn")]
+        public bool isBreached = false;
+        public static bool IsWestGateBreached = false;
+
+        public bool IsDestroyed => isBreached;
+
         [Header("Visual Indicators")]
         public Light statusLight;
         public Renderer statusLedLeft;
@@ -48,6 +59,13 @@ namespace SpaceCyberpunk
         private float _stayOpenTimer = 0f;
         private ParticleSystem _steamLeft;
         private ParticleSystem _steamRight;
+        private ParticleSystem _breachSmoke;
+        private ParticleSystem _sparkEmitter;
+        private AudioSource _audioSource;
+        private AudioClip _impactClip;
+        private AudioClip _explosionClip;
+        private AudioClip _sparkClip;
+        private Coroutine _shakeRoutine;
 
         public bool IsFullyOpen => _currentOpen >= 0.95f;
         public bool IsFullyClosed => _currentOpen <= 0.05f;
@@ -55,6 +73,8 @@ namespace SpaceCyberpunk
 
         private void Awake()
         {
+            currentHealth = maxHealth;
+            BuildProceduralAudio();
             InitializeDoorReferences();
             CreateStatusIndicators();
             CreateSteamVentEmitters();
@@ -62,8 +82,82 @@ namespace SpaceCyberpunk
 
         private void Start()
         {
-            // Mặc định cửa bắt đầu ở trạng thái đóng kín
-            SetOpenImmediate(0f);
+            if (isBreached || IsWestGateBreached)
+            {
+                TriggerCatastrophicBreach(instant: true);
+            }
+            else
+            {
+                // Mặc định cửa bắt đầu ở trạng thái đóng kín
+                SetOpenImmediate(0f);
+            }
+        }
+
+        private void BuildProceduralAudio()
+        {
+            _audioSource = gameObject.GetComponent<AudioSource>();
+            if (_audioSource == null) _audioSource = gameObject.AddComponent<AudioSource>();
+            _audioSource.spatialBlend = 0.85f;
+            _audioSource.playOnAwake = false;
+            _audioSource.rolloffMode = AudioRolloffMode.Linear;
+            _audioSource.minDistance = 3f;
+            _audioSource.maxDistance = 60f;
+
+            _impactClip = CreateImpactTone(220f, 0.18f, 0.45f);
+            _explosionClip = CreateBreachExplosionClip(1.4f);
+            _sparkClip = CreateElectricSparkClip(0.12f);
+        }
+
+        private static AudioClip CreateImpactTone(float freq, float duration, float volume)
+        {
+            int sampleRate = 44100;
+            int samples = (int)(sampleRate * duration);
+            float[] data = new float[samples];
+            for (int i = 0; i < samples; i++)
+            {
+                float t = (float)i / sampleRate;
+                float decay = Mathf.Exp(-t * 18f);
+                float noise = UnityEngine.Random.Range(-0.4f, 0.4f);
+                float tone = Mathf.Sin(2f * Mathf.PI * freq * t);
+                data[i] = (tone * 0.6f + noise * 0.4f) * decay * volume;
+            }
+            var clip = AudioClip.Create("Gate_Hit_Clang", samples, 1, sampleRate, false);
+            clip.SetData(data, 0);
+            return clip;
+        }
+
+        private static AudioClip CreateBreachExplosionClip(float duration)
+        {
+            int sampleRate = 44100;
+            int samples = (int)(sampleRate * duration);
+            float[] data = new float[samples];
+            for (int i = 0; i < samples; i++)
+            {
+                float t = (float)i / sampleRate;
+                float decay = Mathf.Exp(-t * 3.8f);
+                float noise = UnityEngine.Random.Range(-1f, 1f);
+                float sub = Mathf.Sin(2f * Mathf.PI * Mathf.Lerp(90f, 32f, t / duration) * t);
+                data[i] = (sub * 0.65f + noise * 0.55f) * decay * 0.75f;
+            }
+            var clip = AudioClip.Create("Gate_Breach_Explosion", samples, 1, sampleRate, false);
+            clip.SetData(data, 0);
+            return clip;
+        }
+
+        private static AudioClip CreateElectricSparkClip(float duration)
+        {
+            int sampleRate = 44100;
+            int samples = (int)(sampleRate * duration);
+            float[] data = new float[samples];
+            for (int i = 0; i < samples; i++)
+            {
+                float noise = UnityEngine.Random.Range(-0.8f, 0.8f);
+                float decay = 1f - ((float)i / samples);
+                data[i] = noise * decay * 0.35f;
+            }
+            var clip = AudioClip.Create("Gate_Electric_Spark", samples, 1, sampleRate, false);
+            clip.SetData(data, 0);
+            return clip;
         }
 
         private void InitializeDoorReferences()
@@ -72,6 +166,31 @@ namespace SpaceCyberpunk
             if (doorRight == null) doorRight = transform.Find("door_1_right");
             if (animator == null) animator = GetComponent<Animator>();
             if (animator != null) animator.enabled = false; // Tắt animator để không bị kẹp chết ở vị trí hé mở 2.47m
+
+            // Đảm bảo cả 2 cánh cửa cơ khí đều có Collider để đạn Laser bắn trúng
+            EnsureDoorCollider(doorLeft, new Vector3(2.4f, 3.8f, 0.5f), new Vector3(0f, 1.8f, 0f));
+            EnsureDoorCollider(doorRight, new Vector3(2.4f, 3.8f, 0.5f), new Vector3(0f, 1.8f, 0f));
+
+            // Collider bao trùm toàn bộ vòm cổng để nhận sát thương đạn pháo
+            var portalCol = GetComponent<BoxCollider>();
+            if (portalCol == null)
+            {
+                portalCol = gameObject.AddComponent<BoxCollider>();
+                portalCol.size = new Vector3(4.8f, 4.4f, 0.9f);
+                portalCol.center = new Vector3(0f, 2.0f, 0f);
+            }
+        }
+
+        private void EnsureDoorCollider(Transform doorTr, Vector3 size, Vector3 center)
+        {
+            if (doorTr == null) return;
+            var col = doorTr.GetComponent<BoxCollider>();
+            if (col == null)
+            {
+                col = doorTr.gameObject.AddComponent<BoxCollider>();
+                col.size = size;
+                col.center = center;
+            }
         }
 
         private void CreateStatusIndicators()
@@ -171,12 +290,40 @@ namespace SpaceCyberpunk
 
         private void LateUpdate()
         {
+            if (isBreached)
+            {
+                // Cửa đã bị bắn nổ thủng: Giữ nguyên vị trí biến dạng toác mở vĩnh viễn
+                if (doorLeft != null)
+                {
+                    doorLeft.localPosition = new Vector3(3.90f, 0.0057f, 0.15f);
+                    doorLeft.localRotation = Quaternion.Euler(0f, 0f, -4.5f);
+                }
+                if (doorRight != null)
+                {
+                    doorRight.localPosition = new Vector3(-3.90f, 0f, 0.15f);
+                    doorRight.localRotation = Quaternion.Euler(0f, 0f, 5.2f);
+                }
+                return;
+            }
+
             // Luôn áp dụng vị trí cửa tại LateUpdate để đảm bảo không bị bất kỳ Animator nào ghi đè
             ApplyDoorPositions();
         }
 
         private void Update()
         {
+            if (isBreached)
+            {
+                // Đèn báo động khẩn cấp chập chờn màu đỏ sau khi cửa bị phá hủy
+                if (statusLight != null)
+                {
+                    float flicker = (Time.frameCount % 8 < 4) ? 3.5f : 0.8f;
+                    statusLight.color = new Color(1.0f, 0.08f, 0.05f);
+                    statusLight.intensity = flicker;
+                }
+                return;
+            }
+
             // Kiểm tra proximity tự động khi không bị khóa điều khiển bởi cinematic
             if (autoProximity && !_isLocked)
             {
@@ -190,6 +337,212 @@ namespace SpaceCyberpunk
                 _currentOpen = Mathf.MoveTowards(_currentOpen, _targetOpen, Time.deltaTime * speed);
                 ApplyDoorPositions();
                 UpdateVisualStatus();
+            }
+        }
+
+        /// <summary>
+        /// Nhận sát thương khi bị tàu vũ trụ của người chơi hoặc các vũ khí bắn trúng
+        /// </summary>
+        public void TakeDamage(float damage, Vector3 hitPoint, Vector3 shotDir)
+        {
+            if (isBreached) return;
+
+            currentHealth -= damage;
+
+            // Âm thanh kim loại va chạm
+            if (_audioSource != null && _impactClip != null)
+            {
+                _audioSource.pitch = UnityEngine.Random.Range(0.92f, 1.08f);
+                _audioSource.PlayOneShot(_impactClip, 0.65f);
+            }
+
+            // Rung chấn cửa khi trúng đạn
+            if (_shakeRoutine != null) StopCoroutine(_shakeRoutine);
+            _shakeRoutine = StartCoroutine(DoImpactShake(shotDir));
+
+            // Hiệu ứng tia lửa xả ra từ khe cửa
+            TriggerSteamPuff();
+
+            // Nếu máu giảm dưới 50%: Phát tia lửa điện cảnh báo
+            if (currentHealth <= maxHealth * 0.5f)
+            {
+                if (statusLight != null)
+                {
+                    statusLight.color = new Color(1.0f, 0.35f, 0.1f);
+                    statusLight.intensity = 3.0f;
+                }
+            }
+
+            // Khi máu cạn kiệt: NỔ TUNG VÀ BẮN THỦNG CỬA HOÀN TOÀN
+            if (currentHealth <= 0f)
+            {
+                TriggerCatastrophicBreach();
+            }
+        }
+
+        private IEnumerator DoImpactShake(Vector3 shotDir)
+        {
+            Vector3 localShake = transform.InverseTransformDirection(shotDir).normalized * 0.08f;
+            float elapsed = 0f;
+            float duration = 0.16f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float damp = 1f - (elapsed / duration);
+                float sin = Mathf.Sin(elapsed * 45f) * damp;
+                if (doorLeft != null) doorLeft.localPosition += localShake * sin;
+                if (doorRight != null) doorRight.localPosition += localShake * sin;
+                yield return null;
+            }
+            ApplyDoorPositions();
+        }
+
+        /// <summary>
+        /// Kích hoạt nổ tung, bắn thủng và toác mở vĩnh viễn vòm cửa căn cứ
+        /// </summary>
+        public void TriggerCatastrophicBreach(bool instant = false)
+        {
+            if (isBreached && !instant) return;
+
+            isBreached = true;
+            IsWestGateBreached = true;
+            _isLocked = true;
+            autoProximity = false;
+            _currentOpen = 1f;
+            _targetOpen = 1f;
+
+            // Biến dạng cánh cửa toác sang 2 bên
+            if (doorLeft != null)
+            {
+                doorLeft.localPosition = new Vector3(3.90f, 0.0057f, 0.15f);
+                doorLeft.localRotation = Quaternion.Euler(0f, 0f, -4.5f);
+            }
+            if (doorRight != null)
+            {
+                doorRight.localPosition = new Vector3(-3.90f, 0f, 0.15f);
+                doorRight.localRotation = Quaternion.Euler(0f, 0f, 5.2f);
+            }
+
+            // Đèn vòm chuyển sang báo động đỏ
+            if (statusLight != null)
+            {
+                statusLight.color = new Color(1.0f, 0.08f, 0.05f);
+                statusLight.intensity = 3.5f;
+            }
+
+            // Bật khói và tia lửa điện chập chờn liên tục
+            CreateBreachContinuousSmokeAndSparks();
+
+            if (!instant)
+            {
+                // Âm thanh nổ vang rền
+                if (_audioSource != null && _explosionClip != null)
+                {
+                    _audioSource.pitch = 0.95f;
+                    _audioSource.PlayOneShot(_explosionClip, 1.0f);
+                }
+
+                // Tạo các mảnh vỡ kim loại nóng chảy văng tung tóe ra đường băng
+                SpawnFieryDoorDebris();
+            }
+
+            // Ghi đè trạng thái bàn phím mật mã ngoài cửa: Báo Breach Override, không cần nhập mã
+            var keypad = CitadelKeypadTerminal.Instance ?? FindFirstObjectByType<CitadelKeypadTerminal>();
+            if (keypad != null)
+            {
+                keypad.TriggerTerminalBreachOverride();
+            }
+        }
+
+        private void CreateBreachContinuousSmokeAndSparks()
+        {
+            if (_breachSmoke == null)
+            {
+                var smokeGo = new GameObject("Gate_Breach_Smoke");
+                smokeGo.transform.SetParent(transform, false);
+                smokeGo.transform.localPosition = new Vector3(0f, 2.2f, 0f);
+
+                _breachSmoke = smokeGo.AddComponent<ParticleSystem>();
+                var main = _breachSmoke.main;
+                main.playOnAwake = true;
+                main.loop = true;
+                main.duration = 1.0f;
+                main.startLifetime = 1.8f;
+                main.startSpeed = new ParticleSystem.MinMaxCurve(0.8f, 2.2f);
+                main.startSize = new ParticleSystem.MinMaxCurve(0.6f, 1.6f);
+                main.startColor = new Color(0.2f, 0.22f, 0.25f, 0.65f);
+
+                var emission = _breachSmoke.emission;
+                emission.rateOverTime = 22f;
+
+                var shape = _breachSmoke.shape;
+                shape.shapeType = ParticleSystemShapeType.Box;
+                shape.scale = new Vector3(3.2f, 2.0f, 0.5f);
+
+                var rend = _breachSmoke.GetComponent<ParticleSystemRenderer>();
+                rend.renderMode = ParticleSystemRenderMode.Billboard;
+#if UNITY_EDITOR
+                var smokeMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/New/Materials/Mat_Cosmic_Smoke.mat");
+                if (smokeMat != null) rend.sharedMaterial = smokeMat;
+#endif
+            }
+
+            if (_sparkEmitter == null)
+            {
+                StartCoroutine(BreachElectricSparkingRoutine());
+            }
+        }
+
+        private IEnumerator BreachElectricSparkingRoutine()
+        {
+            while (isBreached)
+            {
+                yield return new WaitForSeconds(UnityEngine.Random.Range(0.6f, 1.8f));
+                if (!isBreached) yield break;
+
+                // Phát tia lửa điện chập giật
+                if (_steamLeft != null) _steamLeft.Emit(UnityEngine.Random.Range(4, 10));
+                if (_audioSource != null && _sparkClip != null)
+                {
+                    _audioSource.pitch = UnityEngine.Random.Range(1.1f, 1.6f);
+                    _audioSource.PlayOneShot(_sparkClip, 0.35f);
+                }
+            }
+        }
+
+        private void SpawnFieryDoorDebris()
+        {
+            Vector3 blastCenter = transform.position + Vector3.up * 2.0f;
+            for (int i = 0; i < 14; i++)
+            {
+                var debris = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                debris.name = "Door_Breached_Shrapnel";
+                debris.transform.position = blastCenter + UnityEngine.Random.insideUnitSphere * 0.8f;
+                debris.transform.localScale = new Vector3(
+                    UnityEngine.Random.Range(0.12f, 0.35f),
+                    UnityEngine.Random.Range(0.12f, 0.35f),
+                    UnityEngine.Random.Range(0.08f, 0.25f)
+                );
+
+                var mr = debris.GetComponent<MeshRenderer>();
+                if (mr != null)
+                {
+                    var mat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
+                    mat.EnableKeyword("_EMISSION");
+                    mat.color = new Color(0.2f, 0.2f, 0.2f);
+                    mat.SetColor("_EmissionColor", new Color(1.0f, 0.35f, 0.05f) * 2.5f);
+                    mr.material = mat;
+                }
+
+                var rb = debris.AddComponent<Rigidbody>();
+                rb.mass = 2.5f;
+                Vector3 blastDir = (transform.forward * UnityEngine.Random.Range(-0.8f, 1.2f) +
+                                    transform.right * UnityEngine.Random.Range(-1.5f, 1.5f) +
+                                    Vector3.up * UnityEngine.Random.Range(0.8f, 2.5f)).normalized;
+                rb.linearVelocity = blastDir * UnityEngine.Random.Range(8f, 18f);
+                rb.angularVelocity = UnityEngine.Random.insideUnitSphere * 20f;
+
+                Destroy(debris, UnityEngine.Random.Range(4.0f, 7.0f));
             }
         }
 
@@ -225,6 +578,7 @@ namespace SpaceCyberpunk
 
         public void OpenDoor(bool locked = false)
         {
+            if (isBreached) return;
             _isLocked = locked;
             if (_targetOpen < 0.5f)
             {
@@ -236,6 +590,7 @@ namespace SpaceCyberpunk
 
         public void CloseDoor(bool unlock = true)
         {
+            if (isBreached) return;
             if (unlock) _isLocked = false;
             if (_targetOpen > 0.5f)
             {
@@ -246,11 +601,13 @@ namespace SpaceCyberpunk
 
         public void SetLock(bool locked)
         {
+            if (isBreached) return;
             _isLocked = locked;
         }
 
         public void SetOpenImmediate(float openNormalized)
         {
+            if (isBreached) return;
             _currentOpen = Mathf.Clamp01(openNormalized);
             _targetOpen = _currentOpen;
             ApplyDoorPositions();

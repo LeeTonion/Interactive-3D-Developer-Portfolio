@@ -269,6 +269,79 @@ namespace SpaceCyberpunk
             {
                 commanderChair.rotation = Quaternion.Euler(0f, 90f, 0f);
             }
+
+            // Đảm bảo ánh sáng phòng chính rực rỡ và rõ nét
+            EnsureEnhancedChamberLighting();
+        }
+
+        /// <summary>
+        /// Bổ sung và tăng cường ánh sáng rực rỡ, sắc nét cho phòng chính (Command Room / East Chamber)
+        /// </summary>
+        public static void EnsureEnhancedChamberLighting()
+        {
+            var lightGroup = GameObject.Find("Chamber_Atmospheric_Lighting");
+            if (lightGroup == null)
+            {
+                var chamber = GameObject.Find("Chamber_Command_Structure") ?? GameObject.Find("AboutIsland");
+                if (chamber != null)
+                {
+                    lightGroup = new GameObject("Chamber_Atmospheric_Lighting");
+                    lightGroup.transform.SetParent(chamber.transform, false);
+                }
+            }
+            if (lightGroup == null) return;
+
+            // 1. Ánh sáng tràn vòm trần trung tâm: Tăng cường độ sáng bao quát toàn bộ gian phòng
+            EnsurePointLight(lightGroup.transform, "Chamber_Center_Fill", new Vector3(35.0f, 5.8f, 23.0f), new Color(0.92f, 0.96f, 1.0f), 3.8f, 24.0f);
+
+            // 2. Chiếu sáng nền khu vực dàn màn hình Portfolio phía sau
+            EnsurePointLight(lightGroup.transform, "Chamber_VideoWall_Fill", new Vector3(39.0f, 5.5f, 23.0f), new Color(0.90f, 0.96f, 1.0f), 3.6f, 18.0f);
+
+            // 3. Spotlight rọi thẳng xuống bàn ghế chỉ huy
+            EnsureSpotLight(lightGroup.transform, "Chamber_Commander_Desk_Spot", new Vector3(37.0f, 5.2f, 23.0f), new Vector3(90f, 0f, 0f), new Color(0.96f, 0.98f, 1.0f), 3.5f, 8.5f, 80f);
+
+            // 4. Spotlight chính rọi trực diện vào cụm 5 màn hình Portfolio
+            EnsureSpotLight(lightGroup.transform, "Chamber_Screen_Spotlight", new Vector3(37.5f, 5.50f, 23.0f), new Vector3(50f, 90f, 0f), new Color(0.96f, 0.98f, 1.0f), 4.8f, 12.0f, 75f);
+
+            // 5. Đèn rọi vòm cửa lối vào phòng chỉ huy
+            EnsureSpotLight(lightGroup.transform, "Walkway_Entry_Downlight", new Vector3(28.0f, 4.5f, 23.0f), new Vector3(90f, 0f, 0f), new Color(0.90f, 0.96f, 1.0f), 3.0f, 8.0f, 80f);
+        }
+
+        private static Light EnsurePointLight(Transform parent, string name, Vector3 pos, Color color, float intensity, float range)
+        {
+            var tr = parent.Find(name);
+            GameObject go = tr != null ? tr.gameObject : new GameObject(name);
+            if (tr == null)
+            {
+                go.transform.SetParent(parent, false);
+                go.transform.position = pos;
+            }
+            var l = go.GetComponent<Light>() ?? go.AddComponent<Light>();
+            l.type = LightType.Point;
+            l.color = color;
+            l.intensity = intensity;
+            l.range = range;
+            return l;
+        }
+
+        private static Light EnsureSpotLight(Transform parent, string name, Vector3 pos, Vector3 rot, Color color, float intensity, float range, float spotAngle)
+        {
+            var tr = parent.Find(name);
+            GameObject go = tr != null ? tr.gameObject : new GameObject(name);
+            if (tr == null)
+            {
+                go.transform.SetParent(parent, false);
+                go.transform.position = pos;
+                go.transform.rotation = Quaternion.Euler(rot);
+            }
+            var l = go.GetComponent<Light>() ?? go.AddComponent<Light>();
+            l.type = LightType.Spot;
+            l.color = color;
+            l.intensity = intensity;
+            l.range = range;
+            l.spotAngle = spotAngle;
+            return l;
+        }
         }
 
         /// <summary>
@@ -295,8 +368,8 @@ namespace SpaceCyberpunk
         {
             AutoResolveReferences();
 
-            // Khóa cửa ban đầu để chỉ mở khi nhập đúng mật khẩu
-            if (westGateDoor != null)
+            // Khóa cửa ban đầu để chỉ mở khi nhập đúng mật khẩu (chỉ khi cổng chưa bị bắn nổ thủng)
+            if (westGateDoor != null && !westGateDoor.IsDestroyed)
             {
                 westGateDoor.autoProximity = false;
                 westGateDoor.SetOpenImmediate(0f);
@@ -372,84 +445,106 @@ namespace SpaceCyberpunk
             ));
             if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
 
-            // ═════════════════════════════════════════════════════════════════════════
-            // BƯỚC 2: TIẾN ĐẾN ĐÚNG BÀN PHÍM AN NINH TẠI BỆ NGOÀI CỔNG
-            // ═════════════════════════════════════════════════════════════════════════
-            Vector3 outsideGateApproach = new Vector3(-15.5f, eyeHeight, 22.0f);
-            Vector3 inFrontOfKeypad = new Vector3(-12.75f, eyeHeight, 20.81f);
-            Vector3 keypadScreenPos = (keypadTerminal != null)
-                ? keypadTerminal.transform.position + new Vector3(0f, 1.25f, 0f)
-                : new Vector3(-11.84f, 1.34f, 20.81f);
-
-            // Đi dọc đường băng dẫn vào tiếp cận cổng
-            yield return StartCoroutine(MoveCameraFPS(
-                fromPos: runwayDeckPos,
-                toPos: outsideGateApproach,
-                lookTarget: inFrontOfKeypad,
-                speed: walkSpeed,
-                easeStart: false,
-                easeEnd: false
-            ));
-            if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
-
-            // Bước chậm lại tiếp cận đứng thẳng trước màn hình console an ninh
-            yield return StartCoroutine(MoveCameraFPS(
-                fromPos: outsideGateApproach,
-                toPos: inFrontOfKeypad,
-                lookTarget: keypadScreenPos,
-                speed: approachSpeed,
-                easeStart: false,
-                easeEnd: true
-            ));
-            if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
-
-            // ═════════════════════════════════════════════════════════════════════════
-            // BƯỚC 3: NHẬP MẬT MÃ TẠI BÀN PHÍM (Enter Passcode)
-            // Camera cúi nhẹ vào màn hình bàn phím an ninh
-            // ═════════════════════════════════════════════════════════════════════════
-            Quaternion lookKeypadRot = Quaternion.LookRotation(keypadScreenPos - inFrontOfKeypad);
-            yield return StartCoroutine(RotateCameraTo(lookKeypadRot, 0.40f));
-
-            if (keypadTerminal != null)
-            {
-                yield return StartCoroutine(keypadTerminal.PerformPasscodeEntrySequence(null));
-            }
-            else
-            {
-                yield return new WaitForSeconds(1.5f);
-            }
-
-            yield return new WaitForSeconds(0.25f);
-
-            // ═════════════════════════════════════════════════════════════════════════
-            // BƯỚC 4: BƯỚC RA GIỮA VÒM CỬA, CỬA MỞ RA VÀ BƯỚC THẲNG VÀO TRONG
-            // (Step to Center of Doorway, Door Opens & Walk Straight Inside)
-            // ═════════════════════════════════════════════════════════════════════════
-            // Điểm chính giữa vòm cửa bên ngoài (Tọa độ Z = 23.0f chuẩn tâm vòm cửa)
+            bool isGateBreached = (westGateDoor != null && westGateDoor.IsDestroyed) || CitadelAutomaticDoor.IsWestGateBreached;
             Vector3 doorwayOutsideCenter = new Vector3(-11.50f, eyeHeight, 23.00f);
             Vector3 doorCorridorLook = new Vector3(0f, eyeHeight, 23.00f); // Hướng nhìn thẳng vào tâm hành lang
 
-            // Bước từ bệ bàn phím ra ĐỨNG NGAY GIỮA CỬA
-            yield return StartCoroutine(MoveCameraFPS(
-                fromPos: inFrontOfKeypad,
-                toPos: doorwayOutsideCenter,
-                lookTarget: doorCorridorLook,
-                speed: walkSpeed,
-                easeStart: true,
-                easeEnd: true
-            ));
-            if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
-
-            // Đứng ngay chính giữa cửa, hướng mắt nhìn thẳng vào trong
-            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(doorCorridorLook - doorwayOutsideCenter), 0.35f));
-
-            // Kích hoạt cửa trượt mở hoàn toàn từ chính diện + hiệu ứng xả khí nén
-            if (westGateDoor != null)
+            if (isGateBreached)
             {
-                PlayDoorWhoosh();
-                westGateDoor.OpenDoor(locked: true);
+                // ═════════════════════════════════════════════════════════════════════════
+                // CỔNG ĐÃ BỊ BẮN THỦNG / PHÁ HỦY: KHÔNG CẦN NHẬP MẬT KHẨU!
+                // Đi thẳng từ đường băng qua vòm cửa đã bị toác mở bốc khói vào căn cứ
+                // ═════════════════════════════════════════════════════════════════════════
+                yield return StartCoroutine(MoveCameraFPS(
+                    fromPos: runwayDeckPos,
+                    toPos: doorwayOutsideCenter,
+                    lookTarget: doorCorridorLook,
+                    speed: walkSpeed,
+                    easeStart: false,
+                    easeEnd: true
+                ));
+                if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
+
+                yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(doorCorridorLook - doorwayOutsideCenter), 0.35f));
+                yield return new WaitForSeconds(0.20f);
             }
-            yield return new WaitForSeconds(0.65f);
+            else
+            {
+                // ═════════════════════════════════════════════════════════════════════════
+                // BƯỚC 2: TIẾN ĐẾN ĐÚNG BÀN PHÍM AN NINH TẠI BỆ NGOÀI CỔNG
+                // ═════════════════════════════════════════════════════════════════════════
+                Vector3 outsideGateApproach = new Vector3(-15.5f, eyeHeight, 22.0f);
+                Vector3 inFrontOfKeypad = new Vector3(-12.75f, eyeHeight, 20.81f);
+                Vector3 keypadScreenPos = (keypadTerminal != null)
+                    ? keypadTerminal.transform.position + new Vector3(0f, 1.25f, 0f)
+                    : new Vector3(-11.84f, 1.34f, 20.81f);
+
+                // Đi dọc đường băng dẫn vào tiếp cận cổng
+                yield return StartCoroutine(MoveCameraFPS(
+                    fromPos: runwayDeckPos,
+                    toPos: outsideGateApproach,
+                    lookTarget: inFrontOfKeypad,
+                    speed: walkSpeed,
+                    easeStart: false,
+                    easeEnd: false
+                ));
+                if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
+
+                // Bước chậm lại tiếp cận đứng thẳng trước màn hình console an ninh
+                yield return StartCoroutine(MoveCameraFPS(
+                    fromPos: outsideGateApproach,
+                    toPos: inFrontOfKeypad,
+                    lookTarget: keypadScreenPos,
+                    speed: approachSpeed,
+                    easeStart: false,
+                    easeEnd: true
+                ));
+                if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
+
+                // ═════════════════════════════════════════════════════════════════════════
+                // BƯỚC 3: NHẬP MẬT MÃ TẠI BÀN PHÍM (Enter Passcode)
+                // Camera cúi nhẹ vào màn hình bàn phím an ninh
+                // ═════════════════════════════════════════════════════════════════════════
+                Quaternion lookKeypadRot = Quaternion.LookRotation(keypadScreenPos - inFrontOfKeypad);
+                yield return StartCoroutine(RotateCameraTo(lookKeypadRot, 0.40f));
+
+                if (keypadTerminal != null)
+                {
+                    yield return StartCoroutine(keypadTerminal.PerformPasscodeEntrySequence(null));
+                }
+                else
+                {
+                    yield return new WaitForSeconds(1.5f);
+                }
+
+                yield return new WaitForSeconds(0.25f);
+
+                // ═════════════════════════════════════════════════════════════════════════
+                // BƯỚC 4: BƯỚC RA GIỮA VÒM CỬA, CỬA MỞ RA VÀ BƯỚC THẲNG VÀO TRONG
+                // (Step to Center of Doorway, Door Opens & Walk Straight Inside)
+                // ═════════════════════════════════════════════════════════════════════════
+                // Bước từ bệ bàn phím ra ĐỨNG NGAY GIỮA CỬA
+                yield return StartCoroutine(MoveCameraFPS(
+                    fromPos: inFrontOfKeypad,
+                    toPos: doorwayOutsideCenter,
+                    lookTarget: doorCorridorLook,
+                    speed: walkSpeed,
+                    easeStart: true,
+                    easeEnd: true
+                ));
+                if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
+
+                // Đứng ngay chính giữa cửa, hướng mắt nhìn thẳng vào trong
+                yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(doorCorridorLook - doorwayOutsideCenter), 0.35f));
+
+                // Kích hoạt cửa trượt mở hoàn toàn từ chính diện + hiệu ứng xả khí nén
+                if (westGateDoor != null)
+                {
+                    PlayDoorWhoosh();
+                    westGateDoor.OpenDoor(locked: true);
+                }
+                yield return new WaitForSeconds(0.65f);
+            }
 
             // Bước thẳng xuyên qua tâm cửa vào trong (tất cả các điểm đều nằm trên trục Z = 23.0f chính giữa cửa!)
             Vector3[] entrancePath = new Vector3[]
@@ -710,13 +805,13 @@ namespace SpaceCyberpunk
             ));
             if (_skipRequested) { FastForwardToShip(onComplete); yield break; }
 
-            // Thao tác mở cửa Cổng Tây
-            if (westGateDoor != null)
+            // Thao tác mở cửa Cổng Tây (nếu chưa bị bắn thủng)
+            if (westGateDoor != null && !westGateDoor.IsDestroyed)
             {
                 PlayDoorWhoosh();
                 westGateDoor.OpenDoor(locked: true);
+                yield return new WaitForSeconds(0.40f);
             }
-            yield return new WaitForSeconds(0.40f);
 
             // Bước THẲNG QUA TÂM CỬA CỔNG TÂY ra vị trí chính giữa bên ngoài (Z = 23.0f chuẩn tâm cửa)
             yield return StartCoroutine(MoveCameraFPS(
@@ -769,8 +864,8 @@ namespace SpaceCyberpunk
             yield return StartCoroutine(RotateCameraTo(lookReturnShipRot, 0.50f));
             yield return new WaitForSeconds(0.30f);
 
-            // Đóng cửa căn cứ lại sau lưng
-            if (westGateDoor != null)
+            // Đóng cửa căn cứ lại sau lưng (nếu chưa bị bắn nổ thủng)
+            if (westGateDoor != null && !westGateDoor.IsDestroyed)
             {
                 westGateDoor.CloseDoor(unlock: true);
             }

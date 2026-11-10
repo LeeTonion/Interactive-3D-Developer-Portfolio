@@ -131,6 +131,7 @@ namespace SpaceCyberpunk
         private void Awake()
         {
             Application.runInBackground = true;
+            FirstPersonCitadelWalkthrough.EnsureEnhancedChamberLighting();
             _mpb = new MaterialPropertyBlock();
             if (ship == null) ship = FindFirstObjectByType<PlayerSpaceshipController>();
             if (cameraFollow == null) cameraFollow = FindFirstObjectByType<SpaceshipCameraFollow>();

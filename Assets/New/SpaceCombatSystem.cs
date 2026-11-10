@@ -197,6 +197,32 @@ namespace SpaceCyberpunk
                 return;
             }
 
+            // 5.6 Kiểm tra trúng Cổng Căn Cứ Chính / Cửa Airlock (Citadel Breachable Gate)
+            var citadelDoor = hit.collider.GetComponentInParent<CitadelAutomaticDoor>();
+            if (citadelDoor == null)
+            {
+                string hitName = hit.collider.name;
+                Transform hitParent = hit.collider.transform.parent;
+                string parentName = hitParent != null ? hitParent.name : "";
+                if (hitName.Contains("door_1") || hitName.Contains("West_Gate") || hitName.Contains("Portal") ||
+                    parentName.Contains("door_1") || parentName.Contains("West_Gate") || parentName.Contains("Portal"))
+                {
+                    citadelDoor = hit.collider.GetComponentInParent<CitadelAutomaticDoor>();
+                    if (citadelDoor == null)
+                    {
+                        var wg = GameObject.Find("West_Gate_Airlock_Portal");
+                        if (wg != null) citadelDoor = wg.GetComponent<CitadelAutomaticDoor>();
+                    }
+                }
+            }
+
+            if (citadelDoor != null)
+            {
+                citadelDoor.TakeDamage(damage, hitPoint, boltDir);
+                SpaceExplosionVFX.SpawnSurfaceImpact(hit, boltDir, isPlayerShot, false);
+                return;
+            }
+
             // 6. Kiểm tra bắn vào Nhà Chính (Project / AboutIsland) hoặc các trụ / căn cứ / công trình -> Kích hoạt báo động hạm đội ngay
             if (isPlayerShot)
             {
