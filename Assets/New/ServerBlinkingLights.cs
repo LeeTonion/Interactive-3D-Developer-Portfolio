@@ -53,6 +53,17 @@ namespace SpaceCyberpunk
         private void Update()
         {
             if (ledRenderers == null || ledRenderers.Length == 0) return;
+            if (_mpb == null) _mpb = new MaterialPropertyBlock();
+            if (_timers == null || _timers.Length != ledRenderers.Length)
+            {
+                _timers = new float[ledRenderers.Length];
+                _activeColors = new Color[ledRenderers.Length];
+                for (int j = 0; j < ledRenderers.Length; j++)
+                {
+                    _timers[j] = Random.Range(minBlinkInterval, maxBlinkInterval);
+                    _activeColors[j] = Palette[Random.Range(0, Palette.Length)];
+                }
+            }
 
             float dt = Time.deltaTime;
             for (int i = 0; i < ledRenderers.Length; i++)

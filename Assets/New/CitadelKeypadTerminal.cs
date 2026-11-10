@@ -298,9 +298,10 @@ namespace SpaceCyberpunk
                     lGo.transform.localPosition = new Vector3(0f, 1.45f, 0.25f);
                     terminalScreenLight = lGo.AddComponent<Light>();
                     terminalScreenLight.type = LightType.Point;
-                    terminalScreenLight.range = 2.4f;
-                    terminalScreenLight.intensity = 1.8f;
+                    terminalScreenLight.range = 1.4f;
+                    terminalScreenLight.intensity = 1.6f;
                     terminalScreenLight.color = ColorCyan;
+                    terminalScreenLight.shadows = LightShadows.Soft;
                 }
             }
         }

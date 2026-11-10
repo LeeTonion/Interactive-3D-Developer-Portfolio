@@ -111,7 +111,8 @@ namespace SpaceCyberpunk
         private Coroutine _activeCinematicRoutine;
         private GameObject _cinematicSkipHUD;
         private float _contentAnim = 1f;
-        private MaterialPropertyBlock _mpb;
+        private MaterialPropertyBlock _cachedMpb;
+        private MaterialPropertyBlock _mpb => _cachedMpb ?? (_cachedMpb = new MaterialPropertyBlock());
         private Texture2D _fallbackImage;
         private Transform _hovered;
         private Vector3 _hoveredBaseScale;
@@ -131,7 +132,7 @@ namespace SpaceCyberpunk
         private void Awake()
         {
             Application.runInBackground = true;
-            _mpb = new MaterialPropertyBlock();
+            _cachedMpb = new MaterialPropertyBlock();
             if (ship == null) ship = FindFirstObjectByType<PlayerSpaceshipController>();
             if (cameraFollow == null) cameraFollow = FindFirstObjectByType<SpaceshipCameraFollow>();
             if (viewCamera == null) viewCamera = cameraFollow != null ? cameraFollow.GetComponent<Camera>() : Camera.main;
@@ -320,11 +321,16 @@ namespace SpaceCyberpunk
                 Vector3 padPos = landingPadCenter != null ? landingPadCenter.position : transform.position;
                 Vector3 startShipPos = ship != null ? ship.transform.position : padPos;
                 
-                // KHÔNG ÉP TÀU VỀ TÂM BÃI ĐÁP: Tàu đỗ ở đâu trong bãi thì hạ cánh ngay tại vị trí X, Z đó!
-                Vector3 targetShipPos = new Vector3(startShipPos.x, padPos.y + 0.72f, startShipPos.z);
+                // ĐẬU ĐÚNG VÒNG TRÒN TRƯỚC RỒI MỚI HẠ XUỐNG:
+                // 1. Bay căn chỉnh về đúng tâm vòng tròn bãi đáp trên không
+                // 2. Sau khi đã đứng ngay tâm vòng tròn thì mới hạ cánh thẳng đứng (VTOL) xuống đĩa đáp
+                float overheadHoverY = Mathf.Max(startShipPos.y, padPos.y + 4.2f);
+                Vector3 overheadCenterPos = new Vector3(padPos.x, overheadHoverY, padPos.z);
+                Vector3 finalLandedPos = new Vector3(padPos.x, padPos.y + 0.72f, padPos.z);
+
                 Quaternion startRot = ship != null ? ship.transform.rotation : Quaternion.identity;
-                // Cân bằng góc nghiêng pitch/roll phẳng với mặt sàn, giữ nguyên hướng xoay Y của người chơi
-                Quaternion targetRot = Quaternion.Euler(0f, startRot.eulerAngles.y, 0f);
+                // Đầu phi thuyền hướng chuẩn trục Đông (Y = 90 độ) theo đường băng dẫn vào căn cứ
+                Quaternion targetRot = Quaternion.Euler(0f, 90f, 0f);
 
                 // Khởi tạo Compact HUD panel ở góc trên bên phải màn hình (Top-Right Screen Space)
                 RectTransform hudFillBar;
@@ -332,19 +338,19 @@ namespace SpaceCyberpunk
                 _activeDockingHUD = CreateDockingHUDPanel(out hudStatusText, out hudFillBar);
 
                 // ═════════════════════════════════════════════════════════════════════════
-                // STAGE 1: APPROACH & LANDING (Khoảng 1.5 giây)
+                // STAGE 1: APPROACH & LANDING (Khoảng 2.4 giây: Căn chuẩn tâm trước, rồi hạ thẳng đứng)
                 // ═════════════════════════════════════════════════════════════════════════
-                yield return StartCoroutine(Stage1_ApproachAndLanding(startShipPos, targetShipPos, startRot, targetRot, padPos, hudStatusText, hudFillBar));
+                yield return StartCoroutine(Stage1_ApproachAndLanding(startShipPos, overheadCenterPos, finalLandedPos, startRot, targetRot, padPos, hudStatusText, hudFillBar));
 
                 // ═════════════════════════════════════════════════════════════════════════
                 // STAGE 2: DOCKING SYSTEM (Khoảng 0.9 giây)
                 // ═════════════════════════════════════════════════════════════════════════
-                yield return StartCoroutine(Stage2_DockingClamps(padPos, targetShipPos, targetRot, hudStatusText, hudFillBar));
+                yield return StartCoroutine(Stage2_DockingClamps(padPos, finalLandedPos, targetRot, hudStatusText, hudFillBar));
 
                 // ═════════════════════════════════════════════════════════════════════════
                 // STAGE 3: DATA UPLINK (Khoảng 1.8 giây)
                 // ═════════════════════════════════════════════════════════════════════════
-                yield return StartCoroutine(Stage3_DataUplink(padPos, targetShipPos, hudStatusText, hudFillBar));
+                yield return StartCoroutine(Stage3_DataUplink(padPos, finalLandedPos, hudStatusText, hudFillBar));
 
                 // Dọn dẹp HUD sau khi hoàn tất
                 if (_activeDockingHUD != null) Destroy(_activeDockingHUD);
@@ -362,9 +368,13 @@ namespace SpaceCyberpunk
             Enter();
         }
 
-        private System.Collections.IEnumerator Stage1_ApproachAndLanding(Vector3 startPos, Vector3 targetPos, Quaternion startRot, Quaternion targetRot, Vector3 padPos, TMP_Text hudStatus, RectTransform hudFill)
+        private System.Collections.IEnumerator Stage1_ApproachAndLanding(Vector3 startPos, Vector3 overheadCenterPos, Vector3 finalLandedPos, Quaternion startRot, Quaternion targetRot, Vector3 padPos, TMP_Text hudStatus, RectTransform hudFill)
         {
-            float stageDuration = 1.5f;
+            float alignDuration = 1.10f; // Pha 1: Bay và căn chỉnh chuẩn tâm vòng tròn trên không
+            float descentDuration = 0.85f; // Pha 2: Hạ cánh thẳng đứng từ trên xuống (VTOL)
+            float bounceDuration = 0.50f; // Pha 3: Nhún giảm chấn thủy lực tiếp đất
+            float totalDuration = alignDuration + descentDuration + bounceDuration; // ~ 2.45s
+
             float elapsed = 0f;
             float groundY = padPos.y + 0.08f;
 
@@ -395,33 +405,45 @@ namespace SpaceCyberpunk
 
             bool touchdownTriggered = false;
 
-            while (elapsed < stageDuration)
+            while (elapsed < totalDuration)
             {
                 elapsed += Time.deltaTime;
-                float p = Mathf.Clamp01(elapsed / stageDuration);
+                float p = Mathf.Clamp01(elapsed / totalDuration);
 
-                // Update HUD Progress (0% -> 30%)
-                UpdateHUD(hudStatus, hudFill, "STAGE 1: VTOL DESCENT & TOUCHDOWN...", p * 0.30f);
-
-                // ──────── Chuyển động hạ cánh mượt mà liên tục (Smooth Continuous Descent) ────────
-                if (elapsed <= 0.90f)
+                // ──────── GIAI ĐOẠN 1A: BAY CĂN CHỈNH VỀ ĐÚNG TÂM VÒNG TRÒN BÃI ĐÁP (0.0s -> 1.1s) ────────
+                if (elapsed <= alignDuration)
                 {
-                    float t = Mathf.SmoothStep(0f, 1f, elapsed / 0.90f);
+                    float t = Mathf.SmoothStep(0f, 1f, elapsed / alignDuration);
+                    UpdateHUD(hudStatus, hudFill, "STAGE 1A: CENTERING ON LANDING PAD CIRCLE...", p * 0.15f);
+
                     if (ship != null)
                     {
-                        ship.transform.position = Vector3.Lerp(startPos, targetPos, t);
+                        ship.transform.position = Vector3.Lerp(startPos, overheadCenterPos, t);
                         ship.transform.rotation = Quaternion.Slerp(startRot, targetRot, t);
                     }
                 }
-                // ──────── Chạm đất có nhún giảm chấn thủy lực (Hydraulic Suspension Settle) ────────
+                // ──────── GIAI ĐOẠN 1B: ĐÃ ĐỨNG ĐÚNG TÂM VÒNG TRÒN -> HẠ CÁNH THẲNG ĐỨNG VTOL (1.1s -> 1.95s) ────────
+                else if (elapsed <= alignDuration + descentDuration)
+                {
+                    float t = Mathf.SmoothStep(0f, 1f, (elapsed - alignDuration) / descentDuration);
+                    UpdateHUD(hudStatus, hudFill, "STAGE 1B: VERTICAL VTOL DESCENT & TOUCHDOWN...", 0.15f + t * 0.15f);
+
+                    if (ship != null)
+                    {
+                        // Khóa cứng trục ngang X và Z tại đúng tâm bãi đáp, chỉ hạ thấp dần độ cao Y!
+                        Vector3 curPos = Vector3.Lerp(overheadCenterPos, finalLandedPos, t);
+                        ship.transform.position = curPos;
+                        ship.transform.rotation = targetRot;
+                    }
+                }
+                // ──────── GIAI ĐOẠN 1C: TIẾP ĐẤT & NHÚN GIẢM CHẤN THỦY LỰC (1.95s -> 2.45s) ────────
                 else
                 {
-                    float bouncePhase = (elapsed - 0.90f) / 0.60f;
-                    // Tàu nén nhẹ xuống sàn 0.045m rồi nảy êm ái về vị trí cân bằng
+                    float bouncePhase = (elapsed - (alignDuration + descentDuration)) / bounceDuration;
                     float compression = Mathf.Sin(bouncePhase * Mathf.PI) * Mathf.Exp(-bouncePhase * 3.2f) * 0.045f;
                     if (ship != null)
                     {
-                        ship.transform.position = targetPos + Vector3.down * compression;
+                        ship.transform.position = finalLandedPos + Vector3.down * compression;
                         ship.transform.rotation = targetRot;
                     }
 
@@ -435,25 +457,25 @@ namespace SpaceCyberpunk
                         if (psRight != null) psRight.Emit(28);
 
                         // 2 Vòng sóng áp suất mỏng quét nhanh trên mặt sàn bãi đáp
-                        Vector3 currentNozzleL = ship != null ? ship.transform.TransformPoint(new Vector3(-0.65f, 0.45f, -1.90f)) : targetPos;
-                        Vector3 currentNozzleR = ship != null ? ship.transform.TransformPoint(new Vector3(0.65f, 0.45f, -1.90f)) : targetPos;
+                        Vector3 currentNozzleL = ship != null ? ship.transform.TransformPoint(new Vector3(-0.65f, 0.45f, -1.90f)) : finalLandedPos;
+                        Vector3 currentNozzleR = ship != null ? ship.transform.TransformPoint(new Vector3(0.65f, 0.45f, -1.90f)) : finalLandedPos;
                         StartCoroutine(ExpandThinWireframeShockwave(new Vector3(currentNozzleL.x, groundY, currentNozzleL.z), 0.2f, 2.5f, 0.45f, new Color(0.15f, 0.95f, 1f, 0.8f)));
                         StartCoroutine(ExpandThinWireframeShockwave(new Vector3(currentNozzleR.x, groundY, currentNozzleR.z), 0.2f, 2.5f, 0.45f, new Color(0.15f, 0.95f, 1f, 0.8f)));
-                        StartCoroutine(ExpandThinWireframeShockwave(targetPos, 0.8f, 5.2f, 0.55f, new Color(0.1f, 0.8f, 1f, 0.45f)));
+                        StartCoroutine(ExpandThinWireframeShockwave(finalLandedPos, 0.8f, 5.2f, 0.55f, new Color(0.1f, 0.8f, 1f, 0.45f)));
                     }
                 }
 
                 // Cập nhật vị trí & độ mạnh của 2 luồng phụt xả thẳng đứng
-                Vector3 nozzleL = ship != null ? ship.transform.TransformPoint(new Vector3(-0.65f, 0.45f, -1.90f)) : targetPos;
-                Vector3 nozzleR = ship != null ? ship.transform.TransformPoint(new Vector3(0.65f, 0.45f, -1.90f)) : targetPos;
+                Vector3 nozzleL = ship != null ? ship.transform.TransformPoint(new Vector3(-0.65f, 0.45f, -1.90f)) : finalLandedPos;
+                Vector3 nozzleR = ship != null ? ship.transform.TransformPoint(new Vector3(0.65f, 0.45f, -1.90f)) : finalLandedPos;
                 Vector3 impactL = new Vector3(nozzleL.x, groundY, nozzleL.z);
                 Vector3 impactR = new Vector3(nozzleR.x, groundY, nozzleR.z);
 
                 float jetPower = 1.0f;
-                if (elapsed > 0.90f)
+                if (elapsed > (alignDuration + descentDuration))
                 {
                     // Sau khi tiếp đất, động cơ giảm công suất dần về 0
-                    jetPower = Mathf.Clamp01(1f - (elapsed - 0.90f) / 0.45f);
+                    jetPower = Mathf.Clamp01(1f - (elapsed - (alignDuration + descentDuration)) / 0.45f);
                     // Dừng tạo khói bụi liên tục để bụi cũ tản dần tự nhiên
                     if (psLeft != null) { var em = psLeft.emission; em.rateOverTime = 0f; }
                     if (psRight != null) { var em = psRight.emission; em.rateOverTime = 0f; }

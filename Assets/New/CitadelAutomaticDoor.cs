@@ -13,6 +13,7 @@ namespace SpaceCyberpunk
     /// - Hỗ trợ cả kích hoạt tự động theo khoảng cách (Proximity) và điều khiển qua Script Cinematic Flythrough.
     /// </summary>
     [SelectionBase]
+    [ExecuteAlways]
     public class CitadelAutomaticDoor : MonoBehaviour
     {
         [Header("Door Leaves")]
@@ -32,8 +33,8 @@ namespace SpaceCyberpunk
 
         [Header("Proximity Auto-Sense")]
         public bool autoProximity = true;
-        public float triggerDistance = 16.0f;
-        public float closeDistance = 22.0f;
+        public float triggerDistance = 7.0f;
+        public float closeDistance = 10.0f;
 
         [Header("Destructible Gate Settings (Bắn thủng cửa)")]
         [Tooltip("Lượng máu tối đa của cửa căn cứ trước khi bị bắn nổ thủng")]
@@ -74,10 +75,38 @@ namespace SpaceCyberpunk
         private void Awake()
         {
             currentHealth = maxHealth;
-            BuildProceduralAudio();
             InitializeDoorReferences();
-            CreateStatusIndicators();
-            CreateSteamVentEmitters();
+            if (Application.isPlaying)
+            {
+                BuildProceduralAudio();
+                CreateStatusIndicators();
+                CreateSteamVentEmitters();
+            }
+            else
+            {
+                if (!isBreached)
+                {
+                    SetOpenImmediate(0f);
+                }
+            }
+        }
+
+        private void OnEnable()
+        {
+            InitializeDoorReferences();
+            if (!Application.isPlaying && !isBreached)
+            {
+                SetOpenImmediate(0f);
+            }
+        }
+
+        private void OnValidate()
+        {
+            InitializeDoorReferences();
+            if (!Application.isPlaying && !isBreached)
+            {
+                ApplyDoorPositions();
+            }
         }
 
         private void Start()
@@ -167,17 +196,26 @@ namespace SpaceCyberpunk
             if (animator == null) animator = GetComponent<Animator>();
             if (animator != null) animator.enabled = false; // Tắt animator để không bị kẹp chết ở vị trí hé mở 2.47m
 
-            // Đảm bảo cả 2 cánh cửa cơ khí đều có Collider để đạn Laser bắn trúng
-            EnsureDoorCollider(doorLeft, new Vector3(2.4f, 3.8f, 0.5f), new Vector3(0f, 1.8f, 0f));
-            EnsureDoorCollider(doorRight, new Vector3(2.4f, 3.8f, 0.5f), new Vector3(0f, 1.8f, 0f));
-
-            // Collider bao trùm toàn bộ vòm cổng để nhận sát thương đạn pháo
-            var portalCol = GetComponent<BoxCollider>();
-            if (portalCol == null)
+            if (!Application.isPlaying && !isBreached)
             {
-                portalCol = gameObject.AddComponent<BoxCollider>();
-                portalCol.size = new Vector3(4.8f, 4.4f, 0.9f);
-                portalCol.center = new Vector3(0f, 2.0f, 0f);
+                if (doorLeft != null) doorLeft.localPosition = ClosedLeftPos;
+                if (doorRight != null) doorRight.localPosition = ClosedRightPos;
+            }
+
+            if (Application.isPlaying)
+            {
+                // Đảm bảo cả 2 cánh cửa cơ khí đều có Collider để đạn Laser bắn trúng
+                EnsureDoorCollider(doorLeft, new Vector3(2.4f, 3.8f, 0.5f), new Vector3(0f, 1.8f, 0f));
+                EnsureDoorCollider(doorRight, new Vector3(2.4f, 3.8f, 0.5f), new Vector3(0f, 1.8f, 0f));
+
+                // Collider bao trùm toàn bộ vòm cổng để nhận sát thương đạn pháo
+                var portalCol = GetComponent<BoxCollider>();
+                if (portalCol == null)
+                {
+                    portalCol = gameObject.AddComponent<BoxCollider>();
+                    portalCol.size = new Vector3(4.8f, 4.4f, 0.9f);
+                    portalCol.center = new Vector3(0f, 2.0f, 0f);
+                }
             }
         }
 
@@ -290,6 +328,15 @@ namespace SpaceCyberpunk
 
         private void LateUpdate()
         {
+            if (!Application.isPlaying)
+            {
+                if (!isBreached && _targetOpen <= 0.01f)
+                {
+                    ApplyDoorPositions();
+                }
+                return;
+            }
+
             if (isBreached)
             {
                 // Cửa đã bị bắn nổ thủng: Giữ nguyên vị trí biến dạng toác mở vĩnh viễn
@@ -312,6 +359,8 @@ namespace SpaceCyberpunk
 
         private void Update()
         {
+            if (!Application.isPlaying) return;
+
             if (isBreached)
             {
                 // Đèn báo động khẩn cấp chập chờn màu đỏ sau khi cửa bị phá hủy

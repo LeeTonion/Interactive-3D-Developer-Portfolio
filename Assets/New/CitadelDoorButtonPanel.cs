@@ -66,19 +66,21 @@ namespace SpaceCyberpunk
                 box.name = "Panel_Backplate";
                 box.transform.SetParent(transform, false);
                 box.transform.localPosition = Vector3.zero;
-                box.transform.localScale = new Vector3(0.08f, 0.36f, 0.28f);
+                box.transform.localRotation = Quaternion.identity;
+                box.transform.localScale = new Vector3(0.35f, 0.45f, 0.08f);
                 var bMr = box.GetComponent<MeshRenderer>();
                 var bMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-                bMat.color = new Color(0.12f, 0.15f, 0.20f);
+                bMat.color = new Color(0.10f, 0.12f, 0.16f);
+                bMat.SetFloat("_Smoothness", 0.7f);
                 bMr.material = bMat;
                 if (box.GetComponent<Collider>() != null) Destroy(box.GetComponent<Collider>());
 
                 // Canvas World-Space hướng ra hành lang
                 GameObject canvasGo = new GameObject("Panel_Canvas");
                 canvasGo.transform.SetParent(transform, false);
-                canvasGo.transform.localPosition = new Vector3(-0.045f, 0f, 0f);
-                canvasGo.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
-                canvasGo.transform.localScale = Vector3.one * 0.0016f;
+                canvasGo.transform.localPosition = new Vector3(0f, 0f, 0.042f);
+                canvasGo.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+                canvasGo.transform.localScale = Vector3.one * 0.0018f;
 
                 buttonCanvas = canvasGo.AddComponent<Canvas>();
                 buttonCanvas.renderMode = RenderMode.WorldSpace;
@@ -91,7 +93,7 @@ namespace SpaceCyberpunk
                 var btnRt = btnGo.AddComponent<RectTransform>();
                 btnRt.sizeDelta = new Vector2(140f, 180f);
                 buttonImage = btnGo.AddComponent<Image>();
-                buttonImage.color = new Color(0.04f, 0.16f, 0.26f, 0.95f);
+                buttonImage.color = new Color(0.02f, 0.08f, 0.14f, 0.95f);
 
                 // Viền phát sáng
                 var outlineGo = new GameObject("Glow_Border");
@@ -99,7 +101,7 @@ namespace SpaceCyberpunk
                 var oRt = outlineGo.AddComponent<RectTransform>();
                 oRt.sizeDelta = new Vector2(144f, 184f);
                 var oImg = outlineGo.AddComponent<Image>();
-                oImg.color = ColorIdle;
+                oImg.color = new Color(0f, 0.75f, 1f, 0.25f);
 
                 // Chữ hiển thị
                 var textGo = new GameObject("Label");
@@ -107,11 +109,11 @@ namespace SpaceCyberpunk
                 var tRt = textGo.AddComponent<RectTransform>();
                 tRt.sizeDelta = new Vector2(130f, 160f);
                 labelText = textGo.AddComponent<TextMeshProUGUI>();
-                labelText.text = "BRIDGE\nACCESS\n\n[ OPEN ]";
+                labelText.text = "<b>BRIDGE ACCESS</b>\n<size=14><color=#44ffbb>[ PRESS TO OPEN ]</color></size>";
                 labelText.fontSize = 20;
                 labelText.fontStyle = FontStyles.Bold;
                 labelText.alignment = TextAlignmentOptions.Center;
-                labelText.color = ColorIdle;
+                labelText.color = new Color(0.4f, 0.9f, 1f, 1f);
             }
 
             if (panelLight == null)
@@ -122,12 +124,12 @@ namespace SpaceCyberpunk
                 {
                     var lGo = new GameObject("Panel_Light");
                     lGo.transform.SetParent(transform, false);
-                    lGo.transform.localPosition = new Vector3(-0.15f, 0f, 0f);
+                    lGo.transform.localPosition = new Vector3(0f, 0f, 0.15f);
                     panelLight = lGo.AddComponent<Light>();
                     panelLight.type = LightType.Point;
-                    panelLight.range = 1.6f;
-                    panelLight.intensity = 1.5f;
-                    panelLight.color = ColorIdle;
+                    panelLight.range = 2.5f;
+                    panelLight.intensity = 2.2f;
+                    panelLight.color = new Color(0.2f, 0.8f, 1f);
                 }
             }
         }
@@ -141,7 +143,7 @@ namespace SpaceCyberpunk
 
             if (labelText != null)
             {
-                labelText.text = "BRIDGE\nACCESS\n\n<color=#44ff77>[ ACTIVE ]</color>";
+                labelText.text = "<b>BRIDGE ACCESS</b>\n<size=14><color=#44ff77>[ ACCESS GRANTED ]</color></size>";
                 labelText.color = ColorPressed;
             }
             if (buttonImage != null)

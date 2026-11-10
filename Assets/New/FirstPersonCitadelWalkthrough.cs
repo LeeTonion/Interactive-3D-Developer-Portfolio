@@ -108,8 +108,8 @@ namespace SpaceCyberpunk
             // Âm thanh khí nén cửa mở (Pneumatic Door Whoosh)
             _doorWhooshClip = CreateWhooshClip(0.45f);
 
-            // Âm thanh kích hoạt kết nối Cyber Uplink hiển thị Hologram
-            _cyberUplinkClip = CreateCyberUplinkClip(0.65f);
+            // Âm thanh kích hoạt kết nối Cyber Uplink hiển thị Hologram (chuyển cảnh chậm êm dịu)
+            _cyberUplinkClip = CreateCyberUplinkClip(2.20f);
         }
 
         private static AudioClip CreateStepClip(float freq, float duration, float volume)
@@ -156,14 +156,15 @@ namespace SpaceCyberpunk
             {
                 float t = (float)i / sampleRate;
                 float progress = (float)i / samples;
-                float freq = Mathf.Lerp(440f, 1320f, Mathf.Sqrt(progress));
+                // Âm thanh trầm ấm điện ảnh (Deep cinematic ambient swell)
+                float freq = Mathf.Lerp(60f, 120f, Mathf.Sin(progress * Mathf.PI));
                 float env = Mathf.Sin(progress * Mathf.PI);
-                float tone1 = Mathf.Sin(2f * Mathf.PI * freq * t) * 0.55f;
-                float tone2 = Mathf.Sin(2f * Mathf.PI * (freq * 1.5f) * t) * 0.30f;
-                float noise = UnityEngine.Random.Range(-0.1f, 0.1f) * env;
-                data[i] = (tone1 + tone2 + noise) * env * 0.32f;
+                float sub = Mathf.Sin(2f * Mathf.PI * freq * t) * 0.65f;
+                float warmHarmonic = Mathf.Sin(2f * Mathf.PI * (freq * 2f) * t) * 0.25f;
+                float air = UnityEngine.Random.Range(-0.04f, 0.04f) * env;
+                data[i] = (sub + warmHarmonic + air) * env * 0.40f;
             }
-            var clip = AudioClip.Create("Cyber_Uplink_Chime", samples, 1, sampleRate, false);
+            var clip = AudioClip.Create("Cinematic_Fade_Swell", samples, 1, sampleRate, false);
             clip.SetData(data, 0);
             return clip;
         }
@@ -253,7 +254,7 @@ namespace SpaceCyberpunk
                 else
                 {
                     var panelGo = new GameObject("East_Chamber_Door_Panel");
-                    panelGo.transform.position = new Vector3(29.35f, 1.25f, 21.35f);
+                    panelGo.transform.position = new Vector3(29.35f, 1.35f, 20.75f);
                     panelGo.transform.rotation = Quaternion.Euler(0f, 270f, 0f);
                     innerDoorPanel = panelGo.AddComponent<CitadelDoorButtonPanel>();
                 }
@@ -397,8 +398,8 @@ namespace SpaceCyberpunk
             _stepAlt = false;
 
             // ═════════════════════════════════════════════════════════════════════════
-            // BƯỚC 1: XUỐNG TÀU (Disembark Ship)
-            // Xuất hiện ngay bên cạnh phi thuyền (bên mạn phải/cửa khoang phi thuyền)
+            // BƯỚC 1: XUỐNG TÀU & TIẾP CẬN CỔNG CĂN CỨ (Disembark & Approach Gate)
+            // Chuyển động mượt mà liên tục, hoàn toàn không có khoảng khựng hay dừng xoay người
             // ═════════════════════════════════════════════════════════════════════════
             Transform pad = (station != null && station.landingPadCenter != null) ? station.landingPadCenter : null;
             if (pad == null)
@@ -406,63 +407,48 @@ namespace SpaceCyberpunk
                 var padGo = GameObject.Find("LandingPad_Center");
                 if (padGo != null) pad = padGo.transform;
             }
-            Vector3 padPos = (pad != null) ? pad.position : new Vector3(-32f, 0.12f, 23f);
+            Vector3 padPos = (pad != null) ? pad.position : new Vector3(-32f, 0.32f, 23f);
             float padFloorY = padPos.y + 0.72f;
 
             Vector3 shipPos = (ship != null && Vector3.Distance(ship.transform.position, padPos) < 25f)
                 ? ship.transform.position
-                : padPos;
+                : new Vector3(padPos.x, padFloorY, padPos.z);
             Transform shipTr = (ship != null && Vector3.Distance(ship.transform.position, padPos) < 25f)
                 ? ship.transform
                 : null;
 
-            // Xuất hiện bên cạnh phi thuyền ở cự ly an toàn (cách tâm tàu 2.75m, không chạm vỏ tàu)
+            // Xuất hiện bên cạnh phi thuyền ở cự ly an toàn (cách tâm tàu 2.40m bên mạn phải)
             Vector3 besideOffset = (shipTr != null)
-                ? (shipTr.right * 2.75f + shipTr.forward * 0.40f)
-                : new Vector3(2.75f, 0f, 0.40f);
+                ? (shipTr.right * 2.40f + shipTr.forward * 0.40f)
+                : new Vector3(0.40f, 0f, 2.40f);
             Vector3 shipBesidePos = new Vector3(shipPos.x + besideOffset.x, padFloorY + eyeHeight, shipPos.z + besideOffset.z);
             Vector3 runwayDeckPos = new Vector3(-24.0f, padFloorY + eyeHeight, 23.0f);
+            Vector3 runwayLook = new Vector3(-10f, padFloorY + eyeHeight, 23f);
 
-            // Xuất hiện bên mạn phi thuyền, nhìn về phía buồng lái phi thuyền ở khoảng cách rõ nét
+            // Xuất hiện bên cạnh tàu, mắt hướng thẳng theo đường băng về phía cổng căn cứ ngay từ đầu
             playerCamera.transform.position = shipBesidePos;
-            Vector3 lookShipHatch = shipPos + (shipTr != null ? shipTr.forward * 0.60f : Vector3.zero) + Vector3.up * 1.0f;
-            playerCamera.transform.rotation = Quaternion.LookRotation(lookShipHatch - shipBesidePos);
+            playerCamera.transform.rotation = Quaternion.LookRotation(runwayLook - shipBesidePos);
             playerCamera.fieldOfView = 60f;
 
-            yield return new WaitForSeconds(0.40f);
-
-            // Quay người từ mạn tàu hướng về phía đường băng dẫn vào căn cứ Citadel
-            Vector3 runwayLook = new Vector3(-10f, padFloorY + eyeHeight, 23f);
-            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(runwayLook - shipBesidePos), 0.60f));
-
-            // Đi bộ từ cạnh tàu dọc đường băng với vận tốc ổn định
-            yield return StartCoroutine(MoveCameraFPS(
-                fromPos: shipBesidePos,
-                toPos: runwayDeckPos,
-                lookTarget: runwayLook,
-                speed: walkSpeed,
-                easeStart: true,
-                easeEnd: false
-            ));
-            if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
-
             bool isGateBreached = (westGateDoor != null && westGateDoor.IsDestroyed) || CitadelAutomaticDoor.IsWestGateBreached;
-            Vector3 doorwayOutsideCenter = new Vector3(-11.50f, eyeHeight, 23.00f);
+            Vector3 doorwayOutsideCenter = new Vector3(-14.20f, eyeHeight, 23.00f); // Đứng lùi xa cửa một khoảng rộng chuẩn điện ảnh
             Vector3 doorCorridorLook = new Vector3(0f, eyeHeight, 23.00f); // Hướng nhìn thẳng vào tâm hành lang
 
             if (isGateBreached)
             {
                 // ═════════════════════════════════════════════════════════════════════════
                 // CỔNG ĐÃ BỊ BẮN THỦNG / PHÁ HỦY: KHÔNG CẦN NHẬP MẬT KHẨU!
-                // Đi thẳng từ đường băng qua vòm cửa đã bị toác mở bốc khói vào căn cứ
+                // Đi thẳng từ cạnh tàu qua vòm cửa đã bị toác mở bốc khói vào căn cứ liên tục
                 // ═════════════════════════════════════════════════════════════════════════
-                yield return StartCoroutine(MoveCameraFPS(
-                    fromPos: runwayDeckPos,
-                    toPos: doorwayOutsideCenter,
+                Vector3[] breachedEntrancePath = new Vector3[]
+                {
+                    runwayDeckPos,
+                    doorwayOutsideCenter
+                };
+                yield return StartCoroutine(MoveCameraPathFPS(
+                    waypoints: breachedEntrancePath,
                     lookTarget: doorCorridorLook,
-                    speed: walkSpeed,
-                    easeStart: false,
-                    easeEnd: true
+                    speed: walkSpeed
                 ));
                 if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
 
@@ -473,6 +459,7 @@ namespace SpaceCyberpunk
             {
                 // ═════════════════════════════════════════════════════════════════════════
                 // BƯỚC 2: TIẾN ĐẾN ĐÚNG BÀN PHÍM AN NINH TẠI BỆ NGOÀI CỔNG
+                // (Chuyển động mượt mà liên tục từ phi thuyền đến thẳng bàn phím không có khoảng khựng)
                 // ═════════════════════════════════════════════════════════════════════════
                 Vector3 outsideGateApproach = new Vector3(-15.5f, eyeHeight, 22.0f);
                 Vector3 inFrontOfKeypad = new Vector3(-12.75f, eyeHeight, 20.81f);
@@ -480,35 +467,25 @@ namespace SpaceCyberpunk
                     ? keypadTerminal.transform.position + new Vector3(0f, 1.25f, 0f)
                     : new Vector3(-11.84f, 1.34f, 20.81f);
 
-                // Đi dọc đường băng dẫn vào tiếp cận cổng
-                yield return StartCoroutine(MoveCameraFPS(
-                    fromPos: runwayDeckPos,
-                    toPos: outsideGateApproach,
-                    lookTarget: inFrontOfKeypad,
-                    speed: walkSpeed,
-                    easeStart: false,
-                    easeEnd: false
-                ));
-                if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
+                Vector3[] approachKeypadPath = new Vector3[]
+                {
+                    runwayDeckPos,
+                    outsideGateApproach,
+                    inFrontOfKeypad
+                };
 
-                // Bước chậm lại tiếp cận đứng thẳng trước màn hình console an ninh
-                yield return StartCoroutine(MoveCameraFPS(
-                    fromPos: outsideGateApproach,
-                    toPos: inFrontOfKeypad,
+                // Đi bộ mượt mà liên tục từ cạnh tàu thẳng đến bàn phím an ninh, mắt hướng tự nhiên vào bàn phím
+                yield return StartCoroutine(MoveCameraPathFPS(
+                    waypoints: approachKeypadPath,
                     lookTarget: keypadScreenPos,
-                    speed: approachSpeed,
-                    easeStart: false,
-                    easeEnd: true
+                    speed: walkSpeed
                 ));
                 if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
 
                 // ═════════════════════════════════════════════════════════════════════════
                 // BƯỚC 3: NHẬP MẬT MÃ TẠI BÀN PHÍM (Enter Passcode)
-                // Camera cúi nhẹ vào màn hình bàn phím an ninh
+                // (Đã đứng đúng góc nhìn trực diện bàn phím -> Kích hoạt chuỗi nhập mật mã ngay lập tức!)
                 // ═════════════════════════════════════════════════════════════════════════
-                Quaternion lookKeypadRot = Quaternion.LookRotation(keypadScreenPos - inFrontOfKeypad);
-                yield return StartCoroutine(RotateCameraTo(lookKeypadRot, 0.40f));
-
                 if (keypadTerminal != null)
                 {
                     yield return StartCoroutine(keypadTerminal.PerformPasscodeEntrySequence(null));
@@ -547,12 +524,15 @@ namespace SpaceCyberpunk
                 yield return new WaitForSeconds(0.65f);
             }
 
-            // Bước thẳng xuyên qua tâm cửa vào trong (tất cả các điểm đều nằm trên trục Z = 23.0f chính giữa cửa!)
+            // Bước thẳng xuyên qua tâm cửa vào trong, dừng lại trước bàn chiến thuật hình tròn ở sảnh giữa
+            Vector3 atriumFrontOfTablePos = new Vector3(7.20f, eyeHeight, 23.00f);
             Vector3[] entrancePath = new Vector3[]
             {
-                new Vector3(-9.20f, eyeHeight, 23.00f), // Ngay ngưỡng cửa
-                new Vector3(-6.50f, eyeHeight, 23.00f), // Hầm thông gió
-                new Vector3(14.00f, eyeHeight, 23.00f)  // Tiến vào tâm sảnh lớn Rotunda
+                new Vector3(-11.50f, eyeHeight, 23.00f), // Tiến từ vị trí đứng xa vào trước ngưỡng cửa
+                new Vector3(-9.20f, eyeHeight, 23.00f),  // Ngay ngưỡng cửa
+                new Vector3(-6.50f, eyeHeight, 23.00f),  // Hầm thông gió
+                new Vector3(1.00f, eyeHeight, 23.00f),   // Lối đi vào sảnh lớn
+                atriumFrontOfTablePos                    // Dừng ngay trước bệ sa bàn hologram (không đi xuyên vào bàn)
             };
 
             yield return StartCoroutine(MoveCameraPathFPS(
@@ -566,39 +546,49 @@ namespace SpaceCyberpunk
             // BƯỚC 5: ĐỨNG TẠI SẢNH GIỮA, QUAY TRÁI QUAY PHẢI ĐỂ TÌM PHÒNG CHÍNH
             // (Central Atrium & Look Left, Look Right)
             // ═════════════════════════════════════════════════════════════════════════
-            Vector3 atriumCenterPos = new Vector3(14.0f, eyeHeight, 23.0f);
             yield return new WaitForSeconds(0.30f);
 
             // 5a. Quay đầu sang TRÁI (nhìn về cụm Mission Control / Cánh Bắc)
-            Vector3 lookLeftAtrium = atriumCenterPos + new Vector3(8f, 0.6f, 15f);
-            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(lookLeftAtrium - atriumCenterPos), 0.70f));
+            Vector3 lookLeftAtrium = atriumFrontOfTablePos + new Vector3(8f, 0.6f, 15f);
+            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(lookLeftAtrium - atriumFrontOfTablePos), 0.70f));
             yield return new WaitForSeconds(0.85f);
 
             // 5b. Quay đầu sang PHẢI (nhìn về Cánh Nam / dàn Server & Máy chiếu tinh thể)
-            Vector3 lookRightAtrium = atriumCenterPos + new Vector3(8f, 0.5f, -15f);
-            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(lookRightAtrium - atriumCenterPos), 1.05f));
+            Vector3 lookRightAtrium = atriumFrontOfTablePos + new Vector3(8f, 0.5f, -15f);
+            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(lookRightAtrium - atriumFrontOfTablePos), 1.05f));
             yield return new WaitForSeconds(0.85f);
 
             // 5c. Quay thẳng về PHÍA TRƯỚC: Phát hiện cửa căn phòng chính Cánh Đông!
             Vector3 eastDoorLook = new Vector3(30f, eyeHeight, 23f);
-            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(eastDoorLook - atriumCenterPos), 0.75f));
+            yield return StartCoroutine(RotateCameraTo(Quaternion.LookRotation(eastDoorLook - atriumFrontOfTablePos), 0.75f));
             yield return new WaitForSeconds(0.35f);
 
             // ═════════════════════════════════════════════════════════════════════════
-            // BƯỚC 6: TIẾN ĐẾN CỬA PHÒNG CHÍNH VÀ NHẤN NÚT MỞ CỬA
-            // (Approach & Press Inner Door Button)
+            // BƯỚC 6: ĐI VÒNG TỪ BÊN TRÁI QUA BÀN CHIẾN THUẬT (HOÀN TOÀN KHÔNG ĐI XUYÊN QUA GHẾ)
+            // (Walk Around Table from LEFT side, outside all chairs)
             // ═════════════════════════════════════════════════════════════════════════
             Vector3 inFrontOfEastDoor = new Vector3(28.2f, eyeHeight, 22.3f);
-            Vector3 innerDoorButtonPos = (innerDoorPanel != null) ? innerDoorPanel.transform.position : new Vector3(29.35f, 1.25f, 21.35f);
+            Vector3 innerDoorButtonPos = (innerDoorPanel != null) ? innerDoorPanel.transform.position : new Vector3(29.35f, 1.35f, 20.75f);
 
-            // Bước đều chân đến trước cửa phòng chỉ huy
-            yield return StartCoroutine(MoveCameraFPS(
-                fromPos: atriumCenterPos,
-                toPos: inFrontOfEastDoor,
-                lookTarget: innerDoorButtonPos,
+            // Đường đi vòng lượn theo cánh TRÁI (Bắc - Z > 23), hoàn toàn đi ở hành lang ngoài dãy ghế chỉ huy
+            Vector3[] aroundHoloTablePathLeft = new Vector3[]
+            {
+                new Vector3(8.80f, eyeHeight, 24.20f),
+                new Vector3(10.50f, eyeHeight, 26.00f),
+                new Vector3(12.20f, eyeHeight, 27.30f),
+                new Vector3(14.00f, eyeHeight, 27.50f), // Lối đi rộng thoáng bên trái bàn & ngoài tất cả ghế
+                new Vector3(15.80f, eyeHeight, 27.30f),
+                new Vector3(17.50f, eyeHeight, 26.00f),
+                new Vector3(19.20f, eyeHeight, 24.20f),
+                new Vector3(21.50f, eyeHeight, 23.00f), // Nhập lại trục chính dẫn đến cửa phòng
+                inFrontOfEastDoor
+            };
+
+            yield return StartCoroutine(MoveCameraPathFPS(
+                waypoints: aroundHoloTablePathLeft,
+                lookTarget: eastDoorLook,
                 speed: walkSpeed,
-                easeStart: true,
-                easeEnd: true
+                lookAheadAlongPath: true
             ));
             if (_skipRequested) { FastForwardToKiosk(onComplete); yield break; }
 
@@ -788,21 +778,29 @@ namespace SpaceCyberpunk
             // ═════════════════════════════════════════════════════════════════════════
             // BƯỚC 3: CHẠY BỘ / ĐI BỘ NHANH QUA SẢNH GIỮA (Jog Through Central Atrium)
             // ═════════════════════════════════════════════════════════════════════════
-            Vector3 atriumCenterPos = new Vector3(14.0f, eyeHeight, 23.0f);
             Vector3 insideThresholdExit = new Vector3(-6.5f, eyeHeight, 23.0f);
-            Vector3 doorwayOutsideCenter = new Vector3(-11.50f, eyeHeight, 23.00f);
+            Vector3 doorwayOutsideCenter = new Vector3(-14.20f, eyeHeight, 23.00f); // Đứng lùi xa cửa một khoảng rộng chuẩn điện ảnh
 
-            // Chạy thẳng từ cửa Đông qua tâm sảnh Rotunda đến hầm thông gió
+            // Chạy vòng qua bên cánh bàn chiến thuật hình tròn về hầm thông gió Cổng Tây (vòng ngoài ghế, không xuyên bàn ghế)
             Vector3[] atriumExitPath = new Vector3[]
             {
-                atriumCenterPos,
+                new Vector3(21.50f, eyeHeight, 23.00f),
+                new Vector3(19.20f, eyeHeight, 24.20f),
+                new Vector3(17.50f, eyeHeight, 26.00f),
+                new Vector3(15.80f, eyeHeight, 27.30f),
+                new Vector3(14.00f, eyeHeight, 27.50f),
+                new Vector3(12.20f, eyeHeight, 27.30f),
+                new Vector3(10.50f, eyeHeight, 26.00f),
+                new Vector3(8.80f, eyeHeight, 24.20f),
+                new Vector3(7.20f, eyeHeight, 23.00f),
                 insideThresholdExit
             };
 
             yield return StartCoroutine(MoveCameraPathFPS(
                 waypoints: atriumExitPath,
                 lookTarget: westLook,
-                speed: jogSpeed
+                speed: jogSpeed,
+                lookAheadAlongPath: true
             ));
             if (_skipRequested) { FastForwardToShip(onComplete); yield break; }
 
@@ -947,14 +945,14 @@ namespace SpaceCyberpunk
         }
 
         /// <summary>
-        /// Hiệu ứng chuyển cảnh Sci-Fi Cyber Uplink khi ngồi vào ghế chỉ huy:
-        /// Lóe sáng Neon Cyan, viền khung Letterbox, HUD trạng thái đồng bộ và tan biến hé lộ 5 màn hình Portfolio.
+        /// Hiệu ứng chuyển cảnh điện ảnh: Màn hình từ từ dần tối (Fade to Black) rồi dần dần sáng trở lại (Fade in to Clear),
+        /// tốc độ chậm rãi êm dịu, hoàn toàn không có chữ, tạo trải nghiệm điện ảnh chuẩn xác sau khi người chơi ngồi vào ghế.
         /// </summary>
         private IEnumerator PerformCyberTransitionFX(Action onPeakFlash)
         {
             PlayCyberUplinkSound();
 
-            GameObject fxCanvasGo = new GameObject("Cyber_Transition_Overlay_FX");
+            GameObject fxCanvasGo = new GameObject("Cinematic_Fade_Transition_Overlay");
             var canvas = fxCanvasGo.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 1000;
@@ -963,58 +961,44 @@ namespace SpaceCyberpunk
             cs.referenceResolution = new Vector2(1920, 1080);
             fxCanvasGo.AddComponent<GraphicRaycaster>();
 
-            // Nền Flash lóe sáng phát quang Neon Cyan
-            var flashGo = new GameObject("Cyber_Flash");
-            flashGo.transform.SetParent(fxCanvasGo.transform, false);
-            var flashRt = flashGo.AddComponent<RectTransform>();
-            flashRt.anchorMin = Vector2.zero;
-            flashRt.anchorMax = Vector2.one;
-            flashRt.sizeDelta = Vector2.zero;
-            var flashImg = flashGo.AddComponent<Image>();
-            flashImg.color = new Color(0f, 0.95f, 1f, 0f);
+            // Tấm màn màu đen chuyển cảnh điện ảnh (Fade to Black - Không có bất kỳ chữ nào)
+            var fadeGo = new GameObject("Cinema_Fade_Image");
+            fadeGo.transform.SetParent(fxCanvasGo.transform, false);
+            var fadeRt = fadeGo.AddComponent<RectTransform>();
+            fadeRt.anchorMin = Vector2.zero;
+            fadeRt.anchorMax = Vector2.one;
+            fadeRt.sizeDelta = Vector2.zero;
+            var fadeImg = fadeGo.AddComponent<Image>();
+            fadeImg.color = new Color(0f, 0f, 0f, 0f);
 
-            // Dòng chữ HUD đồng bộ giao diện
-            var textGo = new GameObject("Uplink_Status_Text");
-            textGo.transform.SetParent(fxCanvasGo.transform, false);
-            var textRt = textGo.AddComponent<RectTransform>();
-            textRt.anchorMin = new Vector2(0.5f, 0.5f);
-            textRt.anchorMax = new Vector2(0.5f, 0.5f);
-            textRt.sizeDelta = new Vector2(900f, 80f);
-            var tmp = textGo.AddComponent<TextMeshProUGUI>();
-            tmp.text = "<color=#00e5ff><b>◆ SYSTEM UPLINK SYNCHRONIZED ◆</b></color>\n<size=16><color=#ffffffcc>COMMAND DISPLAY ONLINE</color></size>";
-            tmp.fontSize = 22;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.fontStyle = FontStyles.Bold;
-            tmp.color = new Color(1f, 1f, 1f, 0f);
-
-            // Giai đoạn 1: Flash lóe sáng rực rỡ (0.28s)
-            float inDuration = 0.28f;
+            // GIAI ĐOẠN 1: Màn hình TỪ TỪ DẦN TỐI (Fade to Black chậm rãi ~ 1.00s)
+            float fadeOutDuration = 1.00f;
             float inElapsed = 0f;
-            while (inElapsed < inDuration)
+            while (inElapsed < fadeOutDuration)
             {
                 inElapsed += Time.deltaTime;
-                float p = Mathf.Clamp01(inElapsed / inDuration);
-                float alpha = Mathf.SmoothStep(0f, 0.92f, p);
-                flashImg.color = new Color(0.04f, 0.85f, 1f, alpha);
-                tmp.color = new Color(1f, 1f, 1f, p);
+                float p = Mathf.Clamp01(inElapsed / fadeOutDuration);
+                float alpha = Mathf.SmoothStep(0f, 1f, p);
+                fadeImg.color = new Color(0f, 0f, 0f, alpha);
                 yield return null;
             }
+            fadeImg.color = new Color(0f, 0f, 0f, 1f);
 
-            // Đỉnh điểm Flash: Thực hiện hành động chuyển đổi (đặt vị trí Camera)
+            // ĐỈNH ĐIỂM KHI MÀN HÌNH TỐI HOÀN TOÀN: Chuyển vị trí Camera
             onPeakFlash?.Invoke();
 
-            yield return new WaitForSeconds(0.06f);
+            // Giữ lại trong bóng tối 0.20 giây để góc nhìn ổn định và tĩnh lặng
+            yield return new WaitForSeconds(0.20f);
 
-            // Giai đoạn 2: Lóe sáng tan dần hé lộ các bảng Hologram (0.36s)
-            float outDuration = 0.36f;
+            // GIAI ĐOẠN 2: Màn hình TỪ TỪ DẦN SÁNG TRỞ LẠI (Fade in to Clear chậm rãi ~ 1.05s)
+            float fadeInDuration = 1.05f;
             float outElapsed = 0f;
-            while (outElapsed < outDuration)
+            while (outElapsed < fadeInDuration)
             {
                 outElapsed += Time.deltaTime;
-                float p = Mathf.Clamp01(outElapsed / outDuration);
-                float alpha = Mathf.Lerp(0.92f, 0f, p * p);
-                flashImg.color = new Color(0.04f, 0.85f, 1f, alpha);
-                tmp.color = new Color(1f, 1f, 1f, 1f - p);
+                float p = Mathf.Clamp01(outElapsed / fadeInDuration);
+                float alpha = Mathf.SmoothStep(1f, 0f, p);
+                fadeImg.color = new Color(0f, 0f, 0f, alpha);
                 yield return null;
             }
 
@@ -1102,7 +1086,7 @@ namespace SpaceCyberpunk
         /// <summary>
         /// Di chuyển liên tục qua chuỗi các điểm Waypoint với tốc độ ổn định không khựng giữa đường
         /// </summary>
-        private IEnumerator MoveCameraPathFPS(Vector3[] waypoints, Vector3 lookTarget, float speed)
+        private IEnumerator MoveCameraPathFPS(Vector3[] waypoints, Vector3 lookTarget, float speed, bool lookAheadAlongPath = false)
         {
             if (waypoints == null || waypoints.Length == 0) yield break;
 
@@ -1113,7 +1097,22 @@ namespace SpaceCyberpunk
                 Vector3 target = waypoints[i];
                 bool isFirst = (i == 0);
                 bool isLast = (i == waypoints.Length - 1);
-                yield return StartCoroutine(MoveCameraFPS(start, target, lookTarget, speed, easeStart: isFirst, easeEnd: isLast));
+
+                Vector3 currentLook = lookTarget;
+                if (lookAheadAlongPath)
+                {
+                    if (i < waypoints.Length - 2)
+                    {
+                        Vector3 dir = (waypoints[i + 1] - target).normalized;
+                        currentLook = waypoints[i + 1] + dir * 4.0f;
+                    }
+                    else
+                    {
+                        currentLook = lookTarget;
+                    }
+                }
+
+                yield return StartCoroutine(MoveCameraFPS(start, target, currentLook, speed, easeStart: isFirst, easeEnd: isLast));
             }
         }
 

@@ -223,6 +223,55 @@ namespace SpaceCyberpunk
                 return;
             }
 
+            // 5.7 Kiểm tra trúng Khu Năng Lượng / Lò Phản Ứng Căn Cứ (Citadel Central Power Reactor Core)
+            var powerCore = hit.collider.GetComponentInParent<CitadelPowerReactorCore>();
+            if (powerCore == null)
+            {
+                string hitLower = hit.collider.name.ToLower();
+                Transform pTr = hit.collider.transform.parent;
+                string pLower = pTr != null ? pTr.name.ToLower() : "";
+                if (hitLower.Contains("reactor") || hitLower.Contains("spire") || hitLower.Contains("shield_core") ||
+                    pLower.Contains("reactor") || pLower.Contains("spire_tower") || pLower.Contains("shield_core"))
+                {
+                    var coreObj = GameObject.Find("Citadel_Central_Power_Reactor_Core") ?? GameObject.Find("Citadel_Power_Spire_Tower");
+                    if (coreObj != null) powerCore = coreObj.GetComponent<CitadelPowerReactorCore>() ?? coreObj.GetComponentInChildren<CitadelPowerReactorCore>();
+                }
+            }
+
+            if (powerCore != null)
+            {
+                powerCore.TakeDamage(damage, hitPoint, boltDir);
+                SpaceExplosionVFX.SpawnSurfaceImpact(hit, boltDir, isPlayerShot, false);
+                return;
+            }
+
+            // 5.8 Kiểm tra trúng Mảng Vỏ Bọc Ngoài Căn Cứ (Citadel Destructible Armor Cladding)
+            var armorPlate = hit.collider.GetComponentInParent<CitadelDestructibleArmorPlate>();
+            if (armorPlate == null && isPlayerShot)
+            {
+                Transform tr = hit.collider.transform;
+                string hitName = tr.name;
+                string parentName = tr.parent != null ? tr.parent.name : "";
+                bool isCitadelWall = parentName.Contains("Exterior_Walls") || hitName.Contains("West_Gate") ||
+                                     hitName.Contains("Portico") || hitName.Contains("Portal_Column") ||
+                                     hitName.Contains("West_Transom") || hitName.Contains("Wall_Big") ||
+                                     hitName.Contains("Center_West") || parentName.Contains("Citadel_Exterior");
+
+                if (isCitadelWall)
+                {
+                    armorPlate = tr.gameObject.AddComponent<CitadelDestructibleArmorPlate>();
+                    armorPlate.plateRenderer = tr.GetComponentInChildren<MeshRenderer>();
+                    armorPlate.plateCollider = tr.GetComponentInChildren<Collider>();
+                }
+            }
+
+            if (armorPlate != null && !armorPlate.isDetached)
+            {
+                armorPlate.TakeDamage(damage, hitPoint, boltDir);
+                SpaceExplosionVFX.SpawnSurfaceImpact(hit, boltDir, isPlayerShot, false);
+                return;
+            }
+
             // 6. Kiểm tra bắn vào Nhà Chính (Project / AboutIsland) hoặc các trụ / căn cứ / công trình -> Kích hoạt báo động hạm đội ngay
             if (isPlayerShot)
             {

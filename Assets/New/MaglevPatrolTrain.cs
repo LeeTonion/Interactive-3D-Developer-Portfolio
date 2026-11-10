@@ -145,6 +145,13 @@ namespace SpaceCyberpunk
 
         private void SampleSplineAtDistance(float distance, out Vector3 position, out Vector3 forward)
         {
+            if (_sampledCumulativeDist == null || _sampledCumulativeDist.Count < 2 || _sampledPositions == null || _sampledPositions.Count < 2 || _totalSplineLength <= 0.001f)
+            {
+                position = transform.position;
+                forward = transform.forward;
+                return;
+            }
+
             float distMod = (distance % _totalSplineLength + _totalSplineLength) % _totalSplineLength;
 
             // Binary search in cumulative distance table
