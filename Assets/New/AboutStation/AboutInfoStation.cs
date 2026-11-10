@@ -131,7 +131,6 @@ namespace SpaceCyberpunk
         private void Awake()
         {
             Application.runInBackground = true;
-            FirstPersonCitadelWalkthrough.EnsureEnhancedChamberLighting();
             _mpb = new MaterialPropertyBlock();
             if (ship == null) ship = FindFirstObjectByType<PlayerSpaceshipController>();
             if (cameraFollow == null) cameraFollow = FindFirstObjectByType<SpaceshipCameraFollow>();
@@ -144,6 +143,15 @@ namespace SpaceCyberpunk
                 if (pad == null) pad = GameObject.Find("About_Spaceship_Landing_Platform");
                 if (pad == null) pad = GameObject.Find("LandingPad");
                 if (pad != null) landingPadCenter = pad.transform;
+            }
+
+            try
+            {
+                FirstPersonCitadelWalkthrough.EnsureEnhancedChamberLighting();
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning("Chamber lighting warning: " + ex.Message);
             }
 
             titleText = titleText ? titleText : FindText("Screen_Title");
@@ -215,7 +223,15 @@ namespace SpaceCyberpunk
         // ───────────────────────── Idle: phát hiện đáp tàu ─────────────────────────
         private void UpdateIdle()
         {
-            if (ship == null || _isLandingSequence) return;
+            if (_isLandingSequence) return;
+
+            if (ship == null)
+            {
+                ship = FindFirstObjectByType<PlayerSpaceshipController>();
+                if (ship != null && _shipRb == null) _shipRb = ship.GetComponent<Rigidbody>();
+                if (ship == null) return;
+            }
+
             if (landingPadCenter == null)
             {
                 var pad = GameObject.Find("LandingPad_Center");
@@ -227,14 +243,15 @@ namespace SpaceCyberpunk
 
             Vector3 d = ship.transform.position - landingPadCenter.position;
             float flatDist = new Vector2(d.x, d.z).magnitude;
-            bool inZone = flatDist < landingRadius && d.y < 8f && d.y > -1f;
+            float effectiveRadius = Mathf.Max(landingRadius, 14.5f);
+            bool inZone = flatDist < effectiveRadius && d.y < 12.0f && d.y > -2.5f;
             float speed = _shipRb != null ? _shipRb.linearVelocity.magnitude : 0f;
 
             if (!inZone)
             {
                 _landedTimer = 0f;
-                if (flatDist > landingRadius + 2f) _armed = true;
-                SetPrompt(flatDist < landingRadius * 2.5f, "HẠ CÁNH XUỐNG BÃI ĐÁP\nĐỂ XEM PROJECTS");
+                _armed = true; // Luôn sẵn sàng kích hoạt khi bay lại vào khu vực bãi đáp
+                SetPrompt(flatDist < effectiveRadius * 2.2f, "HẠ CÁNH XUỐNG BÃI ĐÁP\nĐỂ XEM PROJECTS");
                 return;
             }
 
@@ -244,11 +261,15 @@ namespace SpaceCyberpunk
                 SpaceTrafficShipAI.ClearFleetHostileAlert();
             }
 
-            if (_armed && speed < landedMaxSpeed && ship.IsHovering)
+            // Điều kiện hạ cánh: Giảm tốc độ chậm lại (< 6.5 m/s) HOẶC chủ động nhấn [F] / [E] / [Enter]
+            bool isDecelerating = speed < Mathf.Max(landedMaxSpeed, 6.5f);
+            bool keyLanding = Input.GetKeyDown(KeyCode.F) || Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Return);
+
+            if (keyLanding || isDecelerating)
             {
                 _landedTimer += Time.deltaTime;
                 SetPrompt(true, "ĐANG ĐÁP XUỐNG BÃI...");
-                if (_landedTimer >= 0.4f)
+                if (keyLanding || _landedTimer >= 0.35f)
                 {
                     StartCoroutine(PerformLandingAndConnectingRoutine());
                 }
@@ -256,11 +277,7 @@ namespace SpaceCyberpunk
             else
             {
                 _landedTimer = 0f;
-                SetPrompt(true, _armed ? "GIẢM TỐC ĐỂ ĐÁP" : "NHẤN [F] ĐỂ MỞ TRẠM PROJECTS");
-                if (Input.GetKeyDown(KeyCode.F))
-                {
-                    StartCoroutine(PerformLandingAndConnectingRoutine());
-                }
+                SetPrompt(true, "GIẢM TỐC HOẶC NHẤN [F] ĐỂ ĐÁP TÀU");
             }
         }
 
@@ -282,59 +299,64 @@ namespace SpaceCyberpunk
             _armed = false;
             _landedTimer = 0f;
 
-            // 1. Tắt ngay báo động hạm đội địch
-            SpaceTrafficShipAI.ClearFleetHostileAlert();
-
-            // 2. Khóa điều khiển & tắt va chạm vật lý để đáp êm ái
-            if (ship != null)
+            try
             {
-                ship.enabled = false;
-                if (_shipRb != null)
+                // 1. Tắt ngay báo động hạm đội địch
+                SpaceTrafficShipAI.ClearFleetHostileAlert();
+
+                // 2. Khóa điều khiển & tắt va chạm vật lý để đáp êm ái
+                if (ship != null)
                 {
-                    _savedKinematic = _shipRb.isKinematic;
-                    _shipRb.linearVelocity = Vector3.zero;
-                    _shipRb.angularVelocity = Vector3.zero;
-                    _shipRb.isKinematic = true;
+                    ship.enabled = false;
+                    if (_shipRb != null)
+                    {
+                        _savedKinematic = _shipRb.isKinematic;
+                        _shipRb.linearVelocity = Vector3.zero;
+                        _shipRb.angularVelocity = Vector3.zero;
+                        _shipRb.isKinematic = true;
+                    }
                 }
+
+                Vector3 padPos = landingPadCenter != null ? landingPadCenter.position : transform.position;
+                Vector3 startShipPos = ship != null ? ship.transform.position : padPos;
+                
+                // KHÔNG ÉP TÀU VỀ TÂM BÃI ĐÁP: Tàu đỗ ở đâu trong bãi thì hạ cánh ngay tại vị trí X, Z đó!
+                Vector3 targetShipPos = new Vector3(startShipPos.x, padPos.y + 0.72f, startShipPos.z);
+                Quaternion startRot = ship != null ? ship.transform.rotation : Quaternion.identity;
+                // Cân bằng góc nghiêng pitch/roll phẳng với mặt sàn, giữ nguyên hướng xoay Y của người chơi
+                Quaternion targetRot = Quaternion.Euler(0f, startRot.eulerAngles.y, 0f);
+
+                // Khởi tạo Compact HUD panel ở góc trên bên phải màn hình (Top-Right Screen Space)
+                RectTransform hudFillBar;
+                TMP_Text hudStatusText;
+                _activeDockingHUD = CreateDockingHUDPanel(out hudStatusText, out hudFillBar);
+
+                // ═════════════════════════════════════════════════════════════════════════
+                // STAGE 1: APPROACH & LANDING (Khoảng 1.5 giây)
+                // ═════════════════════════════════════════════════════════════════════════
+                yield return StartCoroutine(Stage1_ApproachAndLanding(startShipPos, targetShipPos, startRot, targetRot, padPos, hudStatusText, hudFillBar));
+
+                // ═════════════════════════════════════════════════════════════════════════
+                // STAGE 2: DOCKING SYSTEM (Khoảng 0.9 giây)
+                // ═════════════════════════════════════════════════════════════════════════
+                yield return StartCoroutine(Stage2_DockingClamps(padPos, targetShipPos, targetRot, hudStatusText, hudFillBar));
+
+                // ═════════════════════════════════════════════════════════════════════════
+                // STAGE 3: DATA UPLINK (Khoảng 1.8 giây)
+                // ═════════════════════════════════════════════════════════════════════════
+                yield return StartCoroutine(Stage3_DataUplink(padPos, targetShipPos, hudStatusText, hudFillBar));
+
+                // Dọn dẹp HUD sau khi hoàn tất
+                if (_activeDockingHUD != null) Destroy(_activeDockingHUD);
+
+                // Dọn sạch ngàm kẹp bãi đáp để giải phóng hoàn toàn chân phi thuyền
+                foreach (var c in _activeDockingClamps) { if (c != null) Destroy(c); }
+                _activeDockingClamps.Clear();
             }
-
-            Vector3 padPos = landingPadCenter != null ? landingPadCenter.position : transform.position;
-            Vector3 startShipPos = ship != null ? ship.transform.position : padPos;
-            
-            // KHÔNG ÉP TÀU VỀ TÂM BÃI ĐÁP: Tàu đỗ ở đâu trong bãi thì hạ cánh ngay tại vị trí X, Z đó!
-            Vector3 targetShipPos = new Vector3(startShipPos.x, padPos.y + 0.72f, startShipPos.z);
-            Quaternion startRot = ship != null ? ship.transform.rotation : Quaternion.identity;
-            // Cân bằng góc nghiêng pitch/roll phẳng với mặt sàn, giữ nguyên hướng xoay Y của người chơi
-            Quaternion targetRot = Quaternion.Euler(0f, startRot.eulerAngles.y, 0f);
-
-            // Khởi tạo Compact HUD panel ở góc trên bên phải màn hình (Top-Right Screen Space)
-            RectTransform hudFillBar;
-            TMP_Text hudStatusText;
-            _activeDockingHUD = CreateDockingHUDPanel(out hudStatusText, out hudFillBar);
-
-            // ═════════════════════════════════════════════════════════════════════════
-            // STAGE 1: APPROACH & LANDING (Khoảng 1.5 giây)
-            // ═════════════════════════════════════════════════════════════════════════
-            yield return StartCoroutine(Stage1_ApproachAndLanding(startShipPos, targetShipPos, startRot, targetRot, padPos, hudStatusText, hudFillBar));
-
-            // ═════════════════════════════════════════════════════════════════════════
-            // STAGE 2: DOCKING SYSTEM (Khoảng 0.9 giây)
-            // ═════════════════════════════════════════════════════════════════════════
-            yield return StartCoroutine(Stage2_DockingClamps(padPos, targetShipPos, targetRot, hudStatusText, hudFillBar));
-
-            // ═════════════════════════════════════════════════════════════════════════
-            // STAGE 3: DATA UPLINK (Khoảng 1.8 giây)
-            // ═════════════════════════════════════════════════════════════════════════
-            yield return StartCoroutine(Stage3_DataUplink(padPos, targetShipPos, hudStatusText, hudFillBar));
-
-            // Dọn dẹp HUD sau khi hoàn tất
-            if (_activeDockingHUD != null) Destroy(_activeDockingHUD);
-
-            // Dọn sạch ngàm kẹp bãi đáp để giải phóng hoàn toàn chân phi thuyền
-            foreach (var c in _activeDockingClamps) { if (c != null) Destroy(c); }
-            _activeDockingClamps.Clear();
-
-            _isLandingSequence = false;
+            finally
+            {
+                _isLandingSequence = false;
+            }
 
             // Kết nối dữ liệu thành công -> Tự động chuyển camera vào xem trạm thông tin Projects
             Enter();

@@ -316,7 +316,8 @@ namespace SpaceCyberpunk
                 go.transform.SetParent(parent, false);
                 go.transform.position = pos;
             }
-            var l = go.GetComponent<Light>() ?? go.AddComponent<Light>();
+            var l = go.GetComponent<Light>();
+            if (l == null) l = go.AddComponent<Light>();
             l.type = LightType.Point;
             l.color = color;
             l.intensity = intensity;
@@ -334,7 +335,8 @@ namespace SpaceCyberpunk
                 go.transform.position = pos;
                 go.transform.rotation = Quaternion.Euler(rot);
             }
-            var l = go.GetComponent<Light>() ?? go.AddComponent<Light>();
+            var l = go.GetComponent<Light>();
+            if (l == null) l = go.AddComponent<Light>();
             l.type = LightType.Spot;
             l.color = color;
             l.intensity = intensity;
