@@ -6,75 +6,268 @@ using UnityEngine.UI;
 namespace SpaceCyberpunk
 {
     /// <summary>
-    /// Hệ Thống Khóa Mục Tiêu & Theo Dõi Tàu Địch (Sci-Fi Target Lock-On & Tracking HUD):
-    /// - Quét các phi thuyền địch (SpaceTrafficShipAI) và mục tiêu trong tầm nhìn không gian.
-    /// - Hiển thị khung ngắm hình thoi 4 góc (▲ ▼ ◄ ►) cùng nhãn TRK / LOCK và khoảng cách như thiết kế ảnh 2.
-    /// - Điều kiện khóa mục tiêu:
-    ///   + Phải nằm trong tầm nhìn 40m của tàu (dist <= 40m).
-    ///   + Phải giữ tâm ngắm liên tục vào mục tiêu trong 3 giây (3.0s).
-    /// - Khi đang khóa (Locking): hiển thị đồng hồ đếm ngược 3s -> 0s kèm thu hẹp 4 góc hình thoi.
-    /// - Khi đã khóa cứng (LOCK): pháo Laser Plasma tự động hội tụ bắn chính xác vào tàu địch.
+    /// Hệ Thống Khóa Mục Tiêu Nhanh 1 Giây & HUD Lục Giác Tập Trung Độc Quyền (Single-Target Hexagon Lock-On HUD):
+    /// - Hiển thị bộ tâm ngắm lục giác vector khử răng cưa phát sáng (Anti-Aliased Hexagon Targeting Reticle).
+    /// - Chỉ khóa và hiển thị DUY NHẤT 1 mục tiêu được ngắm chuẩn xác (không hiện rác nhiều marker trên màn hình).
+    /// - Điều kiện khóa:
+    ///   + Mục tiêu phải nằm trọn bên trong khung lục giác (Hexagon Aperture).
+    ///   + Nằm trong tầm ngắm 200m và không bị che khuất tầm nhìn trực tiếp (Physics Collider + Opaque Visual Geometry).
+    ///   + Khóa nhanh thần tốc trong vòng đúng 1.0 giây (1s countdown).
+    /// - Khi đã khóa cứng (TARGET LOCKED):
+    ///   + Toàn bộ khung lục giác và tâm ngắm chuyển sang màu vàng-cam rực sáng (Luminous White-Amber Glow).
+    ///   + Tiêu đề hiển thị TARGET LOCKED, thanh đáy hiển thị WEAPON SYS: ACTIVE.
+    ///   + Pháo laser kép tự động hội tụ và bám theo mục tiêu chính xác tuyệt đối.
+    ///   + Nếu mục tiêu bị phá hủy hoặc bị bất kỳ đảo/bảng/công trình/tàu nào che khuất -> Lập tức hủy khóa.
     /// </summary>
+    [DefaultExecutionOrder(200)]
     public class SpaceshipTargetLockSystem : MonoBehaviour
     {
-        [Header("Cấu Hình Tầm Quét (Tracking Range)")]
-        public float maxTrackingDistance = 1600f;
-        public float lockAngleThreshold = 18f;
-        public float trackingFovAngle = 65f;
+        [Header("Cấu Hình Khóa Mục Tiêu (Lock-On Configuration)")]
+        [Tooltip("Khoảng cách tối đa để có thể khóa mục tiêu (mặc định: 200m)")]
+        public float maxLockDistance = 200f;
 
-        [Header("Điều Kiện Khóa Mục Tiêu (Lock-On Requirements)")]
-        [Tooltip("Khoảng cách tối đa so với tàu để có thể khóa mục tiêu (mặc định: 300m theo yêu cầu người dùng)")]
-        public float maxLockDistance = 300f;
-
-        [Tooltip("Thời gian giữ tâm ngắm liên tục vào mục tiêu để khóa cứng (mặc định: 3 giây)")]
-        public float lockHoldDuration = 3.0f;
+        [Tooltip("Thời gian giữ tâm ngắm liên tục trong lục giác để khóa cứng (mặc định: đúng 1.0 giây theo yêu cầu)")]
+        public float lockHoldDuration = 1.0f;
 
         [Header("Màu Sắc HUD Khóa Mục Tiêu")]
-        public Color trackingColor = new Color(1f, 0.42f, 0.22f, 0.95f);
-        public Color lockingColor = new Color(1f, 0.68f, 0.15f, 1f);
-        [Tooltip("Màu khi đã khóa cứng mục tiêu (chuyển màu xanh theo yêu cầu người dùng)")]
-        public Color lockedColor = new Color(0.15f, 1f, 0.45f, 1f);
+        public Color searchColor = new Color(0.28f, 0.88f, 1.0f, 0.72f);        // Cyan vi tính tinh tế khi dò tìm
+        public Color lockingColor = new Color(1.0f, 0.80f, 0.22f, 0.95f);       // Hổ phách vàng khi đang đếm 1s
+        public Color lockedColor = new Color(1.0f, 0.60f, 0.14f, 1.0f);         // Cam hổ phách hào quang khi khóa cứng
+        public Color lockedHeaderColor = new Color(1.0f, 0.95f, 0.86f, 1.0f);   // Lõi sáng vàng kem nổi bật (chuẩn ảnh mẫu)
+        public Color activeCyanColor = new Color(0.28f, 1.0f, 0.94f, 1.0f);      // Chữ xanh ngọc WEAPON SYS: ACTIVE.
+
+        public static SpaceshipTargetLockSystem Instance { get; private set; }
 
         private Camera _mainCam;
         private Canvas _canvas;
-        private RectTransform _canvasRt;
-        private RectTransform _hudRootRt;   // RectTransform của _trackingUiRoot
+        private RectTransform _hudRootRt;
         private GameObject _trackingUiRoot;
         private Transform _currentLockedTarget;
         private Transform _potentialLockCandidate;
         private float _lockHoldTimer = 0f;
+        private Vector2 _reticleSmoothVel;
 
-        private readonly List<TrackingMarkerUI> _markers = new List<TrackingMarkerUI>();
-        private const int MaxTrackedTargets = 8;
+        private HexagonLockReticleUI _reticleUI;
+        private static Sprite _circleReticleSprite;
+        private static Sprite _dotReticleSprite;
+
+        // Bộ nhớ đệm các khối hình học hiển thị (Opaque MeshRenderer không có Collider - vd: bảng SPAWN HUB, tinh thể, tường)
+        private struct MeshTriData
+        {
+            public Vector3[] Vertices;
+            public int[] Triangles;
+            public Bounds PaddedLocalBounds;
+        }
+
+        private class OpaqueVisualOccluder
+        {
+            public MeshRenderer Renderer;
+            public GameObject GameObject;
+            public MeshTriData MeshData;
+            public bool HasExactMesh;
+        }
+
+        private class OccluderGroup
+        {
+            public Bounds WorldBounds;
+            public List<OpaqueVisualOccluder> Items = new List<OpaqueVisualOccluder>();
+        }
+
+        private readonly List<OccluderGroup> _occluderGroups = new List<OccluderGroup>();
+        private readonly Dictionary<Mesh, MeshTriData> _meshTriCache = new Dictionary<Mesh, MeshTriData>();
+        private bool _visualOccludersBuilt = false;
 
         public Transform CurrentLockedTarget => _currentLockedTarget;
         public bool HasLockedTarget => _currentLockedTarget != null;
         public float LockProgress => Mathf.Clamp01(_lockHoldTimer / lockHoldDuration);
 
-        private class TrackingMarkerUI
+        public void ClearLockImmediate()
+        {
+            _currentLockedTarget = null;
+            _potentialLockCandidate = null;
+            _lockHoldTimer = 0f;
+        }
+
+        public void ClearLockIfTarget(Transform t)
+        {
+            if (t == null) return;
+            if (_currentLockedTarget == t || (_currentLockedTarget != null && _currentLockedTarget.IsChildOf(t)))
+            {
+                _currentLockedTarget = null;
+            }
+            if (_potentialLockCandidate == t || (_potentialLockCandidate != null && _potentialLockCandidate.IsChildOf(t)))
+            {
+                _potentialLockCandidate = null;
+                _lockHoldTimer = 0f;
+            }
+        }
+
+        private class HexagonLockReticleUI
         {
             public GameObject Root;
-            public RectTransform RectTr;
-            public TMP_Text LabelText;
-            public TMP_Text DistText;
-            public Image ArrowTop;
-            public Image ArrowBottom;
-            public Image ArrowLeft;
-            public Image ArrowRight;
-            public RectTransform ArrowTopRt;
-            public RectTransform ArrowBottomRt;
-            public RectTransform ArrowLeftRt;
-            public RectTransform ArrowRightRt;
-            public bool IsInUse;
+            public RectTransform RootRt;
+
+            // Khung lục giác vector khử răng cưa + hào quang neon mượt mà (Outer Hexagon Border Only)
+            public HexagonVectorGraphic HexGraphic;
+
+            // Tâm ngắm tròn chính giữa sắc nét (Center Circular Reticle: Vòng tròn mảnh + chấm tròn phát sáng)
+            public Image CenterRing;
+            public RectTransform CenterRingRt;
+            public Image CenterDot;
+
+            // Văn bản trạng thái sắc nét không hộp đen thô (Drop shadow + Letter spacing)
+            public TMP_Text HeaderText;   // TARGET LOCKED / LOCKING 0.Xs
+            public TMP_Text FooterText;   // WEAPON SYS: ACTIVE.
+            public TMP_Text DistText;     // [ 85M ]
+        }
+
+        /// <summary>
+        /// Custom Vector MaskableGraphic vẽ viền lục giác khử răng cưa (sub-pixel AA feather)
+        /// với góc nối mitered liền mạch 100% và hào quang neon mềm mại (không vỡ pixel ở cạnh chéo).
+        /// </summary>
+        private class HexagonVectorGraphic : MaskableGraphic
+        {
+            public float HalfWidth = 220f;
+            public float HalfHeight = 172f;
+            public float CornerY = 74f;
+            public float TopGap = 98f;
+
+            public float CoreHalfWidth = 1.55f;
+            public float FeatherWidth = 1.35f;
+            public float GlowHalfWidth = 9.0f;
+
+            public Color CoreColor = new Color(0.28f, 0.88f, 1.0f, 0.72f);
+            public Color GlowColor = new Color(0.10f, 0.76f, 1.0f, 0.22f);
+
+            public void SetStyle(Color coreCol, Color glowCol, float coreHalfW)
+            {
+                if (CoreColor == coreCol && GlowColor == glowCol && Mathf.Abs(CoreHalfWidth - coreHalfW) < 0.01f)
+                    return;
+                CoreColor = coreCol;
+                GlowColor = glowCol;
+                CoreHalfWidth = coreHalfW;
+                SetVerticesDirty();
+            }
+
+            protected override void OnPopulateMesh(VertexHelper vh)
+            {
+                vh.Clear();
+
+                Vector2[] leftPts = new Vector2[]
+                {
+                    new Vector2(-TopGap, HalfHeight),
+                    new Vector2(-HalfWidth, CornerY),
+                    new Vector2(-HalfWidth, -CornerY),
+                    new Vector2(-TopGap, -HalfHeight)
+                };
+
+                Vector2[] rightPts = new Vector2[]
+                {
+                    new Vector2(TopGap, HalfHeight),
+                    new Vector2(HalfWidth, CornerY),
+                    new Vector2(HalfWidth, -CornerY),
+                    new Vector2(TopGap, -HalfHeight)
+                };
+
+                // Pass 1: Hào quang neon mềm bên ngoài (Glow Halo)
+                EmitPolylinePass(vh, leftPts, 0f, GlowHalfWidth, GlowColor);
+                EmitPolylinePass(vh, rightPts, 0f, GlowHalfWidth, GlowColor);
+
+                // Pass 2: Lõi nét sắc khử răng cưa mượt mà (Crisp AA Core)
+                EmitPolylinePass(vh, leftPts, CoreHalfWidth, FeatherWidth, CoreColor);
+                EmitPolylinePass(vh, rightPts, CoreHalfWidth, FeatherWidth, CoreColor);
+            }
+
+            private static void EmitPolylinePass(VertexHelper vh, Vector2[] pts, float innerHalfW, float featherW, Color col)
+            {
+                int count = pts.Length;
+                if (count < 2 || col.a <= 0.002f) return;
+
+                Vector2[] miters = new Vector2[count];
+                float[] miterScales = new float[count];
+
+                for (int i = 0; i < count; i++)
+                {
+                    if (i == 0)
+                    {
+                        Vector2 t = (pts[1] - pts[0]).normalized;
+                        miters[i] = new Vector2(-t.y, t.x);
+                        miterScales[i] = 1f;
+                    }
+                    else if (i == count - 1)
+                    {
+                        Vector2 t = (pts[i] - pts[i - 1]).normalized;
+                        miters[i] = new Vector2(-t.y, t.x);
+                        miterScales[i] = 1f;
+                    }
+                    else
+                    {
+                        Vector2 t0 = (pts[i] - pts[i - 1]).normalized;
+                        Vector2 t1 = (pts[i + 1] - pts[i]).normalized;
+                        Vector2 n0 = new Vector2(-t0.y, t0.x);
+                        Vector2 n1 = new Vector2(-t1.y, t1.x);
+                        Vector2 m = (n0 + n1).normalized;
+                        float dot = Vector2.Dot(m, n0);
+                        miters[i] = m;
+                        miterScales[i] = dot > 0.35f ? (1f / dot) : 1f;
+                    }
+                }
+
+                float outerHalfW = innerHalfW + featherW;
+                Color32 cSolid = col;
+                Color32 cEdge = new Color32(cSolid.r, cSolid.g, cSolid.b, 0);
+                // Đầu mút mở hở được vuốt mờ nhẹ để trông hiện đại, không cụt lủn
+                Color32 cTip = new Color32(cSolid.r, cSolid.g, cSolid.b, (byte)(cSolid.a * 0.55f));
+
+                int baseIdx = vh.currentVertCount;
+                for (int i = 0; i < count; i++)
+                {
+                    Vector2 p = pts[i];
+                    Vector2 n = miters[i] * miterScales[i];
+                    Color32 centerCol = (i == 0 || i == count - 1) ? cTip : cSolid;
+
+                    if (innerHalfW > 0.01f)
+                    {
+                        vh.AddVert(p + n * outerHalfW, cEdge, Vector2.zero);
+                        vh.AddVert(p + n * innerHalfW, centerCol, Vector2.zero);
+                        vh.AddVert(p - n * innerHalfW, centerCol, Vector2.zero);
+                        vh.AddVert(p - n * outerHalfW, cEdge, Vector2.zero);
+                    }
+                    else
+                    {
+                        vh.AddVert(p + n * outerHalfW, cEdge, Vector2.zero);
+                        vh.AddVert(p, centerCol, Vector2.zero);
+                        vh.AddVert(p - n * outerHalfW, cEdge, Vector2.zero);
+                    }
+                }
+
+                int stride = innerHalfW > 0.01f ? 4 : 3;
+                for (int i = 0; i < count - 1; i++)
+                {
+                    int rowA = baseIdx + i * stride;
+                    int rowB = baseIdx + (i + 1) * stride;
+                    for (int s = 0; s < stride - 1; s++)
+                    {
+                        vh.AddTriangle(rowA + s, rowB + s, rowB + s + 1);
+                        vh.AddTriangle(rowA + s, rowB + s + 1, rowA + s + 1);
+                    }
+                }
+            }
+        }
+
+        private void Awake()
+        {
+            Instance = this;
         }
 
         private void Start()
         {
             _mainCam = Camera.main;
             EnsureTrackingUI();
+            BuildVisualOccluderCache();
         }
 
-        private void Update()
+        private void LateUpdate()
         {
             if (_mainCam == null) _mainCam = Camera.main;
             if (_mainCam == null) return;
@@ -86,9 +279,11 @@ namespace SpaceCyberpunk
                 return;
             }
 
-            // Chỉ gọi EnsureTrackingUI nếu markers bị mất (không gọi mỗi frame)
-            if (_markers.Count == 0) EnsureTrackingUI();
-            if (_markers.Count == 0) return;
+            if (_reticleUI == null || _reticleUI.Root == null)
+            {
+                EnsureTrackingUI();
+            }
+            if (_reticleUI == null) return;
 
             if (_trackingUiRoot != null && !_trackingUiRoot.activeSelf)
                 _trackingUiRoot.SetActive(true);
@@ -98,24 +293,34 @@ namespace SpaceCyberpunk
 
         private void EnsureTrackingUI()
         {
-            if (_trackingUiRoot != null && _markers.Count > 0) return;
+            if (_trackingUiRoot != null && _reticleUI != null && _reticleUI.Root != null) return;
 
-            // Tìm Canvas ScreenSpaceOverlay
             Canvas[] allCanvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None);
             Canvas targetCanvas = null;
             foreach (var c in allCanvases)
+            {
                 if (c.renderMode == RenderMode.ScreenSpaceOverlay && c.gameObject.name == "Canvas")
-                { targetCanvas = c; break; }
+                {
+                    targetCanvas = c;
+                    break;
+                }
+            }
             if (targetCanvas == null)
+            {
                 foreach (var c in allCanvases)
+                {
                     if (c.renderMode == RenderMode.ScreenSpaceOverlay)
-                    { targetCanvas = c; break; }
+                    {
+                        targetCanvas = c;
+                        break;
+                    }
+                }
+            }
             if (targetCanvas == null) return;
 
-            _canvas   = targetCanvas;
-            _canvasRt = targetCanvas.GetComponent<RectTransform>();
+            _canvas = targetCanvas;
 
-            // Xóa TẤT CẢ HUD root cũ còn tồn tại - DestroyImmediate để không deferred
+            // Xóa UI cũ nếu có
             var existing = targetCanvas.transform.Find("TargetTracking_HUD_Root");
             while (existing != null)
             {
@@ -123,291 +328,712 @@ namespace SpaceCyberpunk
                 existing = targetCanvas.transform.Find("TargetTracking_HUD_Root");
             }
 
+            // Tắt Crosshair cũ của PlayerController nếu đang mở để tránh chồng chéo
+            var oldCrosshair = targetCanvas.transform.Find("CrosshairReticle");
+            if (oldCrosshair != null) oldCrosshair.gameObject.SetActive(false);
+            foreach (var hudName in new[] { "PlayerCombatHUD", "PlayerSciFiHUD" })
+            {
+                var hudRoot = targetCanvas.transform.Find(hudName);
+                if (hudRoot != null)
+                {
+                    var ch = hudRoot.Find("CrosshairReticle");
+                    if (ch != null) ch.gameObject.SetActive(false);
+                }
+            }
+
             _trackingUiRoot = new GameObject("TargetTracking_HUD_Root", typeof(RectTransform));
             _trackingUiRoot.transform.SetParent(targetCanvas.transform, false);
 
             _hudRootRt = _trackingUiRoot.GetComponent<RectTransform>();
-            _hudRootRt.anchorMin  = Vector2.zero;
-            _hudRootRt.anchorMax  = Vector2.one;
-            _hudRootRt.pivot      = new Vector2(0.5f, 0.5f);
-            _hudRootRt.offsetMin  = Vector2.zero;
-            _hudRootRt.offsetMax  = Vector2.zero;
+            _hudRootRt.anchorMin = Vector2.zero;
+            _hudRootRt.anchorMax = Vector2.one;
+            _hudRootRt.pivot = new Vector2(0.5f, 0.5f);
+            _hudRootRt.offsetMin = Vector2.zero;
+            _hudRootRt.offsetMax = Vector2.zero;
 
-            _markers.Clear();
-            for (int i = 0; i < MaxTrackedTargets; i++)
-                _markers.Add(CreateMarkerUI(_trackingUiRoot.transform, i));
+            _reticleUI = BuildHexagonReticleUI(_trackingUiRoot.transform);
         }
 
-        private TrackingMarkerUI CreateMarkerUI(Transform parent, int index)
+        private HexagonLockReticleUI BuildHexagonReticleUI(Transform parent)
         {
-            var go = new GameObject("Marker_" + index, typeof(RectTransform));
-            go.transform.SetParent(parent, false);
+            var ui = new HexagonLockReticleUI();
 
-            var rt = go.GetComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(80f, 80f);
+            var rootGo = new GameObject("HexagonLockReticle", typeof(RectTransform));
+            rootGo.transform.SetParent(parent, false);
+
+            var rt = rootGo.GetComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(540f, 430f);
             rt.anchorMin = new Vector2(0.5f, 0.5f);
             rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = Vector2.zero;
 
-            var marker = new TrackingMarkerUI
-            {
-                Root = go,
-                RectTr = rt
-            };
+            ui.Root = rootGo;
+            ui.RootRt = rt;
 
-            // 4 mũi tên kiểu bracket ◇ như ảnh 2 - pointing inward
-            float arrowOffset = 28f;
-            float arrowSize = 11f;
+            // Khung lục giác cân đối hài hòa (~gấp 3x bản gọn, 400x296px) và thoáng mép dưới không đè đuôi tàu
+            float hexW = 200f;
+            float hexH = 148f;
+            float topGap = 90f;
+            float cornerY = 64f;
 
-            marker.ArrowTop    = CreateArrow("ArrowTop",    go.transform, new Vector2(0f,  arrowOffset), arrowSize, 0f,   out marker.ArrowTopRt);
-            marker.ArrowBottom = CreateArrow("ArrowBottom",  go.transform, new Vector2(0f, -arrowOffset), arrowSize, 180f, out marker.ArrowBottomRt);
-            marker.ArrowLeft   = CreateArrow("ArrowLeft",   go.transform, new Vector2(-arrowOffset, 0f), arrowSize, 90f,  out marker.ArrowLeftRt);
-            marker.ArrowRight  = CreateArrow("ArrowRight",  go.transform, new Vector2( arrowOffset, 0f), arrowSize, 270f, out marker.ArrowRightRt);
+            // 1. VIỀN NGOÀI LỤC GIÁC VECTOR KHỬ RĂNG CƯA + HÀO QUANG NEON MỀM (KHÔNG RĂNG CƯA, KHÔNG MẤU GÓC)
+            var hexGo = new GameObject("HexVectorFrame", typeof(RectTransform), typeof(CanvasRenderer), typeof(HexagonVectorGraphic));
+            hexGo.transform.SetParent(rootGo.transform, false);
+            var hexRt = hexGo.GetComponent<RectTransform>();
+            hexRt.anchorMin = new Vector2(0.5f, 0.5f);
+            hexRt.anchorMax = new Vector2(0.5f, 0.5f);
+            hexRt.sizeDelta = new Vector2(480f, 360f);
+            hexRt.anchoredPosition = Vector2.zero;
 
-            // Nhãn TRK / LOCK (trái + trên)
-            marker.LabelText = CreateText("LabelTRK", go.transform, "TRK", 13f, trackingColor, TextAlignmentOptions.MidlineLeft);
-            var lblRt = marker.LabelText.rectTransform;
-            lblRt.anchoredPosition = new Vector2(-arrowOffset - 2f, arrowOffset + 6f);
-            lblRt.sizeDelta = new Vector2(80f, 20f);
+            ui.HexGraphic = hexGo.GetComponent<HexagonVectorGraphic>();
+            ui.HexGraphic.raycastTarget = false;
+            ui.HexGraphic.HalfWidth = hexW;
+            ui.HexGraphic.HalfHeight = hexH;
+            ui.HexGraphic.CornerY = cornerY;
+            ui.HexGraphic.TopGap = topGap;
+            ui.HexGraphic.CoreColor = searchColor;
+            ui.HexGraphic.GlowColor = new Color(searchColor.r, searchColor.g, searchColor.b, 0.22f);
 
-            // Khoảng cách bên dưới nhãn
-            marker.DistText = CreateText("DistText", go.transform, "0.8km", 11.5f, trackingColor, TextAlignmentOptions.MidlineLeft);
-            var distRt = marker.DistText.rectTransform;
-            distRt.anchoredPosition = new Vector2(-arrowOffset - 2f, arrowOffset - 8f);
-            distRt.sizeDelta = new Vector2(80f, 20f);
+            // 2. TÂM TRÒN CHÍNH GIỮA MẢNH SẮC NÉT + CHẤM TRÒN PHÁT SÁNG (NO CHUNKY PIXEL)
+            var ringGo = new GameObject("CenterRing", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            ringGo.transform.SetParent(rootGo.transform, false);
+            ui.CenterRing = ringGo.GetComponent<Image>();
+            ui.CenterRing.sprite = GetOrCreateCircleSprite();
+            ui.CenterRing.color = searchColor;
+            ui.CenterRing.raycastTarget = false;
+            ui.CenterRingRt = ui.CenterRing.rectTransform;
+            ui.CenterRingRt.sizeDelta = new Vector2(44f, 44f);
+            ui.CenterRingRt.anchoredPosition = Vector2.zero;
 
-            go.SetActive(false);
-            return marker;
+            var dotGo = new GameObject("CenterDot", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            dotGo.transform.SetParent(rootGo.transform, false);
+            ui.CenterDot = dotGo.GetComponent<Image>();
+            ui.CenterDot.sprite = GetOrCreateDotSprite();
+            ui.CenterDot.color = searchColor;
+            ui.CenterDot.raycastTarget = false;
+            var dotRt = ui.CenterDot.rectTransform;
+            dotRt.sizeDelta = new Vector2(8f, 8f);
+            dotRt.anchoredPosition = Vector2.zero;
+
+            // 3. NHÃN TRẠNG THÁI CHỮ NỔI VIỀN ĐẬM RÕ NÉT TRÊN MỌI NỀN (KHÔNG CẦN HỘP ĐEN THÔ)
+            ui.HeaderText = CreateText("HeaderText", rootGo.transform, "", 15.5f, lockedHeaderColor, TextAlignmentOptions.Center, 5.5f);
+            var hRt = ui.HeaderText.rectTransform;
+            hRt.anchoredPosition = new Vector2(0f, hexH);
+            hRt.sizeDelta = new Vector2(240f, 26f);
+
+            ui.DistText = CreateText("DistText", rootGo.transform, "", 12f, lockedColor, TextAlignmentOptions.Center, 3.5f);
+            var dRt = ui.DistText.rectTransform;
+            dRt.anchoredPosition = new Vector2(0f, hexH - 21f);
+            dRt.sizeDelta = new Vector2(160f, 20f);
+
+            ui.FooterText = CreateText("FooterText", rootGo.transform, "", 12.5f, activeCyanColor, TextAlignmentOptions.Center, 4.5f);
+            var fRt = ui.FooterText.rectTransform;
+            fRt.anchoredPosition = new Vector2(0f, -hexH);
+            fRt.sizeDelta = new Vector2(240f, 22f);
+
+            return ui;
         }
 
-        private Image CreateArrow(string name, Transform parent, Vector2 pos, float size, float rotZ, out RectTransform rectTr)
+        private static TMP_Text CreateText(string name, Transform parent, string text, float size, Color color, TextAlignmentOptions align, float charSpacing)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            go.transform.SetParent(parent, false);
-            var img = go.GetComponent<Image>();
-            img.color = trackingColor;
-            img.raycastTarget = false;
-
-            rectTr = img.rectTransform;
-            rectTr.sizeDelta = new Vector2(size, size * 0.7f);
-            rectTr.anchoredPosition = pos;
-            rectTr.localRotation = Quaternion.Euler(0f, 0f, rotZ);
-            return img;
-        }
-
-        private TMP_Text CreateText(string name, Transform parent, string text, float size, Color color, TextAlignmentOptions align)
-        {
-            var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI), typeof(Shadow));
             go.transform.SetParent(parent, false);
             var tmp = go.GetComponent<TextMeshProUGUI>();
             tmp.text = text;
             tmp.fontSize = size;
             tmp.fontStyle = FontStyles.Bold;
+            tmp.characterSpacing = charSpacing;
             tmp.color = color;
             tmp.alignment = align;
             tmp.raycastTarget = false;
+            tmp.outlineWidth = 0.24f;
+            tmp.outlineColor = new Color32(4, 10, 18, 240);
+
+            var shadow = go.GetComponent<Shadow>();
+            shadow.effectColor = new Color(0.01f, 0.03f, 0.06f, 0.92f);
+            shadow.effectDistance = new Vector2(1.4f, -1.4f);
             return tmp;
+        }
+
+        private static Sprite GetOrCreateCircleSprite()
+        {
+            if (_circleReticleSprite != null) return _circleReticleSprite;
+
+            int size = 256;
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Bilinear;
+            tex.wrapMode = TextureWrapMode.Clamp;
+
+            float center = size * 0.5f;
+            float ringR = size * 0.39f;
+            float halfCore = size * 0.018f;   // Vòng tròn mảnh tinh tế ~4.5% đường kính
+            float aaEdge = 2.0f;
+            float glowSigma = size * 0.055f;
+            Color[] pixels = new Color[size * size];
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dist = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(center, center));
+                    float radialErr = Mathf.Abs(dist - ringR);
+
+                    float coreAlpha = 1f - Mathf.Clamp01((radialErr - halfCore) / aaEdge);
+                    float glowAlpha = 0.34f * Mathf.Exp(-(radialErr * radialErr) / (2f * glowSigma * glowSigma));
+                    float alpha = Mathf.Clamp01(Mathf.Max(coreAlpha, glowAlpha));
+                    pixels[y * size + x] = new Color(1f, 1f, 1f, alpha);
+                }
+            }
+
+            tex.SetPixels(pixels);
+            tex.Apply();
+            _circleReticleSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+            return _circleReticleSprite;
+        }
+
+        private static Sprite GetOrCreateDotSprite()
+        {
+            if (_dotReticleSprite != null) return _dotReticleSprite;
+
+            int size = 32;
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Bilinear;
+            tex.wrapMode = TextureWrapMode.Clamp;
+
+            float center = size * 0.5f;
+            float coreR = size * 0.16f;
+            float glowSigma = size * 0.22f;
+            Color[] pixels = new Color[size * size];
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dist = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(center, center));
+                    float core = 1f - Mathf.Clamp01((dist - coreR) / 1.5f);
+                    float glow = 0.45f * Mathf.Exp(-(dist * dist) / (2f * glowSigma * glowSigma));
+                    float alpha = Mathf.Clamp01(Mathf.Max(core, glow));
+                    pixels[y * size + x] = new Color(1f, 1f, 1f, alpha);
+                }
+            }
+
+            tex.SetPixels(pixels);
+            tex.Apply();
+            _dotReticleSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+            return _dotReticleSprite;
         }
 
         private void UpdateTargetLockingAndTracking()
         {
-            if (_mainCam == null) _mainCam = Camera.main;
-            if (_mainCam == null) return;
-            EnsureTrackingUI();
-
-            for (int i = 0; i < _markers.Count; i++) _markers[i].IsInUse = false;
-
-            IReadOnlyList<SpaceTrafficShipAI> allShips = SpaceTrafficShipAI.ActiveShips;
-            if (allShips == null || allShips.Count == 0)
-            {
-                allShips = FindObjectsByType<SpaceTrafficShipAI>(FindObjectsSortMode.None);
-            }
+            if (_reticleUI == null || _reticleUI.Root == null) return;
 
             Vector3 camPos = _mainCam.transform.position;
             Vector3 camForward = _mainCam.transform.forward;
             Vector3 shipPos = transform.position;
 
-            Transform bestCandidateInAim = null;
-            float smallestLockAngle = float.MaxValue;
+            Camera cam2D = (_canvas != null && _canvas.renderMode == RenderMode.ScreenSpaceCamera)
+                ? _canvas.worldCamera : null;
 
-            // Thu thập các mục tiêu hợp lệ trong tầm nhìn
-            var candidateTargets = new List<(Transform target, float distCam, float distShip, float angle)>();
-
-            foreach (var ship in allShips)
+            // 1. TÍNH TOÁN ĐIỂM NGẮM BORE-SIGHT CỦA PHÁO MẶC ĐỊNH
+            Vector3 gunAimPoint = shipPos + transform.forward * 90f;
+            Vector3 gunSc = _mainCam.WorldToScreenPoint(gunAimPoint);
+            Vector2 boreSightLocal = Vector2.zero;
+            if (gunSc.z > 0f && RectTransformUtility.ScreenPointToLocalPointInRectangle(_hudRootRt, gunSc, cam2D, out Vector2 bPt))
             {
-                if (ship == null) continue;
+                boreSightLocal = bPt;
+            }
 
-                Transform tr = ship.transform;
-                Vector3 toTargetCam = tr.position - camPos;
-                float distCam = toTargetCam.magnitude;
-                if (distCam > maxTrackingDistance || distCam < 4f) continue;
-
-                Vector3 dir = toTargetCam / distCam;
-                float angle = Vector3.Angle(camForward, dir);
-                if (angle > trackingFovAngle) continue;
-
-                float distShip = Vector3.Distance(shipPos, tr.position);
-                candidateTargets.Add((tr, distCam, distShip, angle));
-
-                // Điều kiện để được đưa vào diện khóa mục tiêu:
-                // 1) Phải trong tầm nhìn 300m của tàu (distShip <= 300m)
-                // 2) Phải nằm trong góc ngắm (angle < lockAngleThreshold)
-                if (distShip <= maxLockDistance && angle < lockAngleThreshold && angle < smallestLockAngle)
+            // 2. KIỂM TRA MỤC TIÊU ĐANG KHÓA CỨNG: nếu bị phá hủy, che khuất (LOS), hoặc quá 300m -> HỦY NGAY
+            if (_currentLockedTarget != null)
+            {
+                bool lost = false;
+                if (!_currentLockedTarget.gameObject.activeInHierarchy) lost = true;
+                else
                 {
-                    smallestLockAngle = angle;
-                    bestCandidateInAim = tr;
+                    var targetShip = _currentLockedTarget.GetComponent<SpaceTrafficShipAI>();
+                    if (targetShip != null && targetShip.IsDestroyed) lost = true;
+                    else
+                    {
+                        float dist = Vector3.Distance(shipPos, _currentLockedTarget.position);
+                        Vector3 toTarget = _currentLockedTarget.position - camPos;
+                        float angle = Vector3.Angle(camForward, toTarget.normalized);
+
+                        // Mất khóa ngay nếu vượt tầm 200m, lệch quá 45 độ, hoặc bị che khuất tầm nhìn (LOS)
+                        if (dist > maxLockDistance || angle > 45f || !HasLineOfSight(camPos, _currentLockedTarget))
+                        {
+                            lost = true;
+                        }
+                    }
+                }
+
+                if (lost)
+                {
+                    if (_potentialLockCandidate == _currentLockedTarget)
+                    {
+                        _potentialLockCandidate = null;
+                        _lockHoldTimer = 0f;
+                    }
+                    _currentLockedTarget = null;
                 }
             }
 
-            // Xử lý đếm thời gian 3 giây liên tục để khóa mục tiêu
-            if (bestCandidateInAim != null)
+            // 3 & 4. CHỈ KHI CHƯA KHÓA MỤC TIÊU: TÌM DUY NHẤT 1 MỤC TIÊU TRONG VÙNG LỤC GIÁC VÀ KHÓA TRONG 1.0 GIÂY
+            Vector2 bestCandidateLocalPt = Vector2.zero;
+            float bestCandidateDistShip = 999f;
+
+            if (_currentLockedTarget == null)
             {
-                if (_potentialLockCandidate == bestCandidateInAim)
+                IReadOnlyList<SpaceTrafficShipAI> allShips = SpaceTrafficShipAI.ActiveShips;
+                if (allShips == null || allShips.Count == 0)
                 {
-                    _lockHoldTimer += Time.deltaTime;
+                    allShips = FindObjectsByType<SpaceTrafficShipAI>(FindObjectsSortMode.None);
+                }
+
+                Transform bestCandidateInHex = null;
+                float closestDistToReticleSqr = float.MaxValue;
+
+                // Vùng lục giác: Rộng 200px, Cao 148px tính quanh tâm ngắm bore-sight (khớp viền ngoài cân đối)
+                float hexW = 200f;
+                float hexH = 148f;
+                float acquireRange = Mathf.Max(10f, maxLockDistance - 2f); // Chừa đệm 2m tránh nhấp nháy ở mép 200m
+
+                foreach (var ship in allShips)
+                {
+                    if (ship == null || !ship.gameObject.activeInHierarchy || ship.IsDestroyed) continue;
+
+                    Transform tr = ship.transform;
+                    Vector3 toTarget = tr.position - camPos;
+                    float distCam = toTarget.magnitude;
+                    if (distCam < 3.5f) continue;
+
+                    // Phải ở phía trước Camera
+                    if (Vector3.Dot(camForward, toTarget) <= 0f) continue;
+
+                    float distShip = Vector3.Distance(shipPos, tr.position);
+                    if (distShip > acquireRange) continue; // Giới hạn 200m theo yêu cầu
+
+                    // KIỂM TRA TẦM NHÌN TRỰC TIẾP (Line of Sight): Không bị bất kỳ đảo/vật cản nào che chắn
+                    if (!HasLineOfSight(camPos, tr)) continue;
+
+                    Vector3 screenPt = _mainCam.WorldToScreenPoint(tr.position);
+                    if (screenPt.z <= 0f) continue;
+
+                    if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                        _hudRootRt, screenPt, cam2D, out Vector2 localPt))
+                    {
+                        // KIỂM TRA MỤC TIÊU NẰM TRỌN TRONG VÙNG LỤC GIÁC (HEXAGON APERTURE):
+                        Vector2 delta = localPt - boreSightLocal;
+                        float dx = Mathf.Abs(delta.x);
+                        float dy = Mathf.Abs(delta.y);
+
+                        bool insideHex = (dx <= hexW && dy <= hexH) &&
+                                         ((dx / hexW) + (dy / hexH) <= 1.45f);
+
+                        if (insideHex)
+                        {
+                            float distSqr = delta.sqrMagnitude;
+                            if (distSqr < closestDistToReticleSqr)
+                            {
+                                closestDistToReticleSqr = distSqr;
+                                bestCandidateInHex = tr;
+                                bestCandidateLocalPt = localPt;
+                                bestCandidateDistShip = distShip;
+                            }
+                        }
+                    }
+                }
+
+                // XỬ LÝ KHÓA NHANH TRONG VÒNG ĐÚNG 1 GIÂY (1.0s Hold Lock-On)
+                if (bestCandidateInHex != null)
+                {
+                    if (_potentialLockCandidate == bestCandidateInHex)
+                    {
+                        _lockHoldTimer += Time.deltaTime;
+                    }
+                    else
+                    {
+                        _potentialLockCandidate = bestCandidateInHex;
+                        _lockHoldTimer = Time.deltaTime;
+                    }
+
+                    if (_lockHoldTimer >= lockHoldDuration)
+                    {
+                        _currentLockedTarget = _potentialLockCandidate;
+                    }
                 }
                 else
                 {
-                    _potentialLockCandidate = bestCandidateInAim;
+                    // Nếu mục tiêu rời khỏi lục giác trước khi khóa cứng: reset bộ đếm ngay
                     _lockHoldTimer = 0f;
+                    _potentialLockCandidate = null;
                 }
+            }
 
-                if (_lockHoldTimer >= lockHoldDuration)
+            // 5. ĐIỀU KHIỂN VỊ TRÍ TÂM LỤC GIÁC (SMOOTH TARGET TRACKING)
+            Vector2 targetReticlePos = boreSightLocal;
+            float targetDistance = 0f;
+
+            if (_currentLockedTarget != null)
+            {
+                Vector3 sc = _mainCam.WorldToScreenPoint(_currentLockedTarget.position);
+                if (sc.z > 0f && RectTransformUtility.ScreenPointToLocalPointInRectangle(_hudRootRt, sc, cam2D, out Vector2 pt))
                 {
-                    _currentLockedTarget = _potentialLockCandidate;
+                    targetReticlePos = pt;
+                    targetDistance = Vector3.Distance(shipPos, _currentLockedTarget.position);
                 }
+            }
+            else if (_potentialLockCandidate != null && _lockHoldTimer > 0f)
+            {
+                targetReticlePos = bestCandidateLocalPt;
+                targetDistance = bestCandidateDistShip;
+            }
+
+            // Đảm bảo bộ nhớ đệm vật cản thị giác đã bao gồm toàn bộ object sinh ra sau Start()
+            if (!_visualOccludersBuilt || (_occludersPostStartPending && Time.timeSinceLevelLoad > 0.4f))
+            {
+                if (_visualOccludersBuilt) _occludersPostStartPending = false;
+                BuildVisualOccluderCache();
+            }
+
+            // Di chuyển tâm lục giác cực mượt bám theo mũi ngắm hoặc mục tiêu (SmoothDamp triệt tiêu giật khung hình)
+            float dt = Mathf.Max(0.0001f, Time.deltaTime);
+            _reticleUI.RootRt.anchoredPosition = Vector2.SmoothDamp(
+                _reticleUI.RootRt.anchoredPosition,
+                targetReticlePos,
+                ref _reticleSmoothVel,
+                0.036f,
+                Mathf.Infinity,
+                dt);
+
+            // 6. CẬP NHẬT GIAO DIỆN & MÀU SẮC THEO 3 TRẠNG THÁI (LOCKED, LOCKING 1S, SEARCHING)
+            bool isLocked = _currentLockedTarget != null;
+            bool isLocking = !isLocked && _potentialLockCandidate != null && _lockHoldTimer > 0f;
+
+            Color activeFrameColor;
+            Color coreColor;
+            Color glowColor;
+            float coreHalfW;
+
+            if (isLocked)
+            {
+                // ĐÃ KHÓA CỨNG: Lõi sáng trắng-vàng ấm + hào quang cam hổ phách mượt mà
+                activeFrameColor = lockedColor;
+                coreColor = Color.Lerp(lockedColor, lockedHeaderColor, 0.62f);
+                glowColor = new Color(lockedColor.r, lockedColor.g * 0.88f, lockedColor.b * 0.65f, 0.50f);
+                coreHalfW = 1.80f;
+
+                float pulse = 1f + 0.025f * Mathf.Sin(Time.time * 11f);
+                _reticleUI.RootRt.localScale = new Vector3(pulse, pulse, 1f);
+
+                _reticleUI.HeaderText.text = "TARGET LOCKED";
+                _reticleUI.HeaderText.color = lockedHeaderColor;
+
+                _reticleUI.FooterText.text = "WEAPON SYS: ACTIVE.";
+                _reticleUI.FooterText.color = activeCyanColor;
+
+                _reticleUI.DistText.text = targetDistance < 1000f ? $"[ {targetDistance:F0}M ]" : $"[ {(targetDistance / 1000f):F2}KM ]";
+                _reticleUI.DistText.color = Color.Lerp(lockedColor, lockedHeaderColor, 0.35f);
+            }
+            else if (isLocking)
+            {
+                // ĐANG KHÓA NHANH 1 GIÂY (LOCKING COUNTDOWN - co nhẹ khung vào mục tiêu)
+                float progress = Mathf.Clamp01(_lockHoldTimer / lockHoldDuration);
+                float timeLeft = Mathf.Max(0f, lockHoldDuration - _lockHoldTimer);
+
+                activeFrameColor = Color.Lerp(lockingColor, lockedColor, progress);
+                coreColor = Color.Lerp(activeFrameColor, lockedHeaderColor, 0.25f + progress * 0.30f);
+                glowColor = new Color(activeFrameColor.r, activeFrameColor.g, activeFrameColor.b, 0.32f + progress * 0.14f);
+                coreHalfW = Mathf.Lerp(1.50f, 1.75f, progress);
+
+                float shrink = Mathf.Lerp(1.06f, 1.00f, progress);
+                _reticleUI.RootRt.localScale = new Vector3(shrink, shrink, 1f);
+
+                _reticleUI.HeaderText.text = $"LOCKING  {timeLeft:F1}s";
+                _reticleUI.HeaderText.color = lockingColor;
+
+                _reticleUI.FooterText.text = "ACQUIRING...";
+                _reticleUI.FooterText.color = Color.Lerp(lockingColor, activeCyanColor, progress * 0.4f);
+
+                _reticleUI.DistText.text = targetDistance < 1000f ? $"[ {targetDistance:F0}M ]" : $"[ {(targetDistance / 1000f):F2}KM ]";
+                _reticleUI.DistText.color = activeFrameColor;
             }
             else
             {
-                _potentialLockCandidate = null;
-                _lockHoldTimer = Mathf.Max(0f, _lockHoldTimer - Time.deltaTime * 2.5f);
+                // TRẠNG THÁI TỰ DO: Tối giản tuyệt đối - chỉ hiển thị viền ngoài lục giác thanh mảnh + tâm tròn
+                activeFrameColor = searchColor;
+                coreColor = searchColor;
+                glowColor = new Color(searchColor.r, searchColor.g, searchColor.b, 0.22f);
+                coreHalfW = 1.40f;
+                _reticleUI.RootRt.localScale = Vector3.one;
 
-                // Nếu đã khóa mục tiêu từ trước, kiểm tra xem mục tiêu có bay quá 300m hoặc ra ngoài tầm ngắm không
-                // Lưu ý: Tàu bị phá hủy KHÔNG mất dấu hiệu khóa (theo yêu cầu người dùng)
-                if (_currentLockedTarget != null)
+                _reticleUI.HeaderText.text = "";
+                _reticleUI.FooterText.text = "";
+                _reticleUI.DistText.text = "";
+            }
+
+            if (_reticleUI.HexGraphic != null)
+            {
+                _reticleUI.HexGraphic.SetStyle(coreColor, glowColor, coreHalfW);
+            }
+
+            _reticleUI.CenterRing.color = coreColor;
+            _reticleUI.CenterDot.color = coreColor;
+        }
+
+        private bool _occludersPostStartPending = true;
+
+        /// <summary>
+        /// Thu thập toàn bộ khối hình học mờ đục (Opaque MeshRenderer không có Collider)
+        /// như bảng hiệu STARPORT ALPHA // SPAWN HUB, tinh thể đảo, tường công trình... để chặn khóa xuyên vật thể.
+        /// </summary>
+        public void BuildVisualOccluderCache()
+        {
+            _occluderGroups.Clear();
+            var groupMap = new Dictionary<Transform, OccluderGroup>();
+
+            MeshRenderer[] allRenderers = FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None);
+            for (int i = 0; i < allRenderers.Length; i++)
+            {
+                MeshRenderer mr = allRenderers[i];
+                if (mr == null || !mr.enabled || !mr.gameObject.activeInHierarchy) continue;
+
+                // Bỏ qua tàu người chơi, camera và tàu AI di chuyển (đã có collider vật lý)
+                if (mr.transform == transform || mr.transform.IsChildOf(transform)) continue;
+                if (_mainCam != null && (mr.transform == _mainCam.transform || mr.transform.IsChildOf(_mainCam.transform))) continue;
+                if (mr.GetComponentInParent<SpaceTrafficShipAI>() != null) continue;
+                if (mr.GetComponent<TMP_Text>() != null) continue;
+
+                // Bỏ qua vật thể đã có Collider vật lý solid (đã được Physics.RaycastAll kiểm tra)
+                Collider existingCol = mr.GetComponent<Collider>();
+                if (existingCol != null && existingCol.enabled && !existingCol.isTrigger) continue;
+
+                // Chỉ xét vật liệu đặc (Opaque renderQueue < 2500), bỏ qua kính trong suốt / scanlines / FX
+                Material mat = mr.sharedMaterial;
+                if (mat == null || mat.renderQueue >= 2500) continue;
+                if (mat.HasProperty("_Surface") && mat.GetFloat("_Surface") > 0.5f) continue;
+
+                Vector3 worldSize = mr.bounds.size;
+                float maxDim = Mathf.Max(worldSize.x, Mathf.Max(worldSize.y, worldSize.z));
+                if (maxDim < 1.5f) continue;
+
+                MeshFilter mf = mr.GetComponent<MeshFilter>();
+                if (mf == null || mf.sharedMesh == null) continue;
+
+                Mesh mesh = mf.sharedMesh;
+                MeshTriData triData;
+                bool hasExactMesh = false;
+
+                if (!_meshTriCache.TryGetValue(mesh, out triData))
                 {
-                    float distShip = Vector3.Distance(shipPos, _currentLockedTarget.position);
-                    Vector3 toTarget = _currentLockedTarget.position - camPos;
-                    float angle = Vector3.Angle(camForward, toTarget.normalized);
+                    Bounds b = mesh.bounds;
+                    Vector3 ext = b.extents;
+                    // Đệm tối thiểu cho các mặt phẳng mỏng như Quad để local bounds luôn cắt được tia
+                    ext.x = Mathf.Max(ext.x, 0.03f);
+                    ext.y = Mathf.Max(ext.y, 0.03f);
+                    ext.z = Mathf.Max(ext.z, 0.03f);
 
-                    // Mất khóa chỉ khi bay ra quá xa (vượt quá tầm khóa 300m + 25% trễ) hoặc quay đầu lệch góc quá 65 độ
-                    if (distShip > maxLockDistance * 1.25f || angle > 65f)
+                    triData = new MeshTriData
                     {
-                        _currentLockedTarget = null;
+                        PaddedLocalBounds = new Bounds(b.center, ext * 2f)
+                    };
+
+                    if (mesh.isReadable && mesh.triangles.Length <= 2400) // <= 800 tam giác mỗi mesh
+                    {
+                        triData.Vertices = mesh.vertices;
+                        triData.Triangles = mesh.triangles;
+                    }
+                    _meshTriCache[mesh] = triData;
+                }
+
+                hasExactMesh = triData.Vertices != null && triData.Triangles != null;
+
+                Transform root = mr.transform.root;
+                if (!groupMap.TryGetValue(root, out OccluderGroup grp))
+                {
+                    grp = new OccluderGroup { WorldBounds = mr.bounds };
+                    groupMap[root] = grp;
+                    _occluderGroups.Add(grp);
+                }
+                else
+                {
+                    grp.WorldBounds.Encapsulate(mr.bounds);
+                }
+
+                grp.Items.Add(new OpaqueVisualOccluder
+                {
+                    Renderer = mr,
+                    GameObject = mr.gameObject,
+                    MeshData = triData,
+                    HasExactMesh = hasExactMesh
+                });
+            }
+
+            // Mở rộng nhẹ bao giới hạn của từng cụm phòng trường hợp có bộ phận xoay nhẹ (turret/door)
+            for (int g = 0; g < _occluderGroups.Count; g++)
+            {
+                _occluderGroups[g].WorldBounds.Expand(4f);
+            }
+
+            _visualOccludersBuilt = true;
+        }
+
+        private bool IsBlockedByVisualOccluders(Vector3 start, Vector3 dir, float maxDist)
+        {
+            if (!_visualOccludersBuilt || maxDist <= 0.1f) return false;
+
+            Ray worldRay = new Ray(start, dir);
+            Vector3 segDelta = dir * maxDist;
+
+            for (int g = 0; g < _occluderGroups.Count; g++)
+            {
+                OccluderGroup grp = _occluderGroups[g];
+                if (!grp.WorldBounds.IntersectRay(worldRay, out float grpDist) || grpDist > maxDist)
+                    continue;
+
+                List<OpaqueVisualOccluder> items = grp.Items;
+                for (int i = 0; i < items.Count; i++)
+                {
+                    OpaqueVisualOccluder occ = items[i];
+                    if (occ.Renderer == null || !occ.Renderer.enabled || !occ.GameObject.activeInHierarchy)
+                        continue;
+
+                    if (!occ.Renderer.bounds.IntersectRay(worldRay, out float wDist) || wDist > maxDist)
+                        continue;
+
+                    Matrix4x4 invMat = occ.Renderer.transform.worldToLocalMatrix;
+                    Vector3 lOrig = invMat.MultiplyPoint3x4(start);
+                    Vector3 lDelta = invMat.MultiplyVector(segDelta);
+                    float lMaxDist = lDelta.magnitude;
+                    if (lMaxDist < 1e-5f) continue;
+
+                    Vector3 lDir = lDelta / lMaxDist;
+                    Ray localRay = new Ray(lOrig, lDir);
+
+                    if (!occ.MeshData.PaddedLocalBounds.IntersectRay(localRay, out float bDist) || bDist > lMaxDist)
+                        continue;
+
+                    if (!occ.HasExactMesh)
+                    {
+                        return true;
+                    }
+
+                    // Kiểm tra va chạm tia-tam giác chính xác tuyệt đối (Möller–Trumbore hai mặt)
+                    Vector3[] verts = occ.MeshData.Vertices;
+                    int[] tris = occ.MeshData.Triangles;
+                    for (int t = 0; t + 2 < tris.Length; t += 3)
+                    {
+                        Vector3 v0 = verts[tris[t]];
+                        Vector3 v1 = verts[tris[t + 1]];
+                        Vector3 v2 = verts[tris[t + 2]];
+
+                        Vector3 e1 = v1 - v0;
+                        Vector3 e2 = v2 - v0;
+                        Vector3 h = Vector3.Cross(lDir, e2);
+                        float a = Vector3.Dot(e1, h);
+                        if (a > -1e-6f && a < 1e-6f) continue;
+
+                        float f = 1f / a;
+                        Vector3 s = lOrig - v0;
+                        float u = f * Vector3.Dot(s, h);
+                        if (u < -0.001f || u > 1.001f) continue;
+
+                        Vector3 q = Vector3.Cross(s, e1);
+                        float v = f * Vector3.Dot(lDir, q);
+                        if (v < -0.001f || u + v > 1.001f) continue;
+
+                        float hitT = f * Vector3.Dot(e2, q);
+                        if (hitT > 0.001f && hitT <= lMaxDist)
+                        {
+                            return true;
+                        }
                     }
                 }
             }
 
-            // Sắp xếp các mục tiêu theo độ ưu tiên (gần tâm ngắm nhất lên đầu)
-            candidateTargets.Sort((a, b) => a.angle.CompareTo(b.angle));
+            return false;
+        }
 
-            int markerIdx = 0;
-            for (int i = 0; i < candidateTargets.Count && markerIdx < _markers.Count; i++)
+        /// <summary>
+        /// Kiểm tra tầm nhìn trực tiếp (Line of Sight) từ Camera và từ Tàu người chơi đến tàu địch.
+        /// Trả về false nếu mục tiêu bị đảo, đất đá, bảng hiệu SPAWN HUB, công trình, tàu mẹ hay tàu khác che khuất,
+        /// hoặc tàu đã bị tiêu diệt / ẩn.
+        /// </summary>
+        public bool HasLineOfSight(Vector3 camPos, Transform target)
+        {
+            if (target == null) return false;
+            if (!target.gameObject.activeInHierarchy) return false;
+
+            var shipAi = target.GetComponent<SpaceTrafficShipAI>();
+            if (shipAi != null && shipAi.IsDestroyed) return false;
+
+            Vector3 targetPos = target.position;
+            Vector3 toTargetCam = targetPos - camPos;
+            float distCam = toTargetCam.magnitude;
+            if (distCam < 1.5f) return true;
+
+            Vector3 dirCam = toTargetCam / distCam;
+            float checkDist = Mathf.Max(0.5f, distCam - 1.2f);
+
+            // 1. Raycast tất cả Physics Collider từ Camera tới target
+            RaycastHit[] hits = Physics.RaycastAll(camPos, dirCam, checkDist, ~0, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < hits.Length; i++)
             {
-                var candidate = candidateTargets[i];
-                Vector3 screenPoint = _mainCam.WorldToScreenPoint(candidate.target.position);
+                Collider col = hits[i].collider;
+                if (col == null || col.isTrigger) continue;
+                if (col.transform == transform || col.transform.IsChildOf(transform)) continue;
+                if (col.transform == target || col.transform.IsChildOf(target)) continue;
+                if (_mainCam != null && (col.transform == _mainCam.transform || col.transform.IsChildOf(_mainCam.transform))) continue;
 
-                if (screenPoint.z <= 0f) continue; // Phía sau camera
-
-                var marker = _markers[markerIdx++];
-                marker.IsInUse = true;
-                marker.Root.SetActive(true);
-
-                // ======= POSITIONING =======
-                // Dùng canvas scaleFactor để chuyển screen pixel → canvas local coords
-                // Cách này work với bất kỳ anchor nào:
-                // - Với anchor=(0.5,0.5) pivot center: anchoredPos = (screenPt - screenCenter) / scaleFactor
-                // - Với anchor=(0,0) pivot bottom-left: anchoredPos = screenPt / scaleFactor
-                // Ta set anchor = (0.5,0.5) + dùng RectTransformUtility để đảm bảo đúng
-                if (_hudRootRt == null && _trackingUiRoot != null)
-                    _hudRootRt = _trackingUiRoot.GetComponent<RectTransform>();
-
-                if (_hudRootRt != null)
-                {
-                    // Force anchor = center pivot trên marker trước khi tính
-                    marker.RectTr.anchorMin = new Vector2(0.5f, 0.5f);
-                    marker.RectTr.anchorMax = new Vector2(0.5f, 0.5f);
-                    marker.RectTr.pivot     = new Vector2(0.5f, 0.5f);
-
-                    Camera cam2D = (_canvas != null && _canvas.renderMode == RenderMode.ScreenSpaceCamera)
-                        ? _canvas.worldCamera : null;
-
-                    if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                        _hudRootRt, screenPoint, cam2D, out Vector2 localPt))
-                    {
-                        marker.RectTr.anchoredPosition = localPt;
-                    }
-                }
-
-                bool isLocked = candidate.target == _currentLockedTarget;
-                bool isLocking = candidate.target == _potentialLockCandidate && _lockHoldTimer > 0f && !isLocked;
-
-                Color activeColor;
-                float arrowDist = 26f;
-
-                if (isLocked)
-                {
-                    activeColor = lockedColor;
-                    arrowDist = 20f;
-                    float pulse = 1f + 0.14f * Mathf.Sin(Time.time * 14f);
-                    marker.RectTr.localScale = new Vector3(pulse, pulse, 1f);
-                    marker.LabelText.text = "LOCK";
-                    marker.LabelText.color = lockedColor;
-                }
-                else if (isLocking)
-                {
-                    float progress = Mathf.Clamp01(_lockHoldTimer / lockHoldDuration);
-                    float timeLeft = Mathf.Max(0f, lockHoldDuration - _lockHoldTimer);
-                    activeColor = Color.Lerp(lockingColor, lockedColor, progress);
-                    arrowDist = Mathf.Lerp(28f, 21f, progress);
-
-                    float fastPulse = 1f + 0.08f * Mathf.Sin(Time.time * 22f);
-                    marker.RectTr.localScale = new Vector3(fastPulse, fastPulse, 1f);
-                    marker.LabelText.text = $"LOCK {timeLeft:F1}s";
-                    marker.LabelText.color = activeColor;
-                }
-                else
-                {
-                    activeColor = trackingColor;
-                    arrowDist = 26f;
-                    marker.RectTr.localScale = Vector3.one;
-                    marker.LabelText.text = "TRK";
-                    marker.LabelText.color = trackingColor;
-                }
-
-                // Cập nhật vị trí 4 mũi tên hình thoi co giãn theo trạng thái khóa
-                marker.ArrowTopRt.anchoredPosition = new Vector2(0f, arrowDist);
-                marker.ArrowBottomRt.anchoredPosition = new Vector2(0f, -arrowDist);
-                marker.ArrowLeftRt.anchoredPosition = new Vector2(-arrowDist, 0f);
-                marker.ArrowRightRt.anchoredPosition = new Vector2(arrowDist, 0f);
-
-                marker.ArrowTop.color = activeColor;
-                marker.ArrowBottom.color = activeColor;
-                marker.ArrowLeft.color = activeColor;
-                marker.ArrowRight.color = activeColor;
-
-                // Hiển thị khoảng cách: nếu < 100m hiển thị dạng số mét (38m) cho dễ căn tầm 40m, nếu >= 100m hiển thị dạng km (0.8km)
-                if (candidate.distShip < 100f)
-                {
-                    marker.DistText.text = $"{candidate.distShip:F0}m";
-                }
-                else
-                {
-                    float distKm = candidate.distShip / 1000f;
-                    marker.DistText.text = distKm >= 1.0f ? $"{distKm:F1}km" : $"{distKm:F2}km";
-                }
-                marker.DistText.color = activeColor;
+                return false;
             }
 
-            // Tắt các marker không dùng
-            for (int i = 0; i < _markers.Count; i++)
+            // 2. SphereCastAll bán kính 0.25m từ Camera (không bị dừng bởi chính tàu người chơi)
+            RaycastHit[] sphereHits = Physics.SphereCastAll(camPos, 0.25f, dirCam, checkDist, ~0, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < sphereHits.Length; i++)
             {
-                if (!_markers[i].IsInUse && _markers[i].Root.activeSelf)
+                Collider sc = sphereHits[i].collider;
+                if (sc == null || sc.isTrigger) continue;
+                if (sc.transform == transform || sc.transform.IsChildOf(transform)) continue;
+                if (sc.transform == target || sc.transform.IsChildOf(target)) continue;
+                if (_mainCam != null && (sc.transform == _mainCam.transform || sc.transform.IsChildOf(_mainCam.transform))) continue;
+
+                return false;
+            }
+
+            // 3. Kiểm tra các khối hình học đặc không có Collider (bảng Welcome SPAWN HUB, đá, tinh thể, công trình)
+            if (IsBlockedByVisualOccluders(camPos, dirCam, checkDist))
+            {
+                return false;
+            }
+
+            // 4. Kiểm tra bổ sung từ tàu người chơi đến mục tiêu (ngăn góc nhìn camera lệch thấy tàu sau tường)
+            Vector3 shipPos = transform.position;
+            Vector3 toTargetShip = targetPos - shipPos;
+            float distShip = toTargetShip.magnitude;
+            if (distShip > 2.5f)
+            {
+                Vector3 dirShip = toTargetShip / distShip;
+                float checkShipDist = Mathf.Max(0.5f, distShip - 1.2f);
+                RaycastHit[] shipHits = Physics.RaycastAll(shipPos, dirShip, checkShipDist, ~0, QueryTriggerInteraction.Ignore);
+                for (int i = 0; i < shipHits.Length; i++)
                 {
-                    _markers[i].Root.SetActive(false);
+                    Collider sc = shipHits[i].collider;
+                    if (sc == null || sc.isTrigger) continue;
+                    if (sc.transform == transform || sc.transform.IsChildOf(transform)) continue;
+                    if (sc.transform == target || sc.transform.IsChildOf(target)) continue;
+                    if (_mainCam != null && (sc.transform == _mainCam.transform || sc.transform.IsChildOf(_mainCam.transform))) continue;
+
+                    return false;
+                }
+
+                if (IsBlockedByVisualOccluders(shipPos, dirShip, checkShipDist))
+                {
+                    return false;
                 }
             }
+
+            return true;
         }
 
         /// <summary>
@@ -417,6 +1043,21 @@ namespace SpaceCyberpunk
         {
             if (_currentLockedTarget != null)
             {
+                if (!_currentLockedTarget.gameObject.activeInHierarchy)
+                {
+                    _currentLockedTarget = null;
+                    aimPoint = Vector3.zero;
+                    return false;
+                }
+
+                var shipAi = _currentLockedTarget.GetComponent<SpaceTrafficShipAI>();
+                if (shipAi != null && shipAi.IsDestroyed)
+                {
+                    _currentLockedTarget = null;
+                    aimPoint = Vector3.zero;
+                    return false;
+                }
+
                 var rb = _currentLockedTarget.GetComponent<Rigidbody>();
                 Vector3 lead = Vector3.zero;
                 if (rb != null)

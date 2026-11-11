@@ -89,12 +89,20 @@ namespace SpaceCyberpunk
             // Cơ chế đạn tầm nhiệt bám theo mục tiêu đã bị khóa
             if (homingTarget != null)
             {
-                Vector3 toTarget = homingTarget.position - transform.position;
-                if (toTarget.sqrMagnitude > 0.1f)
+                var targetShip = homingTarget.GetComponent<SpaceTrafficShipAI>();
+                if ((targetShip != null && targetShip.IsDestroyed) || !homingTarget.gameObject.activeInHierarchy)
                 {
-                    Vector3 desiredDir = toTarget.normalized;
-                    moveDir = Vector3.RotateTowards(moveDir, desiredDir, homingTurnSpeed * Time.deltaTime, 0f);
-                    transform.rotation = Quaternion.LookRotation(moveDir) * Quaternion.Euler(90f, 0f, 0f);
+                    homingTarget = null;
+                }
+                else
+                {
+                    Vector3 toTarget = homingTarget.position - transform.position;
+                    if (toTarget.sqrMagnitude > 0.1f)
+                    {
+                        Vector3 desiredDir = toTarget.normalized;
+                        moveDir = Vector3.RotateTowards(moveDir, desiredDir, homingTurnSpeed * Time.deltaTime, 0f);
+                        transform.rotation = Quaternion.LookRotation(moveDir) * Quaternion.Euler(90f, 0f, 0f);
+                    }
                 }
             }
 

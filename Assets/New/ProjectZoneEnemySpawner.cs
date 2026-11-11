@@ -78,6 +78,7 @@ namespace SpaceCyberpunk
             {
                 gameObject.AddComponent<ProjectZoneExpansion>();
             }
+            EnsureCarrierColliders();
         }
 
         private void Start()
@@ -87,6 +88,7 @@ namespace SpaceCyberpunk
                 gameObject.AddComponent<ProjectZoneExpansion>();
             }
 
+            EnsureCarrierColliders();
             CachePadAnchors();
             RefreshShipTemplates();
             EnsureTurretsAndCore();
@@ -208,6 +210,25 @@ namespace SpaceCyberpunk
                 if (coreTr.GetComponent<Collider>() == null)
                 {
                     coreTr.gameObject.AddComponent<SphereCollider>();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gắn BoxCollider vào toàn bộ cấu trúc thân tàu sân bay, sàn đáp, vách nhà ga
+        /// để laser và tia kiểm tra Line of Sight không bị bắn xuyên qua thân tàu
+        /// </summary>
+        public void EnsureCarrierColliders()
+        {
+            var allRenderers = GetComponentsInChildren<MeshRenderer>(true);
+            for (int i = 0; i < allRenderers.Length; i++)
+            {
+                var r = allRenderers[i];
+                if (r == null) continue;
+                if (r.GetComponent<TextMeshPro>() != null || r.GetComponent<ParticleSystem>() != null) continue;
+                if (r.GetComponent<Collider>() == null && r.GetComponentInParent<Collider>() == null)
+                {
+                    r.gameObject.AddComponent<BoxCollider>();
                 }
             }
         }

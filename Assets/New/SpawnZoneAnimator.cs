@@ -70,6 +70,19 @@ namespace SpaceCyberpunk
         private void Start()
         {
             CacheBaseHeights();
+
+            // Gỡ bỏ hoàn toàn các phi thuyền / drone tuần tra đậu và bay quanh bãi spawn theo yêu cầu người dùng
+            if (patrolDrones != null)
+            {
+                for (int i = 0; i < patrolDrones.Length; i++)
+                {
+                    if (patrolDrones[i] != null)
+                    {
+                        patrolDrones[i].gameObject.SetActive(false);
+                    }
+                }
+                patrolDrones = new Transform[0];
+            }
         }
 
         private void CacheBaseHeights()
@@ -105,8 +118,7 @@ namespace SpaceCyberpunk
                         var camFollow = FindFirstObjectByType<SpaceshipCameraFollow>();
                         if (camFollow != null)
                         {
-                            camFollow.transform.position = pos - (rot * Vector3.forward) * camFollow.distance + Vector3.up * camFollow.height;
-                            camFollow.transform.LookAt(pos + (rot * Vector3.forward) * 4f);
+                            camFollow.SnapToTargetImmediate();
                         }
                     }
                 }

@@ -875,10 +875,7 @@ namespace SpaceCyberpunk
 
             if (ship != null && cameraFollow != null)
             {
-                Transform target = cameraFollow.target != null ? cameraFollow.target : ship.transform;
-                targetShipCamPos = target.position - target.forward * cameraFollow.distance + target.up * cameraFollow.height;
-                Vector3 look = target.position + target.forward * 4f;
-                targetShipCamRot = Quaternion.LookRotation(look - targetShipCamPos, target.up);
+                cameraFollow.GetDesiredPose(out targetShipCamPos, out targetShipCamRot);
             }
             else
             {
@@ -1218,11 +1215,14 @@ namespace SpaceCyberpunk
             if (ship != null && cameraFollow != null)
             {
                 cameraFollow.enabled = true;
-                Transform target = cameraFollow.target != null ? cameraFollow.target : ship.transform;
+                cameraFollow.GetDesiredPose(out Vector3 desiredPos, out Quaternion desiredRot);
                 if (playerCamera != null)
                 {
-                    playerCamera.transform.position = target.position - target.forward * cameraFollow.distance + target.up * cameraFollow.height;
-                    playerCamera.transform.rotation = Quaternion.LookRotation(target.position + target.forward * 4f - playerCamera.transform.position, target.up);
+                    playerCamera.transform.SetPositionAndRotation(desiredPos, desiredRot);
+                }
+                else
+                {
+                    cameraFollow.SnapToTargetImmediate();
                 }
             }
 

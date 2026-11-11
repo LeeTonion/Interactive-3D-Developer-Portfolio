@@ -38,18 +38,41 @@ namespace SpaceCyberpunk
         public float bobFrequency = 2.2f;
         public LayerMask groundLayer = ~0;
 
-        [Header("Tốc Độ Động Cơ (Engine Propulsion)")]
-        public float cruiseSpeed = 30f;
-        public float boostSpeed = 60f;
-        public float reverseSpeed = 14f;
-        public float verticalSpeed = 16f;
-        public float acceleration = 6f;
+        [Header("Tốc Độ & Quán Tính Không Gian (Realistic Space Propulsion)")]
+        public float cruiseSpeed = 34f;
+        public float boostSpeed = 68f;
+        public float reverseSpeed = 16f;
+        public float verticalSpeed = 18f;
+        public float acceleration = 10.5f;
+        [Tooltip("Lực cản trôi tự do khi thả ga ngoài vũ trụ (càng nhỏ trôi quán tính càng lâu)")]
+        public float spaceCoastDrag = 1.9f;
+        [Tooltip("Lực phanh ngược Retro-Thruster khi nhấn S")]
+        public float retroBrakeRate = 18f;
+        [Tooltip("Độ bám vector vận tốc vào mũi tàu (càng nhỏ tàu càng có độ drift G-force khi cua gấp)")]
+        public float velocityResponsiveness = 6.2f;
+        public float hoverVelocityResponsiveness = 11f;
 
-        [Header("Cơ Chế Lái & Khí Động Học Không Gian")]
-        public float turnSpeed = 70f;
-        public float pitchSpeed = 45f;
-        public float maxBankAngle = 32f;
-        public float bankSmoothing = 5f;
+        [Header("Cơ Chế Lái Thực Tế & Cần Điều Khiển Ảo (Flight Stick & Aerodynamics)")]
+        public bool enableMouseFlightStick = true;
+        public float mouseSteerSensitivity = 0.90f;
+        public float mouseSteerDeadzone = 0.075f;
+        public bool invertMousePitch = false;
+        public KeyCode toggleMouseStickKey = KeyCode.M;
+        public float turnSpeed = 78f;
+        public float pitchSpeed = 66f;
+        public float angularResponse = 6.8f;
+        public float maxBankAngle = 42f;
+        public float bankSmoothing = 6.5f;
+
+        [Header("Hệ Thống Nhào Lộn Không Gian (Acrobatic Flight 360°)")]
+        [Tooltip("Bật chế độ nhào lộn tự do linh hoạt (Barrel Roll, Vertical Loop 360 độ)")]
+        public bool enableAcrobaticFlight = true;
+        [Tooltip("Tốc độ lăn lộn vòng (độ/giây)")]
+        public float rollSpeed = 160f;
+        [Tooltip("Thời gian thực hiện 1 vòng Barrel Roll 360 độ (giây)")]
+        public float barrelRollDuration = 0.55f;
+        [Tooltip("Thời gian thực hiện 1 vòng Vertical Loop 360 độ (giây)")]
+        public float loopDuration = 0.85f;
 
         [Header("Cơ Chế Bay Tự Do Khi Va Chạm (Free Flight On Collision)")]
         [Tooltip("Tắt tự động phanh lùi / thắng giật lùi và ngắt động cơ khi va chạm, cho phép phi thuyền lướt tự do")]
@@ -59,13 +82,13 @@ namespace SpaceCyberpunk
 
         [Header("Hệ Thống Tự Cân Bằng Sau Va Chạm (Gyro Auto-Stabilizer)")]
         [Tooltip("Tốc độ con quay hồi chuyển tự lấy lại thăng bằng phương ngang sau va chạm")]
-        public float horizonStabilizeSpeed = 10f;
-        [Tooltip("Tốc độ tự trả mũi tàu (Pitch) về mặt phẳng ngang")]
-        public float pitchAutoLevelSpeed = 5.5f;
+        public float horizonStabilizeSpeed = 6f;
+        [Tooltip("Tốc độ tự trả mũi tàu (Pitch) về mặt phẳng ngang khi không điều khiển")]
+        public float pitchAutoLevelSpeed = 4.5f;
         [Tooltip("Độ triệt tiêu lực xoay văng vật lý sau khi va đập")]
-        public float gyroAngularDamping = 14f;
-        [Tooltip("Góc ngóc/chúi tối đa cho phép (độ)")]
-        public float maxPitchAngle = 26f;
+        public float gyroAngularDamping = 10f;
+        [Tooltip("Góc ngóc/chúi tối đa cho phép (độ) - khi nhào lộn có thể đạt 360 độ tự do")]
+        public float maxPitchAngle = 88f;
 
         [Header("Hệ Thống Vũ Khí & Giáp Chiến Đấu (Space Combat)")]
         public float fireInterval = 0.16f;
@@ -91,6 +114,38 @@ namespace SpaceCyberpunk
         private float _currentBank;
         private float _currentYaw;
         private float _currentPitch;
+        private float _yawRate;
+        private float _pitchRate;
+        private float _rollRate;
+        private float _turnInput;
+        private float _pitchInput;
+        private float _rollInput;
+        private float _throttleInput;
+        private Vector2 _virtualStick;
+        private Vector2 _virtualStickVel;
+        private Vector2 _rmbStick;
+        private Vector2 _rmbStickVel;
+        private float _smoothedTurnCmd;
+        private float _smoothedPitchCmd;
+        private float _smoothedRollCmd;
+        private bool _mouseSteerArmed;
+        private Vector3 _lastMouseScreenPos;
+        private float _mouseMovedPixels;
+        private float _freeRollHoldTimer;
+        private float _currentGForce = 1f;
+        private Vector3 _prevWorldVel;
+        private float _lastFireTime = -99f;
+        private SpaceshipCockpit1P _cockpit1P;
+        private bool _isAcrobaticRolling;
+        private float _acrobaticRollTimer;
+        private float _acrobaticRollDirection;
+        private bool _isAcrobaticLooping;
+        private float _acrobaticLoopTimer;
+        private float _lastTapATime = -99f;
+        private float _lastTapDTime = -99f;
+        private float _lastTapQTime = -99f;
+        private float _lastTapETime = -99f;
+        private float _lastSteeringInputTime = 0f;
         private float _impactRollJolt;
         private float _impactPitchJolt;
         private bool _isBoosting;
@@ -110,6 +165,8 @@ namespace SpaceCyberpunk
         private float _collisionRecoilTimer;
         private Vector3 _contactNormalSum;
         private bool _isRespawning;
+        private bool _thirdPersonVisualsVisible = true;
+        private GameObject _cachedShieldBubbleGo;
         private Vector3 _spawnPos = new Vector3(-65f, 28.7f, 45f);
         private Quaternion _spawnRot = Quaternion.Euler(0f, 115f, 0f);
 
@@ -122,6 +179,11 @@ namespace SpaceCyberpunk
         private RectTransform[] _compassTickLines;
         private TMP_Text _compassArrow;
         private GameObject _crosshairRoot;
+        private GameObject _virtualStickHudRoot;
+        private RectTransform _stickLineRt;
+        private RectTransform _stickPipRt;
+        private Image _stickLineImg;
+        private Image _stickPipImg;
 
         // Bottom Left HP & SHD Bars
         private Image _hpBarFill;
@@ -145,19 +207,93 @@ namespace SpaceCyberpunk
 
         public bool IsBoosting => _isBoosting;
         public bool IsHovering => _isHoveringOverGround;
+        public float CurrentForwardSpeed => _currentForwardSpeed;
+        public float CurrentBankAngle => _currentBank;
+        public float CurrentPitchRate => _pitchRate;
+        public float CurrentYawRate => _yawRate;
+        public float CurrentRollRate => _rollRate;
+        public float CurrentGForce => _currentGForce;
+        public float ThrottleRatio => Mathf.Clamp01(_currentForwardSpeed / Mathf.Max(1f, boostSpeed));
+        public bool IsBraking => _throttleInput < -0.1f;
+        public bool IsCoasting => !_isHoveringOverGround && Mathf.Abs(_throttleInput) < 0.05f && Mathf.Abs(_currentForwardSpeed) > 3f;
+        public bool IsMouseSteerArmed => enableMouseFlightStick && _mouseSteerArmed;
+        public Vector2 VirtualStick => _virtualStick;
+        public float TurnInput => _turnInput;
+        public float PitchInput => _pitchInput;
+        public float RollInput => _rollInput;
+        public float LastFireTime => _lastFireTime;
+        public bool IsRespawning => _isRespawning;
+        public bool IsUnderFire => _lastDamageTime > 0f && (Time.time - _lastDamageTime) < 3.5f;
         public float CurrentSpeedRatio => Mathf.Abs(_currentForwardSpeed) / boostSpeed;
         public float HealthRatio => maxHealth > 0f ? Mathf.Clamp01(_currentHealth / maxHealth) : 0f;
         public float ShieldRatio => maxShield > 0f ? Mathf.Clamp01(_currentShield / maxShield) : 0f;
         public float BoostRatio => maxBoostEnergy > 0f ? Mathf.Clamp01(_currentBoostEnergy / maxBoostEnergy) : 0f;
 
+        /// <summary>
+        /// Ẩn/hiện phần thân tàu góc nhìn thứ 3 (mesh, thruster, shield bubble) khi chuyển sang buồng lái 1P
+        /// mà vẫn giữ nguyên toàn bộ Collider vật lý.
+        /// </summary>
+        public void SetThirdPersonShipVisualsVisible(bool visible)
+        {
+            _thirdPersonVisualsVisible = visible;
+
+            if (visualModel != null)
+            {
+                var renderers = visualModel.GetComponentsInChildren<Renderer>(true);
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    if (renderers[i] != null) renderers[i].enabled = visible;
+                }
+            }
+
+            SetThrusterRenderersVisible(leftThrusterParticle, visible);
+            SetThrusterRenderersVisible(rightThrusterParticle, visible);
+
+            if (engineLight != null)
+            {
+                engineLight.enabled = visible;
+            }
+
+            if (_cachedShieldBubbleGo == null)
+            {
+                var sb = transform.Find("Player_HexShield_Bubble");
+                if (sb != null) _cachedShieldBubbleGo = sb.gameObject;
+            }
+            if (_cachedShieldBubbleGo != null && _cachedShieldBubbleGo.activeSelf != visible)
+            {
+                _cachedShieldBubbleGo.SetActive(visible);
+            }
+        }
+
+        private static void SetThrusterRenderersVisible(ParticleSystem ps, bool visible)
+        {
+            if (ps == null) return;
+            var psRenderers = ps.GetComponentsInChildren<ParticleSystemRenderer>(true);
+            for (int i = 0; i < psRenderers.Length; i++)
+            {
+                if (psRenderers[i] != null) psRenderers[i].enabled = visible;
+            }
+        }
+
+        private void EnsureRigidbody()
+        {
+            if (_rb == null)
+            {
+                _rb = GetComponent<Rigidbody>();
+                if (_rb != null)
+                {
+                    _rb.useGravity = false;
+                    _rb.interpolation = RigidbodyInterpolation.Interpolate;
+                    _rb.linearDamping = 1.8f;
+                    _rb.angularDamping = 3.5f;
+                    _rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+                }
+            }
+        }
+
         private void Awake()
         {
-            _rb = GetComponent<Rigidbody>();
-            _rb.useGravity = false;
-            _rb.interpolation = RigidbodyInterpolation.Interpolate;
-            _rb.linearDamping = 1.8f;
-            _rb.angularDamping = 3.5f;
-            _rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            EnsureRigidbody();
 
             CaptureSpawnPose();
             _currentYaw = transform.eulerAngles.y;
@@ -184,11 +320,8 @@ namespace SpaceCyberpunk
             if (col != null)
             {
                 col.isTrigger = false;
-                if (col.size == Vector3.one || col.size == new Vector3(3.2f, 1.4f, 4.2f))
-                {
-                    col.size = new Vector3(5.4f, 2.25f, 6.9f);
-                    col.center = new Vector3(0f, 0.68f, 0.15f);
-                }
+                col.size = new Vector3(5.2f, 1.8f, 6.5f);
+                col.center = new Vector3(0f, 0.85f, 0.15f);
             }
 
             if (visualModel == null && transform.childCount > 0)
@@ -278,7 +411,8 @@ namespace SpaceCyberpunk
         private void FixedUpdate()
         {
             if (_isRespawning) return;
-            if (_rb != null && _rb.isKinematic) return;
+            EnsureRigidbody();
+            if (_rb == null || _rb.isKinematic) return;
 
             if (_collisionRecoilTimer > 0f)
             {
@@ -292,6 +426,16 @@ namespace SpaceCyberpunk
 
         private void ReadPlayerInput()
         {
+            if (Input.GetKeyDown(toggleMouseStickKey))
+            {
+                enableMouseFlightStick = !enableMouseFlightStick;
+                _virtualStick = Vector2.zero;
+                _virtualStickVel = Vector2.zero;
+                _mouseMovedPixels = 0f;
+                _mouseSteerArmed = false;
+                _lastMouseScreenPos = Input.mousePosition;
+            }
+
             bool wantsBoost = Input.GetKey(KeyCode.LeftShift);
             if (wantsBoost && _currentBoostEnergy > 2f)
             {
@@ -304,25 +448,182 @@ namespace SpaceCyberpunk
                 _currentBoostEnergy = Mathf.Min(maxBoostEnergy, _currentBoostEnergy + boostRegenRate * Time.deltaTime);
             }
 
+            // 1. Điều khiển ga & quán tính vũ trụ (W tăng ga, thả W lướt quán tính vũ trụ, S phanh ngược / lùi)
             float forwardInput = 0f;
             if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) forwardInput = 1f;
             else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) forwardInput = -1f;
+            _throttleInput = forwardInput;
 
             if (forwardInput > 0f)
+            {
                 _targetForwardSpeed = _isBoosting ? boostSpeed : cruiseSpeed;
+            }
             else if (forwardInput < 0f)
+            {
                 _targetForwardSpeed = -reverseSpeed;
+            }
             else
+            {
                 _targetForwardSpeed = 0f;
+            }
 
-            _currentForwardSpeed = Mathf.Lerp(_currentForwardSpeed, _targetForwardSpeed, Time.deltaTime * acceleration);
+            // Trong lúc đang nhào lộn (Roll / Loop): duy trì tốc độ lướt quán tính cao
+            if (_isAcrobaticRolling || _isAcrobaticLooping)
+            {
+                _targetForwardSpeed = Mathf.Max(_targetForwardSpeed, cruiseSpeed * 1.15f);
+            }
+
+            float speedLerpRate;
+            if (forwardInput > 0f)
+                speedLerpRate = acceleration;
+            else if (forwardInput < 0f)
+                speedLerpRate = _currentForwardSpeed > 0f ? retroBrakeRate : acceleration;
+            else
+                speedLerpRate = _isHoveringOverGround ? (acceleration * 0.9f) : spaceCoastDrag;
+
+            _currentForwardSpeed = Mathf.Lerp(_currentForwardSpeed, _targetForwardSpeed, Time.deltaTime * speedLerpRate);
 
             float vertInput = 0f;
-            if (Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.E)) vertInput = 1f;
-            else if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.C) || Input.GetKey(KeyCode.Q)) vertInput = -1f;
+            if (Input.GetKey(KeyCode.Space)) vertInput = 1f;
+            else if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.C)) vertInput = -1f;
 
             _targetVerticalSpeed = vertInput * verticalSpeed;
             _currentVerticalSpeed = Mathf.Lerp(_currentVerticalSpeed, _targetVerticalSpeed, Time.deltaTime * acceleration);
+
+            // 2. Cần lái ảo bằng chuột (Virtual Flight Stick) — chỉ kích hoạt sau khi chuột di chuyển trong khung game
+            UpdateMouseVirtualStick();
+
+            // 3. Kích hoạt các đòn Nhào Lộn (Acrobatic Maneuvers):
+            // Q / E giữ nguyên để lăn cánh liên tục; nhấp đúp A/D hoặc Q/E để Barrel Roll 360 độ; R/F để Vertical Loop 360 độ.
+            if (enableAcrobaticFlight)
+            {
+                if (Input.GetKeyDown(KeyCode.A))
+                {
+                    if (Time.time - _lastTapATime < 0.28f && !_isAcrobaticRolling && !_isAcrobaticLooping)
+                        TriggerBarrelRoll(-1f);
+                    _lastTapATime = Time.time;
+                }
+                else if (Input.GetKeyDown(KeyCode.D))
+                {
+                    if (Time.time - _lastTapDTime < 0.28f && !_isAcrobaticRolling && !_isAcrobaticLooping)
+                        TriggerBarrelRoll(1f);
+                    _lastTapDTime = Time.time;
+                }
+
+                if (Input.GetKeyDown(KeyCode.Q))
+                {
+                    if (Time.time - _lastTapQTime < 0.25f && !_isAcrobaticRolling && !_isAcrobaticLooping)
+                        TriggerBarrelRoll(-1f);
+                    _lastTapQTime = Time.time;
+                }
+                else if (Input.GetKeyDown(KeyCode.E))
+                {
+                    if (Time.time - _lastTapETime < 0.25f && !_isAcrobaticRolling && !_isAcrobaticLooping)
+                        TriggerBarrelRoll(1f);
+                    _lastTapETime = Time.time;
+                }
+
+                if ((Input.GetKeyDown(KeyCode.R) || Input.GetKeyDown(KeyCode.F)) && !_isAcrobaticRolling && !_isAcrobaticLooping)
+                {
+                    TriggerVerticalLoop();
+                }
+            }
+        }
+
+        private void UpdateMouseVirtualStick()
+        {
+            if (AboutInfoStation.AnyStationActive)
+            {
+                _virtualStick = Vector2.zero;
+                _virtualStickVel = Vector2.zero;
+                _mouseSteerArmed = false;
+                _mouseMovedPixels = 0f;
+                return;
+            }
+
+            Vector3 mPos = Input.mousePosition;
+            bool insideViewport = Screen.width > 10 && Screen.height > 10
+                && mPos.x >= 2f && mPos.x <= Screen.width - 2f
+                && mPos.y >= 2f && mPos.y <= Screen.height - 2f;
+
+            if (!_mouseSteerArmed)
+            {
+                if (insideViewport)
+                {
+                    if (_lastMouseScreenPos.sqrMagnitude < 0.01f)
+                    {
+                        _lastMouseScreenPos = mPos;
+                    }
+                    else
+                    {
+                        _mouseMovedPixels += Vector2.Distance(mPos, _lastMouseScreenPos);
+                        _lastMouseScreenPos = mPos;
+                        if (_mouseMovedPixels > 10f || Input.GetMouseButton(1))
+                        {
+                            _mouseSteerArmed = true;
+                        }
+                    }
+                }
+                _virtualStick = Vector2.zero;
+                _virtualStickVel = Vector2.zero;
+                return;
+            }
+
+            _lastMouseScreenPos = mPos;
+            float dt = Mathf.Max(0.0001f, Time.deltaTime);
+            bool pointerOverUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+            if (!enableMouseFlightStick || !insideViewport || (pointerOverUI && !Input.GetMouseButton(1)))
+            {
+                _virtualStick = Vector2.SmoothDamp(_virtualStick, Vector2.zero, ref _virtualStickVel, 0.08f, Mathf.Infinity, dt);
+                return;
+            }
+
+            float minDim = Mathf.Max(200f, Mathf.Min(Screen.width, Screen.height));
+            float radiusPx = minDim * 0.44f;
+            Vector2 center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+            Vector2 rawOffset = ((Vector2)mPos - center) / radiusPx;
+            float mag = rawOffset.magnitude;
+
+            if (mag <= mouseSteerDeadzone)
+            {
+                _virtualStick = Vector2.SmoothDamp(_virtualStick, Vector2.zero, ref _virtualStickVel, 0.06f, Mathf.Infinity, dt);
+                return;
+            }
+
+            float scaledMag = Mathf.Clamp01((mag - mouseSteerDeadzone) / Mathf.Max(0.15f, 1f - mouseSteerDeadzone));
+            float precisionCurve = Mathf.Lerp(scaledMag * scaledMag, Mathf.Pow(scaledMag, 1.55f), 0.45f);
+            float curvedMag = precisionCurve * mouseSteerSensitivity;
+            Vector2 targetStick = rawOffset.normalized * Mathf.Clamp01(curvedMag);
+            if (invertMousePitch) targetStick.y = -targetStick.y;
+
+            _virtualStick = Vector2.SmoothDamp(_virtualStick, targetStick, ref _virtualStickVel, 0.065f, Mathf.Infinity, dt);
+        }
+
+        public void TriggerBarrelRoll(float direction)
+        {
+            if (_isAcrobaticRolling || _isAcrobaticLooping) return;
+            _isAcrobaticRolling = true;
+            _acrobaticRollTimer = 0f;
+            _acrobaticRollDirection = direction;
+            _lastSteeringInputTime = Time.time;
+
+            if (_currentForwardSpeed < cruiseSpeed * 0.9f)
+            {
+                _currentForwardSpeed = cruiseSpeed;
+            }
+        }
+
+        public void TriggerVerticalLoop()
+        {
+            if (_isAcrobaticRolling || _isAcrobaticLooping) return;
+            _isAcrobaticLooping = true;
+            _acrobaticLoopTimer = 0f;
+            _lastSteeringInputTime = Time.time;
+
+            if (_currentForwardSpeed < cruiseSpeed * 0.9f)
+            {
+                _currentForwardSpeed = cruiseSpeed * 1.1f;
+            }
         }
 
         private void HandleWeaponFire()
@@ -348,14 +649,10 @@ namespace SpaceCyberpunk
 
             if (_targetLockSystem != null && _targetLockSystem.HasLockedTarget)
             {
-                homingTarget = _targetLockSystem.CurrentLockedTarget;
                 if (_targetLockSystem.TryGetLockAimPoint(out Vector3 lockPoint))
                 {
                     convergePoint = lockPoint;
-                }
-                else if (homingTarget != null)
-                {
-                    convergePoint = homingTarget.position;
+                    homingTarget = _targetLockSystem.CurrentLockedTarget;
                 }
             }
 
@@ -368,6 +665,10 @@ namespace SpaceCyberpunk
 
             SpaceLaserProjectile.SpawnBolt(leftMuzzle, leftDir, true, gameObject, 125f, laserDamage, homingTarget);
             SpaceLaserProjectile.SpawnBolt(rightMuzzle, rightDir, true, gameObject, 125f, laserDamage, homingTarget);
+
+            _lastFireTime = Time.time;
+            if (_cockpit1P == null) _cockpit1P = FindFirstObjectByType<SpaceshipCockpit1P>();
+            if (_cockpit1P != null) _cockpit1P.NotifyWeaponFire();
         }
 
         private void UpdateShieldRegen()
@@ -428,6 +729,8 @@ namespace SpaceCyberpunk
             if (_isRespawning || AboutInfoStation.AnyStationActive) return;
 
             _lastDamageTime = Time.time;
+            if (_cockpit1P == null) _cockpit1P = FindFirstObjectByType<SpaceshipCockpit1P>();
+            if (_cockpit1P != null) _cockpit1P.NotifyDamageImpact();
 
             if (_currentShield > 0f)
             {
@@ -471,8 +774,29 @@ namespace SpaceCyberpunk
             _targetVerticalSpeed = 0f;
             _currentBank = 0f;
             _currentPitch = 0f;
+            _isAcrobaticRolling = false;
+            _isAcrobaticLooping = false;
             _impactRollJolt = 0f;
             _impactPitchJolt = 0f;
+            _yawRate = 0f;
+            _pitchRate = 0f;
+            _rollRate = 0f;
+            _turnInput = 0f;
+            _pitchInput = 0f;
+            _rollInput = 0f;
+            _throttleInput = 0f;
+            _virtualStick = Vector2.zero;
+            _virtualStickVel = Vector2.zero;
+            _rmbStick = Vector2.zero;
+            _rmbStickVel = Vector2.zero;
+            _smoothedTurnCmd = 0f;
+            _smoothedPitchCmd = 0f;
+            _smoothedRollCmd = 0f;
+            _mouseSteerArmed = false;
+            _mouseMovedPixels = 0f;
+            _freeRollHoldTimer = 0f;
+            _currentGForce = 1f;
+            _prevWorldVel = Vector3.zero;
             _currentYaw = _spawnRot.eulerAngles.y;
             _currentHealth = maxHealth;
             _currentShield = maxShield;
@@ -480,6 +804,7 @@ namespace SpaceCyberpunk
             _displayedHpRatio = 1f;
             _displayedShieldRatio = 1f;
             _displayedBoostRatio = 1f;
+            _lastDamageTime = -99f;
 
             if (_shieldEffect != null)
             {
@@ -502,13 +827,12 @@ namespace SpaceCyberpunk
                 visualModel.gameObject.SetActive(true);
                 visualModel.localRotation = Quaternion.identity;
             }
+            SetThirdPersonShipVisualsVisible(_thirdPersonVisualsVisible);
 
             var camFollow = FindFirstObjectByType<SpaceshipCameraFollow>();
             if (camFollow != null)
             {
-                Vector3 camPos = _spawnPos - (_spawnRot * Vector3.forward) * camFollow.distance + Vector3.up * camFollow.height;
-                camFollow.transform.position = camPos;
-                camFollow.transform.LookAt(_spawnPos + (_spawnRot * Vector3.forward) * 4f);
+                camFollow.SnapToTargetImmediate();
             }
         }
 
@@ -537,9 +861,11 @@ namespace SpaceCyberpunk
             _isRespawning = false;
         }
 
+        private float _computedHoverVerticalSpeed = 0f;
+
         private void ApplyHoverAndGravityPhysics()
         {
-            Vector3 rayOrigin = transform.position - (Vector3.up * 0.35f);
+            Vector3 rayOrigin = transform.position + (Vector3.up * 0.2f);
             float checkDist = targetHoverHeight + 4.5f;
 
             RaycastHit[] hits = Physics.RaycastAll(rayOrigin, Vector3.down, checkDist, groundLayer, QueryTriggerInteraction.Ignore);
@@ -559,89 +885,101 @@ namespace SpaceCyberpunk
             }
 
             _isHoveringOverGround = hitGround;
-            _groundDistance = hitGround ? (closestDist + 0.35f) : 999f;
+            _groundDistance = hitGround ? (closestDist - 0.2f) : 999f;
 
-            if (hitGround)
+            if (hitGround && !_isAcrobaticRolling && !_isAcrobaticLooping)
             {
-                // Khi người chơi chủ động giữ phím hạ cánh (Ctrl / C / Q): hạ đệm nâng xuống 0.35m để tiếp đất thay vì giữ cố định 2.2m
-                float baseHeight = (_targetVerticalSpeed < -0.1f) ? 0.35f : targetHoverHeight;
-                float bobOffset = (_targetVerticalSpeed < -0.1f && _groundDistance < 0.6f) ? 0f : (Mathf.Sin(Time.time * bobFrequency) * bobAmplitude);
-                float desiredHeight = baseHeight + bobOffset;
-
-                float error = desiredHeight - _groundDistance;
-                float upwardVel = _rb.linearVelocity.y;
-                float springForce = (error * hoverSpring) - (upwardVel * hoverDamping);
-
-                if (_targetVerticalSpeed >= 0f)
+                // Chỉ áp dụng đệm nâng khi tàu ở tư thế gần bằng phẳng và không đang nhào lộn
+                float upDot = Vector3.Dot(transform.up, Vector3.up);
+                if (upDot > 0.35f)
                 {
-                    _rb.AddForce(Vector3.up * springForce, ForceMode.Acceleration);
+                    float baseHeight = (_targetVerticalSpeed < -0.1f) ? 0.35f : targetHoverHeight;
+                    float bobOffset = (_targetVerticalSpeed < -0.1f && _groundDistance < 0.6f) ? 0f : (Mathf.Sin(Time.time * bobFrequency) * bobAmplitude);
+                    float desiredHeight = baseHeight + bobOffset;
+
+                    float error = desiredHeight - _groundDistance;
+                    _computedHoverVerticalSpeed = Mathf.Clamp(error * 6.5f, -6f, 8f);
+
+                    // Tiếp đất ổn định: triệt tiêu trượt ngang khi đỗ
+                    if (_groundDistance <= 0.45f && Mathf.Abs(_currentForwardSpeed) < 3f)
+                    {
+                        Vector3 flatVel = new Vector3(_rb.linearVelocity.x, 0f, _rb.linearVelocity.z);
+                        _rb.AddForce(-flatVel * 6f, ForceMode.Acceleration);
+                    }
                 }
                 else
                 {
-                    if (error > 0f)
-                    {
-                        _rb.AddForce(Vector3.up * (springForce * 0.4f), ForceMode.Acceleration);
-                    }
-                }
-
-                // Khi tàu đã tiếp đất ổn định (đáp thành công): triệt tiêu trượt ngang để tàu đỗ vững chắc
-                if (_groundDistance <= 0.45f && Mathf.Abs(_currentForwardSpeed) < 3f)
-                {
-                    Vector3 flatVel = new Vector3(_rb.linearVelocity.x, 0f, _rb.linearVelocity.z);
-                    _rb.AddForce(-flatVel * 6f, ForceMode.Acceleration);
+                    _computedHoverVerticalSpeed = 0f;
                 }
             }
             else
             {
-                _rb.AddForce(Vector3.down * gravity, ForceMode.Acceleration);
+                _computedHoverVerticalSpeed = 0f;
             }
         }
 
         private void ApplyPropulsionPhysics()
         {
+            EnsureRigidbody();
+            if (_rb == null || _rb.isKinematic) return;
+
             if (!disableCollisionBrake && _collisionRecoilTimer > 0f)
             {
                 _contactNormalSum = Vector3.zero;
                 return;
             }
 
-            Vector3 forwardForce = transform.forward * _currentForwardSpeed;
-            Vector3 verticalVelocity = Vector3.up * _currentVerticalSpeed;
-
+            // Hướng bay 3D thực của phi thuyền + đẩy dọc theo trục nâng của tàu khi ở ngoài vũ trụ
+            Vector3 forwardMove = transform.forward * _currentForwardSpeed;
             Vector3 desiredVel;
-            if (Mathf.Abs(_targetVerticalSpeed) < 0.1f)
+
+            if (!_isHoveringOverGround && Mathf.Abs(_targetVerticalSpeed) >= 0.05f && !_isAcrobaticRolling && !_isAcrobaticLooping)
             {
-                Vector3 currentVel = _rb.linearVelocity;
-                desiredVel = new Vector3(forwardForce.x, currentVel.y, forwardForce.z);
+                desiredVel = forwardMove + transform.up * _currentVerticalSpeed;
             }
             else
             {
-                desiredVel = forwardForce + verticalVelocity;
+                float vertVel = _currentVerticalSpeed;
+                if (Mathf.Abs(_targetVerticalSpeed) < 0.1f)
+                {
+                    if (_isHoveringOverGround && !_isAcrobaticRolling && !_isAcrobaticLooping)
+                    {
+                        vertVel = _computedHoverVerticalSpeed;
+                    }
+                    else if (!_isHoveringOverGround && !_isAcrobaticRolling && !_isAcrobaticLooping)
+                    {
+                        if (_currentForwardSpeed > 3f)
+                        {
+                            vertVel = Mathf.Max(0f, _rb.linearVelocity.y * 0.96f);
+                        }
+                        else
+                        {
+                            vertVel = Mathf.Lerp(_rb.linearVelocity.y, -gravity * 0.35f, Time.fixedDeltaTime * 2.5f);
+                        }
+                    }
+                }
+                desiredVel = forwardMove + Vector3.up * vertVel;
             }
 
-            // 1. Chặn ép xuyên vật thể khi đang tiếp xúc trực tiếp (OnCollisionStay)
+            // 1. Trượt lướt mượt mà khi tiếp xúc sườn vật cản, không khựng phanh
             if (_contactNormalSum.sqrMagnitude > 0.0001f)
             {
                 Vector3 contactNormal = _contactNormalSum.normalized;
                 if (Vector3.Dot(desiredVel, contactNormal) < 0f)
                 {
                     desiredVel = Vector3.ProjectOnPlane(desiredVel, contactNormal);
-                    if (!disableCollisionBrake)
-                    {
-                        desiredVel += contactNormal * 1.5f;
-                        _currentForwardSpeed *= 0.65f;
-                    }
                 }
                 _contactNormalSum = Vector3.zero;
             }
 
-            // 2. Quét SphereCast phía trước theo hướng bay để chống xuyên tường ở tốc độ Boost cao (Continuous Anti-Tunneling)
+            // 2. Chống xuyên tường (Anti-tunneling): Quét chướng ngại vật phía trước thân tàu
             float speedMag = desiredVel.magnitude;
             if (speedMag > 0.5f)
             {
                 Vector3 moveDir = desiredVel / speedMag;
-                float sweepDist = Mathf.Max(2.2f, speedMag * Time.fixedDeltaTime * 2.2f + 1.5f);
-                RaycastHit[] hits = Physics.SphereCastAll(transform.position, 1.15f, moveDir, sweepDist, ~0, QueryTriggerInteraction.Ignore);
+                float sweepDist = Mathf.Max(1.8f, speedMag * Time.fixedDeltaTime * 1.5f + 1.0f);
+                Vector3 castOrigin = transform.position + Vector3.up * 0.75f;
+                RaycastHit[] hits = Physics.SphereCastAll(castOrigin, 0.85f, moveDir, sweepDist, ~0, QueryTriggerInteraction.Ignore);
 
                 for (int i = 0; i < hits.Length; i++)
                 {
@@ -649,83 +987,201 @@ namespace SpaceCyberpunk
                     if (col == null || col.isTrigger || col.transform.root == transform.root) continue;
                     if (hits[i].distance <= 0.001f) continue;
 
+                    if (hits[i].point.y < transform.position.y + 0.15f) continue;
                     Vector3 hitNormal = hits[i].normal;
+                    if (Mathf.Abs(hitNormal.y) > 0.65f) continue;
+
                     float intoWall = Vector3.Dot(desiredVel, hitNormal);
-                    if (intoWall < 0f && hits[i].distance < 2.1f)
+                    if (intoWall < 0f && hits[i].distance < 1.8f)
                     {
                         desiredVel = Vector3.ProjectOnPlane(desiredVel, hitNormal);
-                        if (!disableCollisionBrake)
+                    }
+                }
+            }
+
+            // 3. Nội suy vận tốc quán tính thực tế (tạo cảm giác slip khi cua gấp & bảo toàn xung lực từ SpeedBoostRing)
+            Vector3 currentVel = _rb.linearVelocity;
+            float resp = _isHoveringOverGround ? hoverVelocityResponsiveness : velocityResponsiveness;
+            if (!_isHoveringOverGround && _throttleInput >= 0f && currentVel.sqrMagnitude > desiredVel.sqrMagnitude + 16f && Vector3.Dot(currentVel, transform.forward) > 10f)
+            {
+                resp = 1.8f;
+            }
+
+            Vector3 nextVel = Vector3.Lerp(currentVel, desiredVel, Time.fixedDeltaTime * resp);
+            _rb.linearVelocity = nextVel;
+
+            float dt = Mathf.Max(0.005f, Time.fixedDeltaTime);
+            Vector3 accel = (nextVel - _prevWorldVel) / dt;
+            float turnG = Mathf.Abs(Vector3.Dot(accel, transform.up) + Vector3.Dot(accel, transform.right) * 0.55f) / 9.81f;
+            float fwdG = Vector3.Dot(accel, transform.forward) / 9.81f;
+            float rawG = 1f + Mathf.Clamp(turnG + Mathf.Max(0f, fwdG) * 0.65f, 0f, 8.5f);
+            _currentGForce = Mathf.Lerp(_currentGForce, rawG, dt * 7f);
+            _prevWorldVel = nextVel;
+        }
+
+        private void ApplySteeringPhysics()
+        {
+            EnsureRigidbody();
+            if (_rb == null || _rb.isKinematic) return;
+
+            float dt = Time.fixedDeltaTime;
+
+            // 1. Triệt tiêu lực xoáy văng vật lý sau va chạm
+            if (_rb.angularVelocity.sqrMagnitude > 0.0001f)
+            {
+                _rb.angularVelocity = Vector3.Lerp(_rb.angularVelocity, Vector3.zero, dt * gyroAngularDamping);
+            }
+
+            // 2. Thực hiện cú Barrel Roll 360 độ (lăn lộn vòng quanh trục mũi tàu)
+            if (_isAcrobaticRolling)
+            {
+                _acrobaticRollTimer += dt;
+                float rollDelta = (_acrobaticRollDirection * 360f / barrelRollDuration) * dt;
+                Quaternion rollStep = Quaternion.AngleAxis(rollDelta, transform.forward);
+                _rb.MoveRotation(rollStep * _rb.rotation);
+
+                if (_acrobaticRollTimer >= barrelRollDuration)
+                {
+                    _isAcrobaticRolling = false;
+                    _currentYaw = transform.eulerAngles.y;
+                    _currentPitch = NormalizeAngle(transform.eulerAngles.x);
+                    _rollRate = 0f;
+                }
+                return;
+            }
+
+            // 3. Thực hiện cú Vertical Loop 360 độ (lộn nhào vòng cung thẳng đứng qua đỉnh đầu)
+            if (_isAcrobaticLooping)
+            {
+                _acrobaticLoopTimer += dt;
+                float pitchDelta = (-360f / loopDuration) * dt;
+                Quaternion pitchStep = Quaternion.AngleAxis(pitchDelta, transform.right);
+                _rb.MoveRotation(pitchStep * _rb.rotation);
+
+                if (_acrobaticLoopTimer >= loopDuration)
+                {
+                    _isAcrobaticLooping = false;
+                    _currentYaw = transform.eulerAngles.y;
+                    _currentPitch = NormalizeAngle(transform.eulerAngles.x);
+                    _pitchRate = 0f;
+                }
+                return;
+            }
+
+            // 4. Lái thực tế theo hệ trục cục bộ: Phím (A/D/I/K/Q/E) + Cần lái ảo chuột (Virtual Stick) + Giữ chuột phải
+            float turnInput = 0f;
+            if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) turnInput += 1f;
+            if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) turnInput -= 1f;
+
+            float pitchInput = 0f;
+            if (Input.GetKey(KeyCode.K) || Input.GetKey(KeyCode.DownArrow)) pitchInput += 1f;
+            if (Input.GetKey(KeyCode.I) || Input.GetKey(KeyCode.UpArrow)) pitchInput -= 1f;
+
+            if (enableMouseFlightStick && _mouseSteerArmed)
+            {
+                turnInput += _virtualStick.x;
+                pitchInput -= _virtualStick.y;
+                _rmbStick = Vector2.zero;
+                _rmbStickVel = Vector2.zero;
+            }
+            else if (Input.GetMouseButton(1))
+            {
+                Vector2 rmbTarget = new Vector2(
+                    Mathf.Clamp(Input.GetAxis("Mouse X") * 2.2f, -1f, 1f),
+                    Mathf.Clamp(-Input.GetAxis("Mouse Y") * 2.2f, -1f, 1f));
+                _rmbStick = Vector2.SmoothDamp(_rmbStick, rmbTarget, ref _rmbStickVel, 0.045f, Mathf.Infinity, dt);
+                turnInput += _rmbStick.x;
+                pitchInput += _rmbStick.y;
+            }
+            else
+            {
+                _rmbStick = Vector2.SmoothDamp(_rmbStick, Vector2.zero, ref _rmbStickVel, 0.05f, Mathf.Infinity, dt);
+            }
+
+            float rollInput = 0f;
+            if (Input.GetKey(KeyCode.Q)) rollInput -= 1f;
+            if (Input.GetKey(KeyCode.E)) rollInput += 1f;
+
+            turnInput = Mathf.Clamp(turnInput, -1f, 1f);
+            pitchInput = Mathf.Clamp(pitchInput, -1f, 1f);
+            rollInput = Mathf.Clamp(rollInput, -1f, 1f);
+
+            float cmdBlend = 1f - Mathf.Exp(-14f * dt);
+            _smoothedTurnCmd = Mathf.Lerp(_smoothedTurnCmd, turnInput, cmdBlend);
+            _smoothedPitchCmd = Mathf.Lerp(_smoothedPitchCmd, pitchInput, cmdBlend);
+            _smoothedRollCmd = Mathf.Lerp(_smoothedRollCmd, rollInput, cmdBlend);
+
+            _turnInput = _smoothedTurnCmd;
+            _pitchInput = _smoothedPitchCmd;
+            _rollInput = _smoothedRollCmd;
+
+            bool hasSteeringInput = (Mathf.Abs(turnInput) > 0.03f || Mathf.Abs(pitchInput) > 0.03f || Mathf.Abs(rollInput) > 0.03f);
+            if (hasSteeringInput)
+            {
+                _lastSteeringInputTime = Time.time;
+            }
+
+            if (Mathf.Abs(rollInput) > 0.04f)
+            {
+                _freeRollHoldTimer = 1.6f;
+            }
+            else
+            {
+                _freeRollHoldTimer = Mathf.Max(0f, _freeRollHoldTimer - dt);
+            }
+
+            float rateBlend = 1f - Mathf.Exp(-angularResponse * dt);
+            _yawRate = Mathf.Lerp(_yawRate, _smoothedTurnCmd * turnSpeed, rateBlend);
+            _pitchRate = Mathf.Lerp(_pitchRate, _smoothedPitchCmd * pitchSpeed, rateBlend);
+            _rollRate = Mathf.Lerp(_rollRate, _smoothedRollCmd * rollSpeed, rateBlend);
+
+            // Tích hợp góc xoay Quaternion cục bộ (không khóa Gimbal khi bay chúc/ngóc góc đứng 90° hay nhào lộn)
+            Quaternion nextRot = _rb.rotation
+                * Quaternion.AngleAxis(_yawRate * dt, Vector3.up)
+                * Quaternion.AngleAxis(_pitchRate * dt, Vector3.right)
+                * Quaternion.AngleAxis(-_rollRate * dt, Vector3.forward);
+
+            // Cân bằng chân trời tự nhiên khi thả cần roll hoặc chuẩn bị hạ cánh trên bãi đỗ
+            if (_freeRollHoldTimer <= 0f && (!hasSteeringInput || _groundDistance < 5.0f))
+            {
+                Vector3 fwd = nextRot * Vector3.forward;
+                Vector3 up = nextRot * Vector3.up;
+                if (up.y > 0.25f && Mathf.Abs(fwd.y) < 0.88f)
+                {
+                    Vector3 targetUp = Vector3.ProjectOnPlane(Vector3.up, fwd).normalized;
+                    if (targetUp.sqrMagnitude > 0.01f)
+                    {
+                        float rollErr = Vector3.SignedAngle(up, targetUp, fwd);
+                        float alignSpeed = _groundDistance < 5.0f ? horizonStabilizeSpeed : 1.35f;
+                        nextRot = Quaternion.AngleAxis(rollErr * Mathf.Clamp01(dt * alignSpeed), fwd) * nextRot;
+                    }
+
+                    if (_groundDistance < 4.5f && !hasSteeringInput && (Time.time - _lastSteeringInputTime) > 0.9f)
+                    {
+                        Vector3 flatFwd = Vector3.ProjectOnPlane(fwd, Vector3.up).normalized;
+                        if (flatFwd.sqrMagnitude > 0.01f)
                         {
-                            desiredVel += hitNormal * 2.0f;
-                            _currentForwardSpeed *= 0.5f;
+                            Quaternion levelRot = Quaternion.LookRotation(flatFwd, Vector3.up);
+                            nextRot = Quaternion.Slerp(nextRot, levelRot, dt * pitchAutoLevelSpeed);
                         }
                     }
                 }
             }
 
-            if (_rb != null && !_rb.isKinematic)
-            {
-                _rb.linearVelocity = desiredVel;
-            }
-        }
+            _rb.MoveRotation(nextRot);
 
-        private void ApplySteeringPhysics()
-        {
-            // 1. Triệt tiêu lực xoáy văng vật lý (Angular Velocity) sau va chạm bằng Con Quay Hồi Chuyển
-            if (_rb != null && !_rb.isKinematic && _rb.angularVelocity.sqrMagnitude > 0.0001f)
-            {
-                _rb.angularVelocity = Vector3.Lerp(_rb.angularVelocity, Vector3.zero, Time.fixedDeltaTime * gyroAngularDamping);
-            }
+            // Đồng bộ Euler tham khảo cho các hệ thống ngoài
+            _currentYaw = nextRot.eulerAngles.y;
+            _currentPitch = NormalizeAngle(nextRot.eulerAngles.x);
 
-            // Đồng bộ góc hướng mũi tàu thực tế trên mặt phẳng ngang để tránh lệch góc sau khi va đập mạnh
-            Vector3 flatForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
-            if (flatForward.sqrMagnitude > 0.01f && _collisionRecoilTimer > 0f)
-            {
-                _currentYaw = Mathf.LerpAngle(_currentYaw, Quaternion.LookRotation(flatForward, Vector3.up).eulerAngles.y, Time.fixedDeltaTime * 8f);
-            }
+            // Hiệu ứng nghiêng cánh khí động học & rung buồng lái (Aerodynamic Banking)
+            _impactRollJolt = Mathf.Lerp(_impactRollJolt, 0f, dt * 7.5f);
+            _impactPitchJolt = Mathf.Lerp(_impactPitchJolt, 0f, dt * 7.5f);
 
-            float turnInput = 0f;
-            if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) turnInput = 1f;
-            else if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) turnInput = -1f;
-
-            _currentYaw += turnInput * turnSpeed * Time.fixedDeltaTime;
-
-            // 2. Điều khiển ngóc/chúi mũi tàu (Pitch) & Tự động trả về thăng bằng ngang (0 độ)
-            bool manualPitch = false;
-            if (Input.GetKey(KeyCode.I))
-            {
-                _currentPitch -= pitchSpeed * Time.fixedDeltaTime;
-                manualPitch = true;
-            }
-            else if (Input.GetKey(KeyCode.K))
-            {
-                _currentPitch += pitchSpeed * Time.fixedDeltaTime;
-                manualPitch = true;
-            }
-
-            if (!manualPitch)
-            {
-                float targetAutoPitch = 0f;
-                if (Mathf.Abs(_currentVerticalSpeed) > 0.5f && _currentForwardSpeed > 3f)
-                {
-                    targetAutoPitch = Mathf.Clamp(-(_currentVerticalSpeed / verticalSpeed) * 14f, -14f, 14f);
-                }
-                _currentPitch = Mathf.Lerp(_currentPitch, targetAutoPitch, Time.fixedDeltaTime * pitchAutoLevelSpeed);
-            }
-            _currentPitch = Mathf.Clamp(_currentPitch, -maxPitchAngle, maxPitchAngle);
-
-            // 3. Tự động lấy lại thăng bằng đường chân trời (Khử hoàn toàn góc nghiêng Roll bị lệch do va chạm)
-            Quaternion targetBalancedRot = Quaternion.Euler(_currentPitch, _currentYaw, 0f);
-            Quaternion stabilizedRot = Quaternion.Slerp(_rb.rotation, targetBalancedRot, Time.fixedDeltaTime * horizonStabilizeSpeed);
-            _rb.MoveRotation(stabilizedRot);
-
-            // 4. Giảm chấn rung lắc thân tàu sau va chạm & Nghiêng cánh khí động học (Visual Banking)
-            _impactRollJolt = Mathf.Lerp(_impactRollJolt, 0f, Time.fixedDeltaTime * 7.5f);
-            _impactPitchJolt = Mathf.Lerp(_impactPitchJolt, 0f, Time.fixedDeltaTime * 7.5f);
-
-            float targetBank = -turnInput * maxBankAngle;
-            float swayOffset = Mathf.Sin(Time.time * (bobFrequency * 0.8f)) * 1.5f;
-            _currentBank = Mathf.Lerp(_currentBank, targetBank + swayOffset, Time.fixedDeltaTime * bankSmoothing);
+            float targetBank = -_turnInput * maxBankAngle - (_rollInput * 12f);
+            float swayOffset = Mathf.Sin(Time.time * (bobFrequency * 0.8f)) * 1.1f;
+            float bankAlpha = 1f - Mathf.Exp(-bankSmoothing * dt);
+            _currentBank = Mathf.Lerp(_currentBank, targetBank + swayOffset, bankAlpha);
 
             if (visualModel != null)
             {
@@ -733,8 +1189,16 @@ namespace SpaceCyberpunk
             }
         }
 
+        private float NormalizeAngle(float angle)
+        {
+            while (angle > 180f) angle -= 360f;
+            while (angle < -180f) angle += 360f;
+            return angle;
+        }
+
         private void OnCollisionEnter(Collision collision)
         {
+            EnsureRigidbody();
             if (_rb == null || _isRespawning) return;
 
             if (collision.relativeVelocity.sqrMagnitude > 2.2f)
@@ -746,7 +1210,7 @@ namespace SpaceCyberpunk
                 if (disableCollisionBrake)
                 {
                     // Chế độ bay tự do: trượt mượt mà theo bề mặt phẳng của vật cản, không thắng giật lùi, không ngắt động cơ
-                    if (_rb != null && !_rb.isKinematic)
+                    if (!_rb.isKinematic)
                     {
                         Vector3 vel = _rb.linearVelocity;
                         if (Vector3.Dot(vel, normal) < 0f)
@@ -774,13 +1238,15 @@ namespace SpaceCyberpunk
 
         private void OnCollisionStay(Collision collision)
         {
+            EnsureRigidbody();
             if (_rb == null || _isRespawning) return;
 
             int count = collision.contactCount;
             for (int i = 0; i < count; i++)
             {
                 Vector3 n = collision.GetContact(i).normal;
-                if (Vector3.Dot(n, Vector3.up) < 0.75f)
+                // Chỉ nhận các vách tường bên thẳng đứng thực sự (bỏ qua sàn và mép gờ dưới bụng)
+                if (Mathf.Abs(Vector3.Dot(n, Vector3.up)) < 0.45f)
                 {
                     _contactNormalSum += n;
                 }
@@ -789,8 +1255,25 @@ namespace SpaceCyberpunk
 
         private void UpdateVisualEffects()
         {
+            if (_cachedShieldBubbleGo == null)
+            {
+                var sb = transform.Find("Player_HexShield_Bubble");
+                if (sb != null) _cachedShieldBubbleGo = sb.gameObject;
+            }
+            if (_cachedShieldBubbleGo != null && _cachedShieldBubbleGo.activeSelf != _thirdPersonVisualsVisible)
+            {
+                _cachedShieldBubbleGo.SetActive(_thirdPersonVisualsVisible);
+            }
+
+            if (!_thirdPersonVisualsVisible)
+            {
+                if (engineLight != null && engineLight.enabled) engineLight.enabled = false;
+                return;
+            }
+
             if (engineLight != null)
             {
+                if (!engineLight.enabled) engineLight.enabled = true;
                 float baseIntensity = _isBoosting ? 4.5f : (_currentForwardSpeed > 1f ? 2.2f : 0.8f);
                 float pulse = Mathf.Sin(Time.time * 15f) * 0.15f;
                 engineLight.intensity = Mathf.Lerp(engineLight.intensity, baseIntensity + pulse, Time.deltaTime * 10f);
@@ -874,8 +1357,10 @@ namespace SpaceCyberpunk
             // 2. Thước đo la bàn trên đỉnh (Heading Compass Tape)
             BuildCompassHeadingTape(_playerHudRoot.transform);
 
-            // 3. Tâm ngắm trung tâm (Reticle [ · ])
+            // 3. Tâm ngắm trung tâm (Hexagon Lock Reticle HUD do SpaceshipTargetLockSystem quản lý)
             BuildCenterCrosshair(_playerHudRoot.transform);
+            if (_crosshairRoot != null) _crosshairRoot.SetActive(false);
+            BuildVirtualStickOverlay(_playerHudRoot.transform);
 
             // 4. Góc dưới trái: Cụm thanh HP & SHD
             BuildBottomLeftHealthShieldBars(_playerHudRoot.transform);
@@ -1158,6 +1643,67 @@ namespace SpaceCyberpunk
             _warningCardRoot.SetActive(false); // Mặc định ẩn, chỉ hiện khi bị tấn công!
         }
 
+        private void BuildVirtualStickOverlay(Transform parent)
+        {
+            _virtualStickHudRoot = new GameObject("VirtualFlightStick_Overlay", typeof(RectTransform));
+            _virtualStickHudRoot.transform.SetParent(parent, false);
+            var rootRt = _virtualStickHudRoot.GetComponent<RectTransform>();
+            rootRt.anchorMin = new Vector2(0.5f, 0.5f);
+            rootRt.anchorMax = new Vector2(0.5f, 0.5f);
+            rootRt.pivot = new Vector2(0.5f, 0.5f);
+            rootRt.anchoredPosition = Vector2.zero;
+            rootRt.sizeDelta = Vector2.zero;
+
+            _stickLineImg = CreateHudImage("StickTetherLine", _virtualStickHudRoot.transform, new Color(0.28f, 0.94f, 1.0f, 0.42f));
+            _stickLineRt = _stickLineImg.rectTransform;
+            _stickLineRt.pivot = new Vector2(0f, 0.5f);
+            _stickLineRt.anchoredPosition = Vector2.zero;
+            _stickLineRt.sizeDelta = new Vector2(0f, 1.5f);
+
+            _stickPipImg = CreateHudImage("StickPip", _virtualStickHudRoot.transform, new Color(0.32f, 0.96f, 1.0f, 0.85f));
+            _stickPipRt = _stickPipImg.rectTransform;
+            _stickPipRt.sizeDelta = new Vector2(7f, 7f);
+            _stickPipRt.localRotation = Quaternion.Euler(0f, 0f, 45f);
+
+            _virtualStickHudRoot.SetActive(false);
+        }
+
+        private void UpdateVirtualStickHUD()
+        {
+            if (_virtualStickHudRoot == null) return;
+
+            float stickMag = _virtualStick.magnitude;
+            bool show = enableMouseFlightStick && _mouseSteerArmed && stickMag > 0.015f;
+            if (_virtualStickHudRoot.activeSelf != show)
+            {
+                _virtualStickHudRoot.SetActive(show);
+            }
+            if (!show) return;
+
+            float fade = Mathf.Clamp01((stickMag - 0.015f) / 0.10f);
+            Vector2 pxOffset = _virtualStick * 105f;
+            float len = pxOffset.magnitude;
+            float angle = Mathf.Atan2(pxOffset.y, pxOffset.x) * Mathf.Rad2Deg;
+
+            if (_stickLineRt != null)
+            {
+                _stickLineRt.sizeDelta = new Vector2(Mathf.Max(0f, len - 5f), 1.5f);
+                _stickLineRt.localRotation = Quaternion.Euler(0f, 0f, angle);
+            }
+            if (_stickLineImg != null)
+            {
+                _stickLineImg.color = new Color(0.28f, 0.94f, 1.0f, 0.40f * fade);
+            }
+            if (_stickPipRt != null)
+            {
+                _stickPipRt.anchoredPosition = pxOffset;
+            }
+            if (_stickPipImg != null)
+            {
+                _stickPipImg.color = new Color(0.32f, 0.96f, 1.0f, 0.85f * fade);
+            }
+        }
+
         private static Image CreateHudImage(string name, Transform parent, Color color)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
@@ -1213,8 +1759,9 @@ namespace SpaceCyberpunk
             }
             if (!isPiloting) return;
 
-            // 1. Cập nhật thước đo la bàn trên đỉnh
+            // 1. Cập nhật thước đo la bàn trên đỉnh & kim cần lái ảo
             UpdateCompassTape();
+            UpdateVirtualStickHUD();
 
             // 2. Cập nhật thanh HP và SHD
             float targetHpRatio = HealthRatio;

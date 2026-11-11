@@ -41,9 +41,15 @@ namespace SpaceCyberpunk
         public bool isReinforcementShip = false;
         public float maxHealth = 105f;
         public float fireInterval = 1.45f;
-        public float attackRange = 68f;
+        public float attackRange = 115f;
         public float laserDamage = 12f;
         public float respawnDelay = 20f;
+
+        [Header("Giữ Khoảng Cách An Toàn Với Tàu Ta (Player Standoff)")]
+        [Tooltip("Khoảng cách tối thiểu tàu địch luôn giữ với tàu người chơi (m) - không bao giờ áp sát hay đứng kề bên")]
+        public float minPlayerStandoffDistance = 52f;
+        [Tooltip("Bán kính lượn vòng chiến đấu tiêu chuẩn quanh tàu người chơi (m)")]
+        public float preferredCombatRadius = 78f;
 
         [Header("Quỹ Đạo & Điểm Tuần Tra (Patrol Route)")]
         public Vector3[] patrolPoints;
@@ -68,6 +74,8 @@ namespace SpaceCyberpunk
         private Quaternion _spawnRotation;
         private Vector3 _initialScale;
 
+        public bool IsDestroyed => _isDestroyed;
+        public float CurrentHealth => _currentHealth;
         public Vector3 InitialScale => _initialScale.sqrMagnitude > 0.01f ? _initialScale : Vector3.one * 2.2f;
 
         private int _currentIndex;
@@ -164,6 +172,9 @@ namespace SpaceCyberpunk
         private void Start()
         {
             _player = FindFirstObjectByType<PlayerSpaceshipController>();
+            attackRange = Mathf.Max(attackRange, 115f);
+            minPlayerStandoffDistance = Mathf.Max(minPlayerStandoffDistance, 48f);
+            preferredCombatRadius = Mathf.Max(preferredCombatRadius, minPlayerStandoffDistance + 22f);
             _timeOffset = Mathf.Abs(transform.position.x * 0.37f + transform.position.z * 0.53f) + tacticalSlotIndex * 1.9f;
             _nextFireTime = Time.time + Random.Range(0.5f, 1.8f);
 
@@ -241,7 +252,9 @@ namespace SpaceCyberpunk
             {
                 if (patrolPoints == null || patrolPoints.Length == 0) return;
                 targetPos = patrolPoints[_currentIndex];
-                if (Vector3.Distance(transform.position, targetPos) < waypointReachDistance)
+                bool nearWaypoint = Vector3.Distance(transform.position, targetPos) < waypointReachDistance;
+                bool playerOccupyingWaypoint = _player != null && Vector3.Distance(_player.transform.position, targetPos) < minPlayerStandoffDistance;
+                if (nearWaypoint || playerOccupyingWaypoint)
                 {
                     _currentIndex = (_currentIndex + 1) % patrolPoints.Length;
                     targetPos = patrolPoints[_currentIndex];
@@ -257,11 +270,42 @@ namespace SpaceCyberpunk
                 desiredDir = (desiredDir + separation * 0.65f).normalized;
             }
 
-            // Cảm biến né tránh đảo nổi và thiên thạch
+            // Lực giữ khoảng cách an toàn với tàu người chơi (áp dụng cả khi tuần tra lẫn khi truy sát):
+            // Ngăn tàu địch đứng yên hoặc bay lượn quá sát tàu ta (< minPlayerStandoffDistance)
+            float distToPlayer = float.MaxValue;
+            Vector3 radialFromPlayer = Vector3.zero;
+            if (_player != null)
+            {
+                Vector3 fromPlayer = transform.position - _player.transform.position;
+                distToPlayer = fromPlayer.magnitude;
+                radialFromPlayer = (distToPlayer > 0.05f) ? (fromPlayer / distToPlayer) : transform.forward;
+
+                float softBuffer = minPlayerStandoffDistance + 16f;
+                if (distToPlayer < softBuffer)
+                {
+                    float urgency = 1f - Mathf.Clamp01((distToPlayer - minPlayerStandoffDistance * 0.7f) / (softBuffer - minPlayerStandoffDistance * 0.7f));
+                    float dirSign = (tacticalSlotIndex % 2 == 0) ? 1f : -1f;
+                    Vector3 tangent = Vector3.Cross(Vector3.up, radialFromPlayer);
+                    if (tangent.sqrMagnitude < 0.01f) tangent = Vector3.Cross(Vector3.right, radialFromPlayer);
+                    tangent = tangent.normalized * dirSign;
+
+                    if (distToPlayer < minPlayerStandoffDistance)
+                    {
+                        // Bẻ lái dứt khoát tách ra xa khỏi tàu người chơi
+                        desiredDir = (radialFromPlayer * (1.8f + urgency * 1.8f) + tangent * 0.85f + Vector3.up * 0.25f).normalized;
+                    }
+                    else
+                    {
+                        desiredDir = (desiredDir + (radialFromPlayer * 1.4f + tangent * 0.65f) * urgency).normalized;
+                    }
+                }
+            }
+
+            // Cảm biến né tránh đảo nổi, thiên thạch và chính tàu người chơi
             if (Physics.SphereCast(transform.position, avoidanceSphereRadius, transform.forward,
                 out RaycastHit hit, avoidanceDistance, ~0, QueryTriggerInteraction.Ignore))
             {
-                if (hit.rigidbody != _rb && (!hunting || hit.collider.transform.root != _player.transform.root))
+                if (hit.rigidbody != _rb)
                 {
                     Vector3 avoidDir = (hit.normal + Vector3.up * 0.45f).normalized;
                     float urgency = 1f - Mathf.Clamp01(hit.distance / avoidanceDistance);
@@ -270,6 +314,11 @@ namespace SpaceCyberpunk
             }
 
             float activeTurnSpeed = hunting ? hostileTurnSpeed : turnSpeed;
+            if (distToPlayer < minPlayerStandoffDistance)
+            {
+                activeTurnSpeed *= 1.6f; // Xoay mũi tách ra nhanh hơn nếu lỡ tiến sát
+            }
+
             if (desiredDir.sqrMagnitude > 0.001f)
             {
                 Vector3 localDir = transform.InverseTransformDirection(desiredDir);
@@ -285,14 +334,26 @@ namespace SpaceCyberpunk
 
             float activeSpeed = hunting ? (cruiseSpeed * hostileSpeedMultiplier) : cruiseSpeed;
             Vector3 targetVel = transform.forward * activeSpeed;
-            _rb.linearVelocity = Vector3.Lerp(_rb.linearVelocity, targetVel, Time.fixedDeltaTime * 4f);
+            if (_player != null && distToPlayer < minPlayerStandoffDistance)
+            {
+                // Triệt tiêu thành phần vận tốc lao về phía tàu ta và đẩy tách ra giữ cự ly an toàn
+                float pushBoost = Mathf.Clamp((minPlayerStandoffDistance - distToPlayer) * 1.35f, 8f, 34f);
+                float towardPlayerSpeed = Vector3.Dot(targetVel, -radialFromPlayer);
+                if (towardPlayerSpeed > 0f)
+                {
+                    targetVel += radialFromPlayer * towardPlayerSpeed;
+                }
+                targetVel += radialFromPlayer * pushBoost;
+            }
+
+            _rb.linearVelocity = Vector3.Lerp(_rb.linearVelocity, targetVel, Time.fixedDeltaTime * 4.5f);
             _rb.angularVelocity = Vector3.Lerp(_rb.angularVelocity, Vector3.zero, Time.fixedDeltaTime * 5f);
         }
 
         /// <summary>
-        /// Tính toán vị trí bay chiến thuật thông minh (Tactical Flanking & Strafe Run):
-        /// - Mỗi tàu giữ 1 góc vây quanh người chơi ở cự ly 34m - 52m (không lao thẳng vào đuôi người chơi).
-        /// - Luân phiên thực hiện các đợt lượn cắt mặt (Attack Strafe) và lượn vòng rộng (Orbit Flank).
+        /// Tính toán vị trí bay chiến thuật thông minh (Tactical Flanking & Standoff Orbit):
+        /// - Giữ khoảng cách tối thiểu >= minPlayerStandoffDistance (52m), bay lượn ở vòng 78m - 102m.
+        /// - Luân phiên cắt góc bắn từ xa rồi lượn vòng rộng, không bao giờ lao sát hay đỗ kề tàu người chơi.
         /// </summary>
         private Vector3 ComputeSmartTacticalPosition()
         {
@@ -300,7 +361,7 @@ namespace SpaceCyberpunk
             Rigidbody playerRb = _player.GetComponent<Rigidbody>();
             Vector3 playerVel = playerRb != null ? playerRb.linearVelocity : Vector3.zero;
 
-            // Chu kỳ chiến thuật riêng cho từng tàu: 65% thời gian bay lượn vây quanh (Flank Orbit), 35% thời gian cắt góc bắn (Attack Pass)
+            // Chu kỳ chiến thuật riêng cho từng tàu: chủ yếu lượn vòng giữ cự ly, xen kẽ đợt cắt mặt ở khoảng cách an toàn
             float phase = Mathf.Sin(Time.time * 0.65f + tacticalSlotIndex * 1.3f);
             bool inAttackPass = phase > 0.35f;
 
@@ -311,22 +372,31 @@ namespace SpaceCyberpunk
             float distToPlayer = Vector3.Distance(transform.position, playerPos);
 
             Vector3 tacticalTarget;
-            if (inAttackPass && distToPlayer > 24f)
+            if (inAttackPass && distToPlayer > (minPlayerStandoffDistance + 18f))
             {
-                // Bay cắt chéo đón đầu mũi tàu người chơi ở cự ly 26m bên sườn thay vì đâm thẳng vào người chơi
-                Vector3 sideOffset = new Vector3(Mathf.Cos(baseAngle), 0.15f, Mathf.Sin(baseAngle)) * 26f;
-                tacticalTarget = playerPos + playerVel * 0.5f + sideOffset;
+                // Bay cắt chéo ở cự ly an toàn (>= 66m) bên sườn, tuyệt đối không áp sát
+                float passDist = minPlayerStandoffDistance + 16f;
+                Vector3 sideOffset = new Vector3(Mathf.Cos(baseAngle), 0.18f, Mathf.Sin(baseAngle)) * passDist;
+                tacticalTarget = playerPos + playerVel * 0.35f + sideOffset;
             }
             else
             {
-                // Lượn vòng vây quanh người chơi ở bán kính 38m - 54m và biến thiên cao độ
-                float ringRadius = 38f + (tacticalSlotIndex % 3) * 8f;
-                float heightWave = 4f + Mathf.Sin(Time.time * 1.2f + _timeOffset) * 8f;
+                // Lượn vòng vây quanh người chơi ở bán kính 78m - 102m và biến thiên cao độ
+                float ringRadius = preferredCombatRadius + (tacticalSlotIndex % 3) * 12f;
+                float heightWave = 8f + Mathf.Sin(Time.time * 1.2f + _timeOffset) * 10f;
                 tacticalTarget = new Vector3(
                     playerPos.x + Mathf.Cos(baseAngle) * ringRadius,
                     playerPos.y + heightWave,
                     playerPos.z + Mathf.Sin(baseAngle) * ringRadius
                 );
+            }
+
+            // Đảm bảo điểm mục tiêu luôn cách tàu người chơi ít nhất minPlayerStandoffDistance
+            Vector3 toTarget = tacticalTarget - playerPos;
+            if (toTarget.magnitude < minPlayerStandoffDistance)
+            {
+                Vector3 dir = toTarget.sqrMagnitude > 0.01f ? toTarget.normalized : new Vector3(Mathf.Cos(baseAngle), 0.2f, Mathf.Sin(baseAngle)).normalized;
+                tacticalTarget = playerPos + dir * minPlayerStandoffDistance;
             }
 
             // Giữ các tàu luôn nằm trong phạm vi Vùng Đất Project
@@ -460,6 +530,10 @@ namespace SpaceCyberpunk
         private void ExplodeShip()
         {
             _isDestroyed = true;
+            if (SpaceshipTargetLockSystem.Instance != null)
+            {
+                SpaceshipTargetLockSystem.Instance.ClearLockIfTarget(transform);
+            }
             Material mat = (_renderers != null && _renderers.Length > 0) ? _renderers[0].sharedMaterial : null;
             SpaceExplosionVFX.SpawnExplosion(transform.position, 4.2f, false, mat);
 
