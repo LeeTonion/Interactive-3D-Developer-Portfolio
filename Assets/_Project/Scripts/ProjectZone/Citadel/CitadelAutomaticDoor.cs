@@ -25,11 +25,16 @@ namespace SpaceCyberpunk
         public float openSpeed = 2.4f;
         public float closeSpeed = 2.6f;
 
-        // Tọa độ đóng mở chính xác: Khi mở hoàn toàn trượt sâu 3.6m vào trong vách để thông thoáng 100%
-        private static readonly Vector3 ClosedLeftPos = new Vector3(1.386f, 0.0057f, 0f);
-        private static readonly Vector3 ClosedRightPos = new Vector3(-1.409f, 0f, 0f);
-        private static readonly Vector3 OpenLeftPos = new Vector3(3.60f, 0.0057f, 0f);
-        private static readonly Vector3 OpenRightPos = new Vector3(-3.60f, 0f, 0f);
+        [Header("Door Alignment & Positions (Seamless Overlap)")]
+        public Vector3 closedLeftPos = new Vector3(1.3900f, 0.0057f, 0.0400f);
+        public Vector3 closedRightPos = new Vector3(-1.6084f, -0.0200f, -0.3500f);
+        public Vector3 openLeftPos = new Vector3(3.80f, 0.0057f, 0.0400f);
+        public Vector3 openRightPos = new Vector3(-3.80f, -0.0200f, -0.3500f);
+        public Vector3 doorLeafScale = new Vector3(1.25f, 1.0f, 0.6f);
+
+        [Header("Editor Manual Adjustment")]
+        [Tooltip("Khi bật, bạn có thể tự do kéo cánh cửa trong Scene View và vị trí sẽ tự động lưu vào closedPos")]
+        public bool syncManualEditsToClosedPos = true;
 
         [Header("Proximity Auto-Sense")]
         public bool autoProximity = true;
@@ -82,31 +87,16 @@ namespace SpaceCyberpunk
                 CreateStatusIndicators();
                 CreateSteamVentEmitters();
             }
-            else
-            {
-                if (!isBreached)
-                {
-                    SetOpenImmediate(0f);
-                }
-            }
         }
 
         private void OnEnable()
         {
             InitializeDoorReferences();
-            if (!Application.isPlaying && !isBreached)
-            {
-                SetOpenImmediate(0f);
-            }
         }
 
         private void OnValidate()
         {
             InitializeDoorReferences();
-            if (!Application.isPlaying && !isBreached)
-            {
-                ApplyDoorPositions();
-            }
         }
 
         private void Start()
@@ -195,12 +185,6 @@ namespace SpaceCyberpunk
             if (doorRight == null) doorRight = transform.Find("door_1_right");
             if (animator == null) animator = GetComponent<Animator>();
             if (animator != null) animator.enabled = false; // Tắt animator để không bị kẹp chết ở vị trí hé mở 2.47m
-
-            if (!Application.isPlaying && !isBreached)
-            {
-                if (doorLeft != null) doorLeft.localPosition = ClosedLeftPos;
-                if (doorRight != null) doorRight.localPosition = ClosedRightPos;
-            }
 
             if (Application.isPlaying)
             {
@@ -328,14 +312,7 @@ namespace SpaceCyberpunk
 
         private void LateUpdate()
         {
-            if (!Application.isPlaying)
-            {
-                if (!isBreached && _targetOpen <= 0.01f)
-                {
-                    ApplyDoorPositions();
-                }
-                return;
-            }
+            if (!Application.isPlaying) return;
 
             if (isBreached)
             {
@@ -359,7 +336,27 @@ namespace SpaceCyberpunk
 
         private void Update()
         {
-            if (!Application.isPlaying) return;
+            if (!Application.isPlaying)
+            {
+#if UNITY_EDITOR
+                if (syncManualEditsToClosedPos)
+                {
+                    if (doorLeft != null && doorLeft.hasChanged)
+                    {
+                        closedLeftPos = doorLeft.localPosition;
+                        doorLeft.hasChanged = false;
+                        UnityEditor.EditorUtility.SetDirty(this);
+                    }
+                    if (doorRight != null && doorRight.hasChanged)
+                    {
+                        closedRightPos = doorRight.localPosition;
+                        doorRight.hasChanged = false;
+                        UnityEditor.EditorUtility.SetDirty(this);
+                    }
+                }
+#endif
+                return;
+            }
 
             if (isBreached)
             {
@@ -664,16 +661,40 @@ namespace SpaceCyberpunk
             if (animator != null) animator.SetBool("character_nearby", _currentOpen > 0.5f);
         }
 
+        [ContextMenu("Lưu vị trí hiện tại làm Vị trí Đóng (Save As Closed)")]
+        public void SaveCurrentAsClosed()
+        {
+            if (doorLeft != null) closedLeftPos = doorLeft.localPosition;
+            if (doorRight != null) closedRightPos = doorRight.localPosition;
+            if (doorLeft != null) doorLeafScale = doorLeft.localScale;
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(this);
+            Debug.Log($"[CitadelAutomaticDoor] Đã lưu tọa độ đóng mới: Left={closedLeftPos}, Right={closedRightPos}");
+#endif
+        }
+
+        [ContextMenu("Xem trước: Đóng cửa (Preview Closed)")]
+        public void PreviewClosed()
+        {
+            SetOpenImmediate(0f);
+        }
+
+        [ContextMenu("Xem trước: Mở cửa (Preview Open)")]
+        public void PreviewOpen()
+        {
+            SetOpenImmediate(1f);
+        }
+
         private void ApplyDoorPositions()
         {
             float t = Mathf.SmoothStep(0f, 1f, _currentOpen);
             if (doorLeft != null)
             {
-                doorLeft.localPosition = Vector3.Lerp(ClosedLeftPos, OpenLeftPos, t);
+                doorLeft.localPosition = Vector3.Lerp(closedLeftPos, openLeftPos, t);
             }
             if (doorRight != null)
             {
-                doorRight.localPosition = Vector3.Lerp(ClosedRightPos, OpenRightPos, t);
+                doorRight.localPosition = Vector3.Lerp(closedRightPos, openRightPos, t);
             }
         }
 

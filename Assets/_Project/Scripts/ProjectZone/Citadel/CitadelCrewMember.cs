@@ -53,6 +53,12 @@ namespace SpaceCyberpunk
         public float moveSpeed = 1.15f;
         public float turnSpeed = 4.5f;
 
+        [Header("Seated / Chair Settings")]
+        [Tooltip("Bật nếu nhân viên ngồi làm việc trên ghế đàng hoàng")]
+        public bool isSeated = false;
+        public float seatSittingHeight = 0.45f;
+        public float sittingLegPitch = -80f;
+
         [Header("Work & Patrol Waypoints (For PatrolEngineer)")]
         public List<CrewPatrolWaypoint> waypoints = new List<CrewPatrolWaypoint>();
         public bool loopPingPong = true;
@@ -114,9 +120,9 @@ namespace SpaceCyberpunk
             BuildAudioComponents();
             EnsureTerminalGlow();
 
-            // Khóa cao độ sàn chuẩn
+            // Khóa cao độ sàn hoặc ghế ngồi chuẩn
             Vector3 p = transform.position;
-            p.y = floorY;
+            p.y = isSeated ? seatSittingHeight : floorY;
             transform.position = p;
         }
 
@@ -136,8 +142,16 @@ namespace SpaceCyberpunk
             if (bodyTr != null) { _initialBodyPos = bodyTr.localPosition; _initialBodyRot = bodyTr.localRotation; }
             if (armLeftTr != null) _initialArmLRot = armLeftTr.localRotation;
             if (armRightTr != null) _initialArmRRot = armRightTr.localRotation;
-            if (legLeftTr != null) _initialLegLRot = legLeftTr.localRotation;
-            if (legRightTr != null) _initialLegRRot = legRightTr.localRotation;
+            if (isSeated)
+            {
+                if (legLeftTr != null) _initialLegLRot = Quaternion.Euler(sittingLegPitch, 0f, 0f);
+                if (legRightTr != null) _initialLegRRot = Quaternion.Euler(sittingLegPitch, 0f, 0f);
+            }
+            else
+            {
+                if (legLeftTr != null) _initialLegLRot = legLeftTr.localRotation;
+                if (legRightTr != null) _initialLegRRot = legRightTr.localRotation;
+            }
         }
 
         private void Start()
@@ -238,6 +252,13 @@ namespace SpaceCyberpunk
                 armLeftTr.localRotation = Quaternion.Slerp(armLeftTr.localRotation, Quaternion.Euler(-15f, 0f, 0f), dt * 5f);
             }
 
+            // Nếu đang ngồi thì giữ nguyên tư thế chân ngồi trên ghế
+            if (isSeated)
+            {
+                if (legLeftTr != null) legLeftTr.localRotation = Quaternion.Euler(sittingLegPitch, 0f, 0f);
+                if (legRightTr != null) legRightTr.localRotation = Quaternion.Euler(sittingLegPitch, 0f, 0f);
+            }
+
             if (_greetingTimer <= 0f)
             {
                 _isGreetingPlayer = false;
@@ -249,9 +270,17 @@ namespace SpaceCyberpunk
 
         private void HandleStationaryWorker(float dt)
         {
-            // Đảm bảo chân đứng thẳng trên sàn
-            if (legLeftTr != null) legLeftTr.localRotation = _initialLegLRot;
-            if (legRightTr != null) legRightTr.localRotation = _initialLegRRot;
+            // Đảm bảo tư thế chân (ngồi gập đùi trên ghế hoặc đứng thẳng)
+            if (isSeated)
+            {
+                if (legLeftTr != null) legLeftTr.localRotation = Quaternion.Euler(sittingLegPitch, 0f, 0f);
+                if (legRightTr != null) legRightTr.localRotation = Quaternion.Euler(sittingLegPitch, 0f, 0f);
+            }
+            else
+            {
+                if (legLeftTr != null) legLeftTr.localRotation = _initialLegLRot;
+                if (legRightTr != null) legRightTr.localRotation = _initialLegRRot;
+            }
 
             // 1. Nhịp thở vi mô (Micro-breathing)
             float breath = Mathf.Sin(Time.time * 2.2f) * 0.008f;
@@ -560,6 +589,44 @@ namespace SpaceCyberpunk
             var clip = AudioClip.Create("Astronaut_Boot_Step", samples, 1, sampleRate, false);
             clip.SetData(data, 0);
             return clip;
+        }
+
+        [ContextMenu("Thiết lập tư thế Ngồi Ghế (Pose Seated)")]
+        public void PoseSeatedInEditor()
+        {
+            isSeated = true;
+            Vector3 p = transform.position;
+            p.y = seatSittingHeight;
+            transform.position = p;
+            ResolveTransforms();
+            if (legLeftTr != null) legLeftTr.localRotation = Quaternion.Euler(sittingLegPitch, 0f, 0f);
+            if (legRightTr != null) legRightTr.localRotation = Quaternion.Euler(sittingLegPitch, 0f, 0f);
+            if (armLeftTr != null) armLeftTr.localRotation = Quaternion.Euler(-58f, -6f, 0f);
+            if (armRightTr != null) armRightTr.localRotation = Quaternion.Euler(-58f, 6f, 0f);
+            if (bodyTr != null) bodyTr.localRotation = Quaternion.Euler(4f, 0f, 0f);
+            if (headTr != null) headTr.localRotation = Quaternion.Euler(-4f, 0f, 0f);
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(this);
+#endif
+        }
+
+        [ContextMenu("Thiết lập tư thế Đứng (Pose Standing)")]
+        public void PoseStandingInEditor()
+        {
+            isSeated = false;
+            Vector3 p = transform.position;
+            p.y = floorY;
+            transform.position = p;
+            ResolveTransforms();
+            if (legLeftTr != null) legLeftTr.localRotation = Quaternion.identity;
+            if (legRightTr != null) legRightTr.localRotation = Quaternion.identity;
+            if (armLeftTr != null) armLeftTr.localRotation = Quaternion.identity;
+            if (armRightTr != null) armRightTr.localRotation = Quaternion.identity;
+            if (bodyTr != null) bodyTr.localRotation = Quaternion.identity;
+            if (headTr != null) headTr.localRotation = Quaternion.identity;
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(this);
+#endif
         }
     }
 }
