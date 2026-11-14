@@ -558,7 +558,7 @@ RectTransform:
   m_GameObject: {fileID: 531762}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.30464882, z: 1}
+  m_LocalScale: {x: 1, y: 0.3739085, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 851931435}
@@ -1278,7 +1278,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 00:07 / 00:30
+  m_text: 00:13 / 00:30
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -2127,7 +2127,7 @@ RectTransform:
   m_GameObject: {fileID: 5315051}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.77581537, z: 1}
+  m_LocalScale: {x: 1, y: 0.4810074, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 851931435}
@@ -3885,7 +3885,7 @@ RectTransform:
   m_GameObject: {fileID: 16294058}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5736673, z: 1}
+  m_LocalScale: {x: 1, y: 0.3805388, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1066000239}
@@ -6876,7 +6876,7 @@ RectTransform:
   m_GameObject: {fileID: 26242428}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60056734, z: 1}
+  m_LocalScale: {x: 1, y: 0.45266804, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1511783031}
@@ -19032,7 +19032,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 00:07 / 00:30
+  m_text: 00:13 / 00:30
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -21903,7 +21903,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '[ CRYSTAL_REFINERY // ENERGY // DEFENSE MATRIX NETWORK ]'
+  m_text: '[ CRYSTAL_REFINERY // ENERGY // NEO-TOKYO DRIFT CORP ]'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -27815,7 +27815,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0.25457138
+  m_Value: 0.46199992
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -34638,7 +34638,7 @@ RectTransform:
   m_GameObject: {fileID: 87224743}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60056734, z: 1}
+  m_LocalScale: {x: 1, y: 0.45266804, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1066000239}
@@ -35297,7 +35297,7 @@ RectTransform:
   m_GameObject: {fileID: 90008512}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7842383, z: 1}
+  m_LocalScale: {x: 1, y: 0.46475446, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1780577250}
@@ -35597,7 +35597,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: A.I. DEFENSE & DRONE RADAR
+  m_text: SYNTHWAVE NITRO RACER
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -36186,7 +36186,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '[ COMM_RELAY // DEEP_SPACE // DEFENSE MATRIX NETWORK ]'
+  m_text: '[ COMM_RELAY // DEEP_SPACE // NEO-TOKYO DRIFT CORP ]'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -36488,7 +36488,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.111220606}
+  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.18698105}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -37007,7 +37007,7 @@ RectTransform:
   m_GameObject: {fileID: 98677215}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7842383, z: 1}
+  m_LocalScale: {x: 1, y: 0.46475446, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 105537471}
@@ -40491,7 +40491,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 10de6384af0c3b54e8166f9c3f936e88, type: 2}
+  - {fileID: 2100000, guid: a7a0a4887cf6ab445b9dd5a922de2d33, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -41741,7 +41741,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: SYNTHWAVE NITRO RACER
+  m_text: 'CYBER SHADOW: RESURGENCE'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -42746,7 +42746,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.95, b: 1, a: 0.65}
+  m_Color: {r: 1, g: 0.9, b: 0.1, a: 0.65}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -44365,7 +44365,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 00:07 / 00:30
+  m_text: 00:13 / 00:30
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -52635,7 +52635,7 @@ RectTransform:
   m_GameObject: {fileID: 148864709}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60398173, z: 1}
+  m_LocalScale: {x: 1, y: 0.46232182, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 134356792}
@@ -53121,7 +53121,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.111718476}
+  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.18698105}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -53203,7 +53203,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'PERIMETER: SECURE // 04 CARRIER PATROLS ONLINE'
+  m_text: 'TOP SPEED: 485 KM/H // NITRO CAPACITY: 100% READY'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -53212,8 +53212,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294963712
-  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
+    rgba: 4279953151
+  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -53498,7 +53498,7 @@ RectTransform:
   m_GameObject: {fileID: 154484350}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5736673, z: 1}
+  m_LocalScale: {x: 1, y: 0.3805388, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 105537471}
@@ -53759,7 +53759,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 155498484}
-  m_LocalRotation: {x: 0, y: 0, z: 0.42968366, w: -0.9029795}
+  m_LocalRotation: {x: 0, y: 0, z: -0.8509938, w: 0.5251757}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -54660,7 +54660,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: HYPERSONIC ANTI-GRAV DRIFTING // 12 CYBER CIRCUITS
+  m_text: DYNAMIC HACK & SLASH // PRECISE PARRY & WEAPON UPGRADES
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -55496,7 +55496,7 @@ RectTransform:
   m_GameObject: {fileID: 166659762}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.3187947, z: 1}
+  m_LocalScale: {x: 1, y: 0.5393703, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 134356792}
@@ -67802,7 +67802,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: A.I. DEFENSE & DRONE RADAR
+  m_text: SYNTHWAVE NITRO RACER
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -69798,7 +69798,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "360\xB0 THREAT INTERCEPTION // AUTONOMOUS INTERCEPTORS"
+  m_text: HYPERSONIC ANTI-GRAV DRIFTING // 12 CYBER CIRCUITS
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -70324,7 +70324,7 @@ RectTransform:
   m_GameObject: {fileID: 193029932}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.71633655, z: 1}
+  m_LocalScale: {x: 1, y: 0.25568846, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 134356792}
@@ -70957,7 +70957,7 @@ RectTransform:
   m_GameObject: {fileID: 195447636}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5736673, z: 1}
+  m_LocalScale: {x: 1, y: 0.3805388, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1780577250}
@@ -71819,7 +71819,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u25CF FLEET SECURITY TAC-FEED"
+  m_text: "\u25CF SPEED DEMON 2077"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -71828,8 +71828,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4279953151
-  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
+    rgba: 4294963712
+  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -74638,7 +74638,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "360\xB0 THREAT INTERCEPTION // AUTONOMOUS INTERCEPTORS"
+  m_text: HYPERSONIC ANTI-GRAV DRIFTING // 12 CYBER CIRCUITS
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -74867,7 +74867,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "360\xB0 THREAT INTERCEPTION // AUTONOMOUS INTERCEPTORS"
+  m_text: HYPERSONIC ANTI-GRAV DRIFTING // 12 CYBER CIRCUITS
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -75431,7 +75431,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: HYPERSONIC ANTI-GRAV DRIFTING // 12 CYBER CIRCUITS
+  m_text: DYNAMIC HACK & SLASH // PRECISE PARRY & WEAPON UPGRADES
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -75898,7 +75898,7 @@ RectTransform:
   m_GameObject: {fileID: 216827846}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.6061647, z: 1}
+  m_LocalScale: {x: 1, y: 0.46232182, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 851931435}
@@ -78275,7 +78275,7 @@ RectTransform:
   m_GameObject: {fileID: 225025328}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60056734, z: 1}
+  m_LocalScale: {x: 1, y: 0.45266804, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 606591254}
@@ -80380,7 +80380,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u25CF FLEET SECURITY TAC-FEED"
+  m_text: "\u25CF SPEED DEMON 2077"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -80389,8 +80389,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4279953151
-  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
+    rgba: 4294963712
+  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -80693,7 +80693,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.111220606}
+  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.18698105}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -81889,7 +81889,7 @@ RectTransform:
   m_GameObject: {fileID: 243906300}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7842383, z: 1}
+  m_LocalScale: {x: 1, y: 0.46475446, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1207973315}
@@ -82169,7 +82169,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.111220606}
+  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.18698105}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -87588,7 +87588,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '[ COMM_RELAY // DEEP_SPACE // DEFENSE MATRIX NETWORK ]'
+  m_text: '[ COMM_RELAY // DEEP_SPACE // NEO-TOKYO DRIFT CORP ]'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -89883,7 +89883,7 @@ RectTransform:
   m_GameObject: {fileID: 273537122}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60398173, z: 1}
+  m_LocalScale: {x: 1, y: 0.46232182, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1248742538}
@@ -91650,7 +91650,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0.25457138
+  m_Value: 0.46199992
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -98114,7 +98114,7 @@ RectTransform:
   m_GameObject: {fileID: 291047535}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.48318478, z: 1}
+  m_LocalScale: {x: 1, y: 0.49124658, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 76209850}
@@ -98731,7 +98731,7 @@ RectTransform:
   m_GameObject: {fileID: 292475869}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7820476, z: 1}
+  m_LocalScale: {x: 1, y: 0.46475446, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 851931435}
@@ -105133,7 +105133,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 00:07 / 00:30
+  m_text: 00:13 / 00:30
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -109929,7 +109929,7 @@ RectTransform:
   m_GameObject: {fileID: 334151305}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.81390786, z: 1}
+  m_LocalScale: {x: 1, y: 0.5648443, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1066000239}
@@ -112340,7 +112340,7 @@ RectTransform:
   m_GameObject: {fileID: 340336058}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.30337986, z: 1}
+  m_LocalScale: {x: 1, y: 0.3739085, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1511783031}
@@ -112415,7 +112415,7 @@ RectTransform:
   m_GameObject: {fileID: 340559680}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.3187947, z: 1}
+  m_LocalScale: {x: 1, y: 0.5393703, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1780577250}
@@ -114294,7 +114294,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 00:07 / 00:30
+  m_text: 00:13 / 00:30
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -115931,7 +115931,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u25CF FLEET SECURITY TAC-FEED"
+  m_text: "\u25CF SPEED DEMON 2077"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -115940,8 +115940,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4279953151
-  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
+    rgba: 4294963712
+  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -116268,7 +116268,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0.25457138
+  m_Value: 0.46199992
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -117052,7 +117052,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0.25457138
+  m_Value: 0.46199992
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -118454,7 +118454,7 @@ RectTransform:
   m_GameObject: {fileID: 361703543}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60398173, z: 1}
+  m_LocalScale: {x: 1, y: 0.46232182, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1511783031}
@@ -118596,7 +118596,7 @@ RectTransform:
   m_GameObject: {fileID: 362640503}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.3187947, z: 1}
+  m_LocalScale: {x: 1, y: 0.5393703, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 105537471}
@@ -119357,7 +119357,7 @@ RectTransform:
   m_GameObject: {fileID: 366538238}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.3187947, z: 1}
+  m_LocalScale: {x: 1, y: 0.5393703, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1248742538}
@@ -120368,7 +120368,7 @@ RectTransform:
   m_GameObject: {fileID: 370807092}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.51045084, z: 1}
+  m_LocalScale: {x: 1, y: 0.3862602, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1780577250}
@@ -126786,7 +126786,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 00:07 / 00:30
+  m_text: 00:13 / 00:30
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -128518,7 +128518,7 @@ RectTransform:
   m_GameObject: {fileID: 407703026}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.30337986, z: 1}
+  m_LocalScale: {x: 1, y: 0.3739085, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 134356792}
@@ -129531,7 +129531,7 @@ RectTransform:
   m_GameObject: {fileID: 411825531}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.48318478, z: 1}
+  m_LocalScale: {x: 1, y: 0.49124658, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1248742538}
@@ -130097,7 +130097,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.95, b: 1, a: 0.65}
+  m_Color: {r: 1, g: 0.9, b: 0.1, a: 0.65}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -130544,7 +130544,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0.85387486
+  m_Value: 0.6641249
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -130668,7 +130668,7 @@ RectTransform:
   m_GameObject: {fileID: 415445360}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7739102, z: 1}
+  m_LocalScale: {x: 1, y: 0.4810074, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1121871946}
@@ -133162,7 +133162,7 @@ RectTransform:
   m_GameObject: {fileID: 427302744}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5999323, z: 1}
+  m_LocalScale: {x: 1, y: 0.45266804, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 851931435}
@@ -135149,7 +135149,7 @@ RectTransform:
   m_GameObject: {fileID: 437385983}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.3187947, z: 1}
+  m_LocalScale: {x: 1, y: 0.5393703, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 76209850}
@@ -136081,7 +136081,7 @@ RectTransform:
   m_GameObject: {fileID: 442007491}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.51045084, z: 1}
+  m_LocalScale: {x: 1, y: 0.3862602, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 423560798}
@@ -137322,7 +137322,7 @@ RectTransform:
   m_GameObject: {fileID: 444537357}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.8162047, z: 1}
+  m_LocalScale: {x: 1, y: 0.5648443, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1619156597}
@@ -137397,7 +137397,7 @@ RectTransform:
   m_GameObject: {fileID: 445123195}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.46742097, z: 1}
+  m_LocalScale: {x: 1, y: 0.36836123, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1511783031}
@@ -137835,7 +137835,7 @@ RectTransform:
   m_GameObject: {fileID: 447185266}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.48318478, z: 1}
+  m_LocalScale: {x: 1, y: 0.49124658, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1780577250}
@@ -141623,7 +141623,7 @@ RectTransform:
   m_GameObject: {fileID: 461769865}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.81390786, z: 1}
+  m_LocalScale: {x: 1, y: 0.5648443, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1207973315}
@@ -142207,7 +142207,7 @@ RectTransform:
   m_GameObject: {fileID: 463452678}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7739102, z: 1}
+  m_LocalScale: {x: 1, y: 0.4810074, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 606591254}
@@ -143415,7 +143415,7 @@ RectTransform:
   m_GameObject: {fileID: 466599906}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5131461, z: 1}
+  m_LocalScale: {x: 1, y: 0.3862602, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1619156597}
@@ -145291,7 +145291,7 @@ RectTransform:
   m_GameObject: {fileID: 474802789}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60056734, z: 1}
+  m_LocalScale: {x: 1, y: 0.45266804, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 134356792}
@@ -146019,7 +146019,7 @@ RectTransform:
   m_GameObject: {fileID: 477410004}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.71633655, z: 1}
+  m_LocalScale: {x: 1, y: 0.25568846, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 105537471}
@@ -146846,7 +146846,7 @@ RectTransform:
   m_GameObject: {fileID: 479576391}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.30337986, z: 1}
+  m_LocalScale: {x: 1, y: 0.3739085, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 606591254}
@@ -147337,7 +147337,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "360\xB0 THREAT INTERCEPTION // AUTONOMOUS INTERCEPTORS"
+  m_text: HYPERSONIC ANTI-GRAV DRIFTING // 12 CYBER CIRCUITS
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -149735,7 +149735,7 @@ RectTransform:
   m_GameObject: {fileID: 493476614}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7739102, z: 1}
+  m_LocalScale: {x: 1, y: 0.4810074, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1207973315}
@@ -156990,7 +156990,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.111220606}
+  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.18698105}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -163262,7 +163262,7 @@ RectTransform:
   m_GameObject: {fileID: 511355329}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.48318478, z: 1}
+  m_LocalScale: {x: 1, y: 0.49124658, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1511783031}
@@ -163734,7 +163734,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 00:07 / 00:30
+  m_text: 00:13 / 00:30
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -166953,7 +166953,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.95, b: 1, a: 0.65}
+  m_Color: {r: 1, g: 0.9, b: 0.1, a: 0.65}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -167699,7 +167699,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: A.I. DEFENSE & DRONE RADAR
+  m_text: SYNTHWAVE NITRO RACER
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -169115,7 +169115,7 @@ RectTransform:
   m_GameObject: {fileID: 532080658}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60398173, z: 1}
+  m_LocalScale: {x: 1, y: 0.46232182, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 76209850}
@@ -169985,7 +169985,7 @@ RectTransform:
   m_GameObject: {fileID: 535912121}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5736673, z: 1}
+  m_LocalScale: {x: 1, y: 0.3805388, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 423560798}
@@ -171452,7 +171452,7 @@ RectTransform:
   m_GameObject: {fileID: 542918674}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5736673, z: 1}
+  m_LocalScale: {x: 1, y: 0.3805388, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 134356792}
@@ -172492,7 +172492,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "360\xB0 THREAT INTERCEPTION // AUTONOMOUS INTERCEPTORS"
+  m_text: HYPERSONIC ANTI-GRAV DRIFTING // 12 CYBER CIRCUITS
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -174758,7 +174758,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 10de6384af0c3b54e8166f9c3f936e88, type: 2}
+  - {fileID: 2100000, guid: a7a0a4887cf6ab445b9dd5a922de2d33, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -176345,7 +176345,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 562198043}
-  m_LocalRotation: {x: 0, y: 0, z: 0.42968366, w: -0.9029795}
+  m_LocalRotation: {x: 0, y: 0, z: -0.8509938, w: 0.5251757}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -176954,7 +176954,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '[ MEGA_SCREEN // NEO_CYBER_REEL // NEO-TOKYO DRIFT CORP ]'
+  m_text: '[ MEGA_SCREEN // NEO_CYBER_REEL // CYBER SHADOW STUDIOS ]'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -179259,7 +179259,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0.25457138
+  m_Value: 0.46199992
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -187100,7 +187100,7 @@ RectTransform:
   m_GameObject: {fileID: 585938140}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60056734, z: 1}
+  m_LocalScale: {x: 1, y: 0.45266804, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1318209612}
@@ -187387,7 +187387,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'TOP SPEED: 485 KM/H // NITRO CAPACITY: 100% READY'
+  m_text: 'COMBAT INTENSITY: EXTREME // COMBO x64 MULTIPLIER'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -187396,8 +187396,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4279953151
-  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
+    rgba: 4289079039
+  m_fontColor: {r: 1, g: 0.15, b: 0.65, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -188128,7 +188128,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "360\xB0 THREAT INTERCEPTION // AUTONOMOUS INTERCEPTORS"
+  m_text: HYPERSONIC ANTI-GRAV DRIFTING // 12 CYBER CIRCUITS
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -189879,7 +189879,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.95, b: 1, a: 0.65}
+  m_Color: {r: 1, g: 0.9, b: 0.1, a: 0.65}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -199375,7 +199375,7 @@ RectTransform:
   m_GameObject: {fileID: 622511020}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5736673, z: 1}
+  m_LocalScale: {x: 1, y: 0.3805388, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 76209850}
@@ -202152,7 +202152,7 @@ RectTransform:
   m_GameObject: {fileID: 635621719}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60398173, z: 1}
+  m_LocalScale: {x: 1, y: 0.46232182, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1207973315}
@@ -204181,7 +204181,7 @@ RectTransform:
   m_GameObject: {fileID: 644748855}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60398173, z: 1}
+  m_LocalScale: {x: 1, y: 0.46232182, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 423560798}
@@ -211920,7 +211920,7 @@ RectTransform:
   m_GameObject: {fileID: 656542871}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.3187947, z: 1}
+  m_LocalScale: {x: 1, y: 0.5393703, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 423560798}
@@ -212471,7 +212471,7 @@ RectTransform:
   m_GameObject: {fileID: 661236236}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.46742097, z: 1}
+  m_LocalScale: {x: 1, y: 0.36836123, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1066000239}
@@ -214792,7 +214792,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.95, b: 1, a: 0.65}
+  m_Color: {r: 1, g: 0.9, b: 0.1, a: 0.65}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -215666,7 +215666,7 @@ RectTransform:
   m_GameObject: {fileID: 673240385}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.46742097, z: 1}
+  m_LocalScale: {x: 1, y: 0.36836123, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1318209612}
@@ -216183,7 +216183,7 @@ RectTransform:
   m_GameObject: {fileID: 674914563}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.81390786, z: 1}
+  m_LocalScale: {x: 1, y: 0.5648443, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 606591254}
@@ -216444,7 +216444,7 @@ RectTransform:
   m_GameObject: {fileID: 676171037}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.3187947, z: 1}
+  m_LocalScale: {x: 1, y: 0.5393703, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1511783031}
@@ -222125,7 +222125,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.111220606}
+  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.18698105}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -224187,7 +224187,7 @@ RectTransform:
   m_GameObject: {fileID: 689618047}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.77581537, z: 1}
+  m_LocalScale: {x: 1, y: 0.4810074, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1619156597}
@@ -224352,7 +224352,7 @@ RectTransform:
   m_GameObject: {fileID: 691195851}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.46742097, z: 1}
+  m_LocalScale: {x: 1, y: 0.36836123, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 606591254}
@@ -224899,7 +224899,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.95, b: 1, a: 0.65}
+  m_Color: {r: 1, g: 0.9, b: 0.1, a: 0.65}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -225376,7 +225376,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.95, b: 1, a: 0.65}
+  m_Color: {r: 1, g: 0.9, b: 0.1, a: 0.65}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -225426,7 +225426,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 695576908}
-  m_LocalRotation: {x: 0, y: 0, z: 0.42968366, w: -0.9029795}
+  m_LocalRotation: {x: 0, y: 0, z: -0.8509938, w: 0.5251757}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -226968,7 +226968,7 @@ RectTransform:
   m_GameObject: {fileID: 703666830}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7739102, z: 1}
+  m_LocalScale: {x: 1, y: 0.4810074, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 134356792}
@@ -228157,7 +228157,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u25CF FLEET SECURITY TAC-FEED"
+  m_text: "\u25CF SPEED DEMON 2077"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -228166,8 +228166,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4279953151
-  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
+    rgba: 4294963712
+  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -230745,7 +230745,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "360\xB0 THREAT INTERCEPTION // AUTONOMOUS INTERCEPTORS"
+  m_text: HYPERSONIC ANTI-GRAV DRIFTING // 12 CYBER CIRCUITS
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -231131,7 +231131,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 719638029}
-  m_LocalRotation: {x: 0, y: 0, z: 0.42968366, w: -0.9029795}
+  m_LocalRotation: {x: 0, y: 0, z: -0.8509938, w: 0.5251757}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -235075,7 +235075,7 @@ RectTransform:
   m_GameObject: {fileID: 738313233}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.8162047, z: 1}
+  m_LocalScale: {x: 1, y: 0.5648443, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 851931435}
@@ -236026,7 +236026,7 @@ RectTransform:
   m_GameObject: {fileID: 742099079}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.48318478, z: 1}
+  m_LocalScale: {x: 1, y: 0.49124658, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1207973315}
@@ -242286,7 +242286,7 @@ RectTransform:
   m_GameObject: {fileID: 746488694}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.31940824, z: 1}
+  m_LocalScale: {x: 1, y: 0.5393703, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1619156597}
@@ -243452,7 +243452,7 @@ RectTransform:
   m_GameObject: {fileID: 754783357}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.48318478, z: 1}
+  m_LocalScale: {x: 1, y: 0.49124658, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1066000239}
@@ -245662,7 +245662,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'PERIMETER: SECURE // 04 CARRIER PATROLS ONLINE'
+  m_text: 'TOP SPEED: 485 KM/H // NITRO CAPACITY: 100% READY'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -245671,8 +245671,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294963712
-  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
+    rgba: 4279953151
+  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -246097,7 +246097,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 00:07 / 00:30
+  m_text: 00:13 / 00:30
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -248204,7 +248204,7 @@ RectTransform:
   m_GameObject: {fileID: 777720533}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5736673, z: 1}
+  m_LocalScale: {x: 1, y: 0.3805388, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1121871946}
@@ -249732,7 +249732,7 @@ RectTransform:
   m_GameObject: {fileID: 785310119}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.48318478, z: 1}
+  m_LocalScale: {x: 1, y: 0.49124658, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 423560798}
@@ -250774,7 +250774,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 00:25 / 00:30
+  m_text: 00:19 / 00:30
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -251190,7 +251190,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 10de6384af0c3b54e8166f9c3f936e88, type: 2}
+  - {fileID: 2100000, guid: a7a0a4887cf6ab445b9dd5a922de2d33, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -252942,7 +252942,7 @@ RectTransform:
   m_GameObject: {fileID: 795748220}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7842383, z: 1}
+  m_LocalScale: {x: 1, y: 0.46475446, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1248742538}
@@ -253139,7 +253139,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '[ CRYSTAL_REFINERY // ENERGY // DEFENSE MATRIX NETWORK ]'
+  m_text: '[ CRYSTAL_REFINERY // ENERGY // NEO-TOKYO DRIFT CORP ]'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -253326,7 +253326,7 @@ RectTransform:
   m_GameObject: {fileID: 797195565}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.51045084, z: 1}
+  m_LocalScale: {x: 1, y: 0.3862602, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1121871946}
@@ -254846,7 +254846,7 @@ RectTransform:
   m_GameObject: {fileID: 803678770}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.81390786, z: 1}
+  m_LocalScale: {x: 1, y: 0.5648443, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 423560798}
@@ -261813,7 +261813,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u25CF FLEET SECURITY TAC-FEED"
+  m_text: "\u25CF SPEED DEMON 2077"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -261822,8 +261822,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4279953151
-  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
+    rgba: 4294963712
+  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -266193,7 +266193,7 @@ RectTransform:
   m_GameObject: {fileID: 830608635}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60056734, z: 1}
+  m_LocalScale: {x: 1, y: 0.45266804, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 423560798}
@@ -266420,7 +266420,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.111220606}
+  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.18698105}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -266530,7 +266530,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.111220606}
+  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.18698105}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -272172,7 +272172,7 @@ RectTransform:
   m_GameObject: {fileID: 834242018}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.46742097, z: 1}
+  m_LocalScale: {x: 1, y: 0.36836123, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 105537471}
@@ -272342,7 +272342,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0.25457138
+  m_Value: 0.46199992
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -273301,7 +273301,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "360\xB0 THREAT INTERCEPTION // AUTONOMOUS INTERCEPTORS"
+  m_text: HYPERSONIC ANTI-GRAV DRIFTING // 12 CYBER CIRCUITS
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -274136,7 +274136,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u25CF FLEET SECURITY TAC-FEED"
+  m_text: "\u25CF SPEED DEMON 2077"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -274145,8 +274145,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4279953151
-  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
+    rgba: 4294963712
+  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -279482,7 +279482,7 @@ RectTransform:
   m_GameObject: {fileID: 841247739}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.30337986, z: 1}
+  m_LocalScale: {x: 1, y: 0.3739085, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1248742538}
@@ -279762,7 +279762,7 @@ RectTransform:
   m_GameObject: {fileID: 842461035}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7820476, z: 1}
+  m_LocalScale: {x: 1, y: 0.46475446, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1619156597}
@@ -285182,7 +285182,7 @@ RectTransform:
   m_GameObject: {fileID: 846053786}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60056734, z: 1}
+  m_LocalScale: {x: 1, y: 0.45266804, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1780577250}
@@ -295737,7 +295737,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'PERIMETER: SECURE // 04 CARRIER PATROLS ONLINE'
+  m_text: 'TOP SPEED: 485 KM/H // NITRO CAPACITY: 100% READY'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -295746,8 +295746,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294963712
-  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
+    rgba: 4279953151
+  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -303145,7 +303145,7 @@ RectTransform:
   m_GameObject: {fileID: 905724032}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.81390786, z: 1}
+  m_LocalScale: {x: 1, y: 0.5648443, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 76209850}
@@ -303963,7 +303963,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'PERIMETER: SECURE // 04 CARRIER PATROLS ONLINE'
+  m_text: 'TOP SPEED: 485 KM/H // NITRO CAPACITY: 100% READY'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -303972,8 +303972,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294963712
-  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
+    rgba: 4279953151
+  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -314427,7 +314427,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '[ COMM_RELAY // DEEP_SPACE // DEFENSE MATRIX NETWORK ]'
+  m_text: '[ COMM_RELAY // DEEP_SPACE // NEO-TOKYO DRIFT CORP ]'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -314933,7 +314933,7 @@ RectTransform:
   m_GameObject: {fileID: 936417482}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5736673, z: 1}
+  m_LocalScale: {x: 1, y: 0.3805388, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 606591254}
@@ -316477,7 +316477,7 @@ RectTransform:
   m_GameObject: {fileID: 943660854}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.4805295, z: 1}
+  m_LocalScale: {x: 1, y: 0.49124658, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1619156597}
@@ -317065,7 +317065,7 @@ RectTransform:
   m_GameObject: {fileID: 945123385}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.30337986, z: 1}
+  m_LocalScale: {x: 1, y: 0.3739085, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1780577250}
@@ -318053,7 +318053,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: A.I. DEFENSE & DRONE RADAR
+  m_text: SYNTHWAVE NITRO RACER
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -318393,7 +318393,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'PERIMETER: SECURE // 04 CARRIER PATROLS ONLINE'
+  m_text: 'TOP SPEED: 485 KM/H // NITRO CAPACITY: 100% READY'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -318402,8 +318402,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294963712
-  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
+    rgba: 4279953151
+  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -319679,7 +319679,7 @@ RectTransform:
   m_GameObject: {fileID: 959865935}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60398173, z: 1}
+  m_LocalScale: {x: 1, y: 0.46232182, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 105537471}
@@ -326501,7 +326501,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u25CF FLEET SECURITY TAC-FEED"
+  m_text: "\u25CF SPEED DEMON 2077"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -326510,8 +326510,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4279953151
-  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
+    rgba: 4294963712
+  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -327216,7 +327216,7 @@ RectTransform:
   m_GameObject: {fileID: 989248993}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7739102, z: 1}
+  m_LocalScale: {x: 1, y: 0.4810074, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 423560798}
@@ -329992,7 +329992,7 @@ RectTransform:
   m_GameObject: {fileID: 997942634}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.31940824, z: 1}
+  m_LocalScale: {x: 1, y: 0.5393703, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 851931435}
@@ -330128,7 +330128,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'PERIMETER: SECURE // 04 CARRIER PATROLS ONLINE'
+  m_text: 'TOP SPEED: 485 KM/H // NITRO CAPACITY: 100% READY'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -330137,8 +330137,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294963712
-  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
+    rgba: 4279953151
+  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -332925,7 +332925,7 @@ RectTransform:
   m_GameObject: {fileID: 1006306639}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.30464882, z: 1}
+  m_LocalScale: {x: 1, y: 0.3739085, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1619156597}
@@ -341679,7 +341679,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0.25457138
+  m_Value: 0.46199992
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -341942,7 +341942,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u25CF FLEET SECURITY TAC-FEED"
+  m_text: "\u25CF SPEED DEMON 2077"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -341951,8 +341951,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4279953151
-  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
+    rgba: 4294963712
+  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -344158,7 +344158,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.9, b: 0.1, a: 0.65}
+  m_Color: {r: 1, g: 0.15, b: 0.65, a: 0.65}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -345078,7 +345078,7 @@ RectTransform:
   m_GameObject: {fileID: 1036559880}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7842383, z: 1}
+  m_LocalScale: {x: 1, y: 0.46475446, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 134356792}
@@ -345270,7 +345270,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.9, b: 0.1, a: 0.65}
+  m_Color: {r: 1, g: 0.15, b: 0.65, a: 0.65}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -346396,7 +346396,7 @@ RectTransform:
   m_GameObject: {fileID: 1041542815}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7842383, z: 1}
+  m_LocalScale: {x: 1, y: 0.46475446, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 423560798}
@@ -354232,7 +354232,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0.25457138
+  m_Value: 0.46199992
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -356267,7 +356267,7 @@ RectTransform:
   m_GameObject: {fileID: 1057998419}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.71633655, z: 1}
+  m_LocalScale: {x: 1, y: 0.25568846, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1121871946}
@@ -358738,7 +358738,7 @@ RectTransform:
   m_GameObject: {fileID: 1065823682}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5736673, z: 1}
+  m_LocalScale: {x: 1, y: 0.3805388, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1207973315}
@@ -359180,7 +359180,7 @@ RectTransform:
   m_GameObject: {fileID: 1067527281}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60398173, z: 1}
+  m_LocalScale: {x: 1, y: 0.46232182, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1066000239}
@@ -362506,7 +362506,7 @@ RectTransform:
   m_GameObject: {fileID: 1079127243}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.30337986, z: 1}
+  m_LocalScale: {x: 1, y: 0.3739085, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1318209612}
@@ -363964,7 +363964,7 @@ RectTransform:
   m_GameObject: {fileID: 1086683971}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.51045084, z: 1}
+  m_LocalScale: {x: 1, y: 0.3862602, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 76209850}
@@ -364547,7 +364547,7 @@ RectTransform:
   m_GameObject: {fileID: 1089500510}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.46969667, z: 1}
+  m_LocalScale: {x: 1, y: 0.36836123, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 851931435}
@@ -365019,7 +365019,7 @@ RectTransform:
   m_GameObject: {fileID: 1091446299}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.51045084, z: 1}
+  m_LocalScale: {x: 1, y: 0.3862602, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1207973315}
@@ -367509,7 +367509,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "360\xB0 THREAT INTERCEPTION // AUTONOMOUS INTERCEPTORS"
+  m_text: HYPERSONIC ANTI-GRAV DRIFTING // 12 CYBER CIRCUITS
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -367782,7 +367782,7 @@ RectTransform:
   m_GameObject: {fileID: 1105120060}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7739102, z: 1}
+  m_LocalScale: {x: 1, y: 0.4810074, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1780577250}
@@ -369513,7 +369513,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.111718476}
+  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.18698105}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -375321,7 +375321,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1139102737}
-  m_LocalRotation: {x: 0, y: 0, z: 0.42968366, w: -0.9029795}
+  m_LocalRotation: {x: 0, y: 0, z: -0.8509938, w: 0.5251757}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -375536,7 +375536,7 @@ RectTransform:
   m_GameObject: {fileID: 1139409317}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.3187947, z: 1}
+  m_LocalScale: {x: 1, y: 0.5393703, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1066000239}
@@ -377479,7 +377479,7 @@ RectTransform:
   m_GameObject: {fileID: 1148954855}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7842383, z: 1}
+  m_LocalScale: {x: 1, y: 0.46475446, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1511783031}
@@ -377764,7 +377764,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: A.I. DEFENSE & DRONE RADAR
+  m_text: SYNTHWAVE NITRO RACER
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -385779,7 +385779,7 @@ RectTransform:
   m_GameObject: {fileID: 1164642395}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5736673, z: 1}
+  m_LocalScale: {x: 1, y: 0.3805388, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1248742538}
@@ -387908,7 +387908,7 @@ RectTransform:
   m_GameObject: {fileID: 1174987312}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7739102, z: 1}
+  m_LocalScale: {x: 1, y: 0.4810074, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 76209850}
@@ -388211,7 +388211,7 @@ RectTransform:
   m_GameObject: {fileID: 1177485182}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7842383, z: 1}
+  m_LocalScale: {x: 1, y: 0.46475446, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1066000239}
@@ -388829,7 +388829,7 @@ RectTransform:
   m_GameObject: {fileID: 1180506000}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60398173, z: 1}
+  m_LocalScale: {x: 1, y: 0.46232182, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1780577250}
@@ -389211,7 +389211,7 @@ RectTransform:
   m_GameObject: {fileID: 1181776834}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7739102, z: 1}
+  m_LocalScale: {x: 1, y: 0.4810074, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1511783031}
@@ -399354,7 +399354,7 @@ RectTransform:
   m_GameObject: {fileID: 1185716117}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.46742097, z: 1}
+  m_LocalScale: {x: 1, y: 0.36836123, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1207973315}
@@ -399580,7 +399580,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "360\xB0 THREAT INTERCEPTION // AUTONOMOUS INTERCEPTORS"
+  m_text: HYPERSONIC ANTI-GRAV DRIFTING // 12 CYBER CIRCUITS
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -405141,7 +405141,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.95, b: 1, a: 0.65}
+  m_Color: {r: 1, g: 0.9, b: 0.1, a: 0.65}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -408960,7 +408960,7 @@ RectTransform:
   m_GameObject: {fileID: 1223374522}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5736673, z: 1}
+  m_LocalScale: {x: 1, y: 0.3805388, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1511783031}
@@ -410109,7 +410109,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1226808538}
-  m_LocalRotation: {x: 0, y: 0, z: 0.42968366, w: -0.9029795}
+  m_LocalRotation: {x: 0, y: 0, z: -0.8509938, w: 0.5251757}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -410277,7 +410277,7 @@ RectTransform:
   m_GameObject: {fileID: 1227155138}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.30337986, z: 1}
+  m_LocalScale: {x: 1, y: 0.3739085, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1121871946}
@@ -414577,7 +414577,7 @@ RectTransform:
   m_GameObject: {fileID: 1245683663}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60398173, z: 1}
+  m_LocalScale: {x: 1, y: 0.46232182, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1318209612}
@@ -415048,7 +415048,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'TOP SPEED: 485 KM/H // NITRO CAPACITY: 100% READY'
+  m_text: 'COMBAT INTENSITY: EXTREME // COMBO x64 MULTIPLIER'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -415057,8 +415057,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4279953151
-  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
+    rgba: 4289079039
+  m_fontColor: {r: 1, g: 0.15, b: 0.65, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -416098,7 +416098,7 @@ RectTransform:
   m_GameObject: {fileID: 1252525422}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.46969667, z: 1}
+  m_LocalScale: {x: 1, y: 0.36836123, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1619156597}
@@ -430467,7 +430467,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 00:07 / 00:30
+  m_text: 00:13 / 00:30
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -432652,7 +432652,7 @@ RectTransform:
   m_GameObject: {fileID: 1280382928}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.30337986, z: 1}
+  m_LocalScale: {x: 1, y: 0.3739085, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 423560798}
@@ -432727,7 +432727,7 @@ RectTransform:
   m_GameObject: {fileID: 1280588565}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.51045084, z: 1}
+  m_LocalScale: {x: 1, y: 0.3862602, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1248742538}
@@ -438670,7 +438670,7 @@ RectTransform:
   m_GameObject: {fileID: 1285956488}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7842383, z: 1}
+  m_LocalScale: {x: 1, y: 0.46475446, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 76209850}
@@ -441119,7 +441119,7 @@ RectTransform:
   m_GameObject: {fileID: 1295929725}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60056734, z: 1}
+  m_LocalScale: {x: 1, y: 0.45266804, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 76209850}
@@ -453837,7 +453837,7 @@ RectTransform:
   m_GameObject: {fileID: 1320377222}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5999323, z: 1}
+  m_LocalScale: {x: 1, y: 0.45266804, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1619156597}
@@ -455125,7 +455125,7 @@ RectTransform:
   m_GameObject: {fileID: 1327608140}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.81390786, z: 1}
+  m_LocalScale: {x: 1, y: 0.5648443, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 105537471}
@@ -457255,7 +457255,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0.25457138
+  m_Value: 0.46199992
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -457805,7 +457805,7 @@ RectTransform:
   m_GameObject: {fileID: 1337179620}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.71633655, z: 1}
+  m_LocalScale: {x: 1, y: 0.25568846, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 606591254}
@@ -463661,7 +463661,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '[ CRYSTAL_REFINERY // ENERGY // DEFENSE MATRIX NETWORK ]'
+  m_text: '[ CRYSTAL_REFINERY // ENERGY // NEO-TOKYO DRIFT CORP ]'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -465780,7 +465780,7 @@ RectTransform:
   m_GameObject: {fileID: 1367228287}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.71633655, z: 1}
+  m_LocalScale: {x: 1, y: 0.25568846, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1318209612}
@@ -466476,7 +466476,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.111220606}
+  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.18698105}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -468012,7 +468012,7 @@ RectTransform:
   m_GameObject: {fileID: 1377415046}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.46742097, z: 1}
+  m_LocalScale: {x: 1, y: 0.36836123, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1780577250}
@@ -469017,7 +469017,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '[ COMM_RELAY // DEEP_SPACE // DEFENSE MATRIX NETWORK ]'
+  m_text: '[ COMM_RELAY // DEEP_SPACE // NEO-TOKYO DRIFT CORP ]'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -471910,7 +471910,7 @@ RectTransform:
   m_GameObject: {fileID: 1391922731}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.4805295, z: 1}
+  m_LocalScale: {x: 1, y: 0.49124658, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 851931435}
@@ -473404,7 +473404,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u25CF SPEED DEMON 2077"
+  m_text: "\u25CF ACTION RPG TRAILER"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -473413,8 +473413,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294963712
-  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
+    rgba: 4280690431
+  m_fontColor: {r: 1, g: 0.15, b: 0.15, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -475742,7 +475742,7 @@ RectTransform:
   m_GameObject: {fileID: 1412665125}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.48318478, z: 1}
+  m_LocalScale: {x: 1, y: 0.49124658, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 606591254}
@@ -476418,7 +476418,7 @@ RectTransform:
   m_GameObject: {fileID: 1414955747}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60056734, z: 1}
+  m_LocalScale: {x: 1, y: 0.45266804, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1121871946}
@@ -476849,7 +476849,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: A.I. DEFENSE & DRONE RADAR
+  m_text: SYNTHWAVE NITRO RACER
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -482585,7 +482585,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0.25457138
+  m_Value: 0.46199992
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -486365,7 +486365,7 @@ RectTransform:
   m_GameObject: {fileID: 1436508584}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7842383, z: 1}
+  m_LocalScale: {x: 1, y: 0.46475446, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1121871946}
@@ -489001,7 +489001,7 @@ RectTransform:
   m_GameObject: {fileID: 1451249285}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.81390786, z: 1}
+  m_LocalScale: {x: 1, y: 0.5648443, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1318209612}
@@ -495695,7 +495695,7 @@ RectTransform:
   m_GameObject: {fileID: 1456644526}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7739102, z: 1}
+  m_LocalScale: {x: 1, y: 0.4810074, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1066000239}
@@ -496352,7 +496352,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u25CF FLEET SECURITY TAC-FEED"
+  m_text: "\u25CF SPEED DEMON 2077"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -496361,8 +496361,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4279953151
-  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
+    rgba: 4294963712
+  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -497277,7 +497277,7 @@ Transform:
   m_GameObject: {fileID: 1463052818}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.386, y: 0.0057, z: 0}
+  m_LocalPosition: {x: 1.2625, y: 0.0057, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 0.6}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -497329,7 +497329,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 10de6384af0c3b54e8166f9c3f936e88, type: 2}
+  - {fileID: 2100000, guid: a7a0a4887cf6ab445b9dd5a922de2d33, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -497756,7 +497756,7 @@ RectTransform:
   m_GameObject: {fileID: 1463802233}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.81390786, z: 1}
+  m_LocalScale: {x: 1, y: 0.5648443, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1511783031}
@@ -501164,7 +501164,7 @@ RectTransform:
   m_GameObject: {fileID: 1475611737}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60056734, z: 1}
+  m_LocalScale: {x: 1, y: 0.45266804, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 105537471}
@@ -502773,7 +502773,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: A.I. DEFENSE & DRONE RADAR
+  m_text: SYNTHWAVE NITRO RACER
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -502961,7 +502961,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'PERIMETER: SECURE // 04 CARRIER PATROLS ONLINE'
+  m_text: 'TOP SPEED: 485 KM/H // NITRO CAPACITY: 100% READY'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -502970,8 +502970,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294963712
-  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
+    rgba: 4279953151
+  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -503190,7 +503190,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "360\xB0 THREAT INTERCEPTION // AUTONOMOUS INTERCEPTORS"
+  m_text: HYPERSONIC ANTI-GRAV DRIFTING // 12 CYBER CIRCUITS
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -509847,7 +509847,7 @@ RectTransform:
   m_GameObject: {fileID: 1494143124}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.48318478, z: 1}
+  m_LocalScale: {x: 1, y: 0.49124658, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1318209612}
@@ -509989,7 +509989,7 @@ RectTransform:
   m_GameObject: {fileID: 1495775260}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.51045084, z: 1}
+  m_LocalScale: {x: 1, y: 0.3862602, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1066000239}
@@ -512281,7 +512281,7 @@ RectTransform:
   m_GameObject: {fileID: 1503895775}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.46742097, z: 1}
+  m_LocalScale: {x: 1, y: 0.36836123, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 134356792}
@@ -513183,7 +513183,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.111220606}
+  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.18698105}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -515339,7 +515339,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '[ CRYSTAL_REFINERY // ENERGY // DEFENSE MATRIX NETWORK ]'
+  m_text: '[ CRYSTAL_REFINERY // ENERGY // NEO-TOKYO DRIFT CORP ]'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -526976,7 +526976,7 @@ RectTransform:
   m_GameObject: {fileID: 1543270115}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.71633655, z: 1}
+  m_LocalScale: {x: 1, y: 0.25568846, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1248742538}
@@ -528862,7 +528862,7 @@ RectTransform:
   m_GameObject: {fileID: 1553126075}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.71633655, z: 1}
+  m_LocalScale: {x: 1, y: 0.25568846, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1066000239}
@@ -535923,7 +535923,7 @@ RectTransform:
   m_GameObject: {fileID: 1562034273}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.48318478, z: 1}
+  m_LocalScale: {x: 1, y: 0.49124658, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1121871946}
@@ -537318,7 +537318,7 @@ RectTransform:
   m_GameObject: {fileID: 1567356860}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60056734, z: 1}
+  m_LocalScale: {x: 1, y: 0.45266804, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1207973315}
@@ -538078,7 +538078,7 @@ RectTransform:
   m_GameObject: {fileID: 1569777731}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.71633655, z: 1}
+  m_LocalScale: {x: 1, y: 0.25568846, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1207973315}
@@ -538151,7 +538151,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1569938060}
-  m_LocalRotation: {x: 0, y: 0, z: 0.42968366, w: -0.9029795}
+  m_LocalRotation: {x: 0, y: 0, z: -0.8509938, w: 0.5251757}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -543200,7 +543200,7 @@ RectTransform:
   m_GameObject: {fileID: 1594720208}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60056734, z: 1}
+  m_LocalScale: {x: 1, y: 0.45266804, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1248742538}
@@ -543479,7 +543479,7 @@ RectTransform:
   m_GameObject: {fileID: 1595924843}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.6061647, z: 1}
+  m_LocalScale: {x: 1, y: 0.46232182, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1619156597}
@@ -555038,7 +555038,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '[ CRYSTAL_REFINERY // ENERGY // DEFENSE MATRIX NETWORK ]'
+  m_text: '[ CRYSTAL_REFINERY // ENERGY // NEO-TOKYO DRIFT CORP ]'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -555514,7 +555514,7 @@ RectTransform:
   m_GameObject: {fileID: 1605717812}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.71633655, z: 1}
+  m_LocalScale: {x: 1, y: 0.25568846, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 76209850}
@@ -571339,7 +571339,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.95, b: 1, a: 0.65}
+  m_Color: {r: 1, g: 0.9, b: 0.1, a: 0.65}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -573376,7 +573376,7 @@ RectTransform:
   m_GameObject: {fileID: 1637936351}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60398173, z: 1}
+  m_LocalScale: {x: 1, y: 0.46232182, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1121871946}
@@ -575791,7 +575791,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.95, b: 1, a: 0.65}
+  m_Color: {r: 1, g: 0.9, b: 0.1, a: 0.65}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -576044,7 +576044,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 00:07 / 00:30
+  m_text: 00:13 / 00:30
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -589839,7 +589839,7 @@ RectTransform:
   m_GameObject: {fileID: 1695641560}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.71633655, z: 1}
+  m_LocalScale: {x: 1, y: 0.25568846, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1780577250}
@@ -590883,7 +590883,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1698762987}
-  m_LocalRotation: {x: 0, y: 0, z: 0.42968366, w: -0.9029795}
+  m_LocalRotation: {x: 0, y: 0, z: -0.8509938, w: 0.5251757}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -591624,7 +591624,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1700858568}
-  m_LocalRotation: {x: 0, y: 0, z: 0.42968366, w: -0.9029795}
+  m_LocalRotation: {x: 0, y: 0, z: -0.8509938, w: 0.5251757}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -591811,7 +591811,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'PERIMETER: SECURE // 04 CARRIER PATROLS ONLINE'
+  m_text: 'TOP SPEED: 485 KM/H // NITRO CAPACITY: 100% READY'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -591820,8 +591820,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294963712
-  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
+    rgba: 4279953151
+  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -595632,7 +595632,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: A.I. DEFENSE & DRONE RADAR
+  m_text: SYNTHWAVE NITRO RACER
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -599024,7 +599024,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.111220606}
+  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.18698105}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -599297,7 +599297,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: A.I. DEFENSE & DRONE RADAR
+  m_text: SYNTHWAVE NITRO RACER
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -604165,7 +604165,7 @@ RectTransform:
   m_GameObject: {fileID: 1755052090}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.30337986, z: 1}
+  m_LocalScale: {x: 1, y: 0.3739085, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 76209850}
@@ -604296,7 +604296,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.111220606}
+  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.18698105}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -604643,7 +604643,7 @@ RectTransform:
   m_GameObject: {fileID: 1756526658}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5131461, z: 1}
+  m_LocalScale: {x: 1, y: 0.3862602, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 851931435}
@@ -606247,7 +606247,7 @@ RectTransform:
   m_GameObject: {fileID: 1767057421}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7739102, z: 1}
+  m_LocalScale: {x: 1, y: 0.4810074, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1248742538}
@@ -607534,7 +607534,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1770496328}
-  m_LocalRotation: {x: 0, y: 0, z: 0.42968366, w: -0.9029795}
+  m_LocalRotation: {x: 0, y: 0, z: -0.8509938, w: 0.5251757}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -607642,7 +607642,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u25CF FLEET SECURITY TAC-FEED"
+  m_text: "\u25CF SPEED DEMON 2077"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -607651,8 +607651,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4279953151
-  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
+    rgba: 4294963712
+  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -613368,7 +613368,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 00:25 / 00:30
+  m_text: 00:19 / 00:30
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -614234,7 +614234,7 @@ RectTransform:
   m_GameObject: {fileID: 1796698472}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.51045084, z: 1}
+  m_LocalScale: {x: 1, y: 0.3862602, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 134356792}
@@ -614429,7 +614429,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'PERIMETER: SECURE // 04 CARRIER PATROLS ONLINE'
+  m_text: 'TOP SPEED: 485 KM/H // NITRO CAPACITY: 100% READY'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -614438,8 +614438,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294963712
-  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
+    rgba: 4279953151
+  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -614840,7 +614840,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1797632950}
-  m_LocalRotation: {x: 0, y: 0, z: 0.42968366, w: -0.9029795}
+  m_LocalRotation: {x: 0, y: 0, z: -0.8509938, w: 0.5251757}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -615125,7 +615125,7 @@ RectTransform:
   m_GameObject: {fileID: 1798292257}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.81390786, z: 1}
+  m_LocalScale: {x: 1, y: 0.5648443, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 134356792}
@@ -615537,7 +615537,7 @@ RectTransform:
   m_GameObject: {fileID: 1799375121}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7842383, z: 1}
+  m_LocalScale: {x: 1, y: 0.46475446, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 606591254}
@@ -615612,7 +615612,7 @@ RectTransform:
   m_GameObject: {fileID: 1800512211}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.60398173, z: 1}
+  m_LocalScale: {x: 1, y: 0.46232182, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 606591254}
@@ -631352,7 +631352,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '[ MEGA_SCREEN // NEO_CYBER_REEL // NEO-TOKYO DRIFT CORP ]'
+  m_text: '[ MEGA_SCREEN // NEO_CYBER_REEL // CYBER SHADOW STUDIOS ]'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -638215,7 +638215,7 @@ RectTransform:
   m_GameObject: {fileID: 1842188177}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7172709, z: 1}
+  m_LocalScale: {x: 1, y: 0.25568846, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1619156597}
@@ -641864,7 +641864,7 @@ RectTransform:
   m_GameObject: {fileID: 1853381584}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.81390786, z: 1}
+  m_LocalScale: {x: 1, y: 0.5648443, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1121871946}
@@ -656420,7 +656420,7 @@ RectTransform:
   m_GameObject: {fileID: 1875353624}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7739102, z: 1}
+  m_LocalScale: {x: 1, y: 0.4810074, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 105537471}
@@ -656727,7 +656727,7 @@ RectTransform:
   m_GameObject: {fileID: 1876153139}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.30337986, z: 1}
+  m_LocalScale: {x: 1, y: 0.3739085, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1066000239}
@@ -658776,7 +658776,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1887643652}
-  m_LocalRotation: {x: 0, y: 0, z: 0.42968366, w: -0.9029795}
+  m_LocalRotation: {x: 0, y: 0, z: -0.8509938, w: 0.5251757}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -659750,7 +659750,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1893728053}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.68853045, z: -0, w: 0.7252075}
+  m_LocalRotation: {x: -0, y: 0.6935323, z: -0, w: 0.7204256}
   m_LocalPosition: {x: 0, y: -0.09, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -665951,7 +665951,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0.25457138
+  m_Value: 0.46199992
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -666616,7 +666616,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: A.I. DEFENSE & DRONE RADAR
+  m_text: SYNTHWAVE NITRO RACER
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -667307,7 +667307,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'PERIMETER: SECURE // 04 CARRIER PATROLS ONLINE'
+  m_text: 'TOP SPEED: 485 KM/H // NITRO CAPACITY: 100% READY'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -667316,8 +667316,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294963712
-  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
+    rgba: 4279953151
+  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -667790,7 +667790,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 00:07 / 00:30
+  m_text: 00:13 / 00:30
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -669347,7 +669347,7 @@ RectTransform:
   m_GameObject: {fileID: 1910868195}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.46742097, z: 1}
+  m_LocalScale: {x: 1, y: 0.36836123, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 76209850}
@@ -675612,7 +675612,7 @@ RectTransform:
   m_GameObject: {fileID: 1918183791}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.30337986, z: 1}
+  m_LocalScale: {x: 1, y: 0.3739085, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1207973315}
@@ -676585,7 +676585,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.95, b: 1, a: 0.65}
+  m_Color: {r: 1, g: 0.9, b: 0.1, a: 0.65}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -677858,7 +677858,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0.25457138
+  m_Value: 0.46199992
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -677889,7 +677889,7 @@ RectTransform:
   m_GameObject: {fileID: 1930136615}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5736673, z: 1}
+  m_LocalScale: {x: 1, y: 0.3805388, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1318209612}
@@ -679102,9 +679102,9 @@ MonoBehaviour:
   blastDoorLeft: {fileID: 1463052819}
   blastDoorRight: {fileID: 1997448348}
   blastDoorUpper: {fileID: 0}
-  doorLeftClosedPos: {x: 1.386, y: 0.0057, z: 0}
+  doorLeftClosedPos: {x: 1.2625, y: 0.0057, z: 0}
   doorLeftOpenPos: {x: 3.6, y: 0.0057, z: 0}
-  doorRightClosedPos: {x: -1.409, y: 0, z: 0}
+  doorRightClosedPos: {x: -1.5325, y: 0, z: 0}
   doorRightOpenPos: {x: -3.6, y: 0, z: 0}
   doorUpperClosedPos: {x: 0, y: 13, z: 15.9}
   doorUpperOpenPos: {x: 0, y: 17.8, z: 15.9}
@@ -679240,7 +679240,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'PERIMETER: SECURE // 04 CARRIER PATROLS ONLINE'
+  m_text: 'TOP SPEED: 485 KM/H // NITRO CAPACITY: 100% READY'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -679249,8 +679249,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294963712
-  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
+    rgba: 4279953151
+  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -685758,7 +685758,7 @@ RectTransform:
   m_GameObject: {fileID: 1942492126}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5736126, z: 1}
+  m_LocalScale: {x: 1, y: 0.3805388, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1619156597}
@@ -686533,7 +686533,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u25CF SPEED DEMON 2077"
+  m_text: "\u25CF ACTION RPG TRAILER"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -686542,8 +686542,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294963712
-  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
+    rgba: 4280690431
+  m_fontColor: {r: 1, g: 0.15, b: 0.15, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -687113,7 +687113,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '[ COMM_RELAY // DEEP_SPACE // DEFENSE MATRIX NETWORK ]'
+  m_text: '[ COMM_RELAY // DEEP_SPACE // NEO-TOKYO DRIFT CORP ]'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -687445,7 +687445,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u25CF FLEET SECURITY TAC-FEED"
+  m_text: "\u25CF SPEED DEMON 2077"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -687454,8 +687454,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4279953151
-  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
+    rgba: 4294963712
+  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -687902,7 +687902,7 @@ RectTransform:
   m_GameObject: {fileID: 1952960266}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.81390786, z: 1}
+  m_LocalScale: {x: 1, y: 0.5648443, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1248742538}
@@ -688886,7 +688886,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.111220606}
+  m_Color: {r: 0, g: 0.05, b: 0.1, a: 0.18698105}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -691184,7 +691184,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '[ COMM_RELAY // DEEP_SPACE // DEFENSE MATRIX NETWORK ]'
+  m_text: '[ COMM_RELAY // DEEP_SPACE // NEO-TOKYO DRIFT CORP ]'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -704206,7 +704206,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u25CF FLEET SECURITY TAC-FEED"
+  m_text: "\u25CF SPEED DEMON 2077"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -704215,8 +704215,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4279953151
-  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
+    rgba: 4294963712
+  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -711546,7 +711546,7 @@ RectTransform:
   m_GameObject: {fileID: 1990252702}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.3187947, z: 1}
+  m_LocalScale: {x: 1, y: 0.5393703, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 606591254}
@@ -711621,7 +711621,7 @@ RectTransform:
   m_GameObject: {fileID: 1990348709}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.3187947, z: 1}
+  m_LocalScale: {x: 1, y: 0.5393703, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1207973315}
@@ -711696,7 +711696,7 @@ RectTransform:
   m_GameObject: {fileID: 1990525673}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.51045084, z: 1}
+  m_LocalScale: {x: 1, y: 0.3862602, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1318209612}
@@ -712172,7 +712172,7 @@ RectTransform:
   m_GameObject: {fileID: 1992279644}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.46742097, z: 1}
+  m_LocalScale: {x: 1, y: 0.36836123, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1121871946}
@@ -712523,7 +712523,7 @@ RectTransform:
   m_GameObject: {fileID: 1993091302}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.3187947, z: 1}
+  m_LocalScale: {x: 1, y: 0.5393703, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1318209612}
@@ -713526,7 +713526,7 @@ RectTransform:
   m_GameObject: {fileID: 1996119893}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.51045084, z: 1}
+  m_LocalScale: {x: 1, y: 0.3862602, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 105537471}
@@ -713833,7 +713833,7 @@ Transform:
   m_GameObject: {fileID: 1997448347}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.409, y: 0, z: 0}
+  m_LocalPosition: {x: -1.5325, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 0.6}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -713885,7 +713885,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 10de6384af0c3b54e8166f9c3f936e88, type: 2}
+  - {fileID: 2100000, guid: a7a0a4887cf6ab445b9dd5a922de2d33, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -715401,7 +715401,7 @@ RectTransform:
   m_GameObject: {fileID: 2006654044}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.71633655, z: 1}
+  m_LocalScale: {x: 1, y: 0.25568846, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1511783031}
@@ -716009,7 +716009,7 @@ RectTransform:
   m_GameObject: {fileID: 2007665149}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7842383, z: 1}
+  m_LocalScale: {x: 1, y: 0.46475446, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1318209612}
@@ -717430,7 +717430,7 @@ RectTransform:
   m_GameObject: {fileID: 2015089536}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.81390786, z: 1}
+  m_LocalScale: {x: 1, y: 0.5648443, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1780577250}
@@ -718996,7 +718996,7 @@ RectTransform:
   m_GameObject: {fileID: 2020164564}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.51045084, z: 1}
+  m_LocalScale: {x: 1, y: 0.3862602, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1511783031}
@@ -724912,7 +724912,7 @@ RectTransform:
   m_GameObject: {fileID: 2022355476}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.48318478, z: 1}
+  m_LocalScale: {x: 1, y: 0.49124658, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 105537471}
@@ -725895,7 +725895,7 @@ RectTransform:
   m_GameObject: {fileID: 2025454959}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.46742097, z: 1}
+  m_LocalScale: {x: 1, y: 0.36836123, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1248742538}
@@ -726192,7 +726192,7 @@ RectTransform:
   m_GameObject: {fileID: 2027741427}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.3187947, z: 1}
+  m_LocalScale: {x: 1, y: 0.5393703, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1121871946}
@@ -727584,7 +727584,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: SYNTHWAVE NITRO RACER
+  m_text: 'CYBER SHADOW: RESURGENCE'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -727691,7 +727691,7 @@ RectTransform:
   m_GameObject: {fileID: 2032749622}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.48318478, z: 1}
+  m_LocalScale: {x: 1, y: 0.49124658, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 134356792}
@@ -735356,7 +735356,7 @@ RectTransform:
   m_GameObject: {fileID: 2042989254}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7739102, z: 1}
+  m_LocalScale: {x: 1, y: 0.4810074, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1318209612}
@@ -735497,7 +735497,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "360\xB0 THREAT INTERCEPTION // AUTONOMOUS INTERCEPTORS"
+  m_text: HYPERSONIC ANTI-GRAV DRIFTING // 12 CYBER CIRCUITS
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -737108,7 +737108,7 @@ RectTransform:
   m_GameObject: {fileID: 2050273084}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.51045084, z: 1}
+  m_LocalScale: {x: 1, y: 0.3862602, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 606591254}
@@ -737920,7 +737920,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: A.I. DEFENSE & DRONE RADAR
+  m_text: SYNTHWAVE NITRO RACER
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -740704,7 +740704,7 @@ RectTransform:
   m_GameObject: {fileID: 2062150758}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.71633655, z: 1}
+  m_LocalScale: {x: 1, y: 0.25568846, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 423560798}
@@ -749814,7 +749814,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0.85387486
+  m_Value: 0.6641249
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -750251,7 +750251,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2080928194}
-  m_LocalRotation: {x: 0, y: 0, z: 0.42968366, w: -0.9029795}
+  m_LocalRotation: {x: 0, y: 0, z: -0.8509938, w: 0.5251757}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -753572,7 +753572,7 @@ RectTransform:
   m_GameObject: {fileID: 2095335578}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.30337986, z: 1}
+  m_LocalScale: {x: 1, y: 0.3739085, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 105537471}
@@ -754495,7 +754495,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '[ CRYSTAL_REFINERY // ENERGY // DEFENSE MATRIX NETWORK ]'
+  m_text: '[ CRYSTAL_REFINERY // ENERGY // NEO-TOKYO DRIFT CORP ]'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -755292,7 +755292,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2106050344}
-  m_LocalRotation: {x: 0, y: 0, z: 0.42968366, w: -0.9029795}
+  m_LocalRotation: {x: 0, y: 0, z: -0.8509938, w: 0.5251757}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -757754,7 +757754,7 @@ RectTransform:
   m_GameObject: {fileID: 2114412035}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.7172709, z: 1}
+  m_LocalScale: {x: 1, y: 0.25568846, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 851931435}
@@ -759093,7 +759093,7 @@ RectTransform:
   m_GameObject: {fileID: 2120073976}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.46742097, z: 1}
+  m_LocalScale: {x: 1, y: 0.36836123, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 423560798}
@@ -760500,7 +760500,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'PERIMETER: SECURE // 04 CARRIER PATROLS ONLINE'
+  m_text: 'TOP SPEED: 485 KM/H // NITRO CAPACITY: 100% READY'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -760509,8 +760509,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294963712
-  m_fontColor: {r: 0, g: 0.95, b: 1, a: 1}
+    rgba: 4279953151
+  m_fontColor: {r: 1, g: 0.9, b: 0.1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -760956,7 +760956,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 00:07 / 00:30
+  m_text: 00:13 / 00:30
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -761063,7 +761063,7 @@ RectTransform:
   m_GameObject: {fileID: 2128237790}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5736126, z: 1}
+  m_LocalScale: {x: 1, y: 0.3805388, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 851931435}
@@ -761419,7 +761419,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: A.I. DEFENSE & DRONE RADAR
+  m_text: SYNTHWAVE NITRO RACER
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -768227,7 +768227,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.95, b: 1, a: 0.65}
+  m_Color: {r: 1, g: 0.9, b: 0.1, a: 0.65}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
