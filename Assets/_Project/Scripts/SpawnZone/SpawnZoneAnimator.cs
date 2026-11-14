@@ -79,11 +79,14 @@ namespace SpaceCyberpunk
         public bool playBoardingIntroOnRespawn = false;
         public float walkDuration = 4.6f;
         public float climbDuration = 1.85f;
-        public Vector3 airlockStartLocalPos = new Vector3(0f, 4.05f, -23.6f);
+        public Vector3 airlockStartLocalPos = new Vector3(0f, 4.05f, -25.35f);
         public Vector3 airlockMidLocalPos = new Vector3(-2.1f, 4.05f, -16.2f);
         public Vector3 shipSideBoardLocalPos = new Vector3(-3.35f, 4.05f, -8.8f);
         public Vector3 wingStepLocalPos = new Vector3(-1.45f, 5.55f, -7.0f);
         public Vector3 canopyOverLocalPos = new Vector3(-0.35f, 6.45f, -6.0f);
+
+        [Header("8C. Cửa Căn Cứ Xuất Phát (Hangar Aft Airlock Door)")]
+        public SpawnBaseAirlockDoor aftAirlockDoor;
 
         public enum HangarOnboardingState
         {
@@ -169,6 +172,16 @@ namespace SpaceCyberpunk
             {
                 playerShip = FindFirstObjectByType<PlayerSpaceshipController>();
             }
+
+            if (aftAirlockDoor == null)
+            {
+                aftAirlockDoor = GetComponentInChildren<SpawnBaseAirlockDoor>();
+                if (aftAirlockDoor == null)
+                {
+                    var aftGo = GameObject.Find("Hangar_Aft_Door");
+                    if (aftGo != null) aftAirlockDoor = aftGo.GetComponent<SpawnBaseAirlockDoor>() ?? aftGo.AddComponent<SpawnBaseAirlockDoor>();
+                }
+            }
         }
 
         [ContextMenu("Preview Hangar Doors Closed")]
@@ -205,10 +218,19 @@ namespace SpaceCyberpunk
             {
                 _hasPlayedInitialBoarding = true;
                 _onboardingState = HangarOnboardingState.WalkingFromBase;
+                if (aftAirlockDoor != null)
+                {
+                    aftAirlockDoor.SetOpenImmediate(0f);
+                    aftAirlockDoor.OpenDoor(holdSeconds: walkDuration + 2.5f);
+                }
             }
             else
             {
                 _onboardingState = HangarOnboardingState.AwaitingEnterBriefing;
+                if (aftAirlockDoor != null)
+                {
+                    aftAirlockDoor.CloseDoor();
+                }
             }
         }
 
@@ -220,6 +242,10 @@ namespace SpaceCyberpunk
             if (!IsIntroWalkActive) return;
             _onboardingState = HangarOnboardingState.AwaitingEnterBriefing;
             _onboardingTimer = 0f;
+            if (aftAirlockDoor != null)
+            {
+                aftAirlockDoor.CloseDoor();
+            }
         }
 
         /// <summary>
@@ -627,6 +653,10 @@ namespace SpaceCyberpunk
                 {
                     _onboardingState = HangarOnboardingState.ClimbingIntoShip;
                     _onboardingTimer = 0f;
+                    if (aftAirlockDoor != null)
+                    {
+                        aftAirlockDoor.CloseDoor();
+                    }
                 }
             }
             else if (_onboardingState == HangarOnboardingState.ClimbingIntoShip)
