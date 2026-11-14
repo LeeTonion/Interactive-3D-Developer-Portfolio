@@ -79,25 +79,11 @@ namespace SpaceCyberpunk
         public bool playBoardingIntroOnRespawn = false;
         public float walkDuration = 4.6f;
         public float climbDuration = 1.85f;
-        public Vector3 airlockStartLocalPos = new Vector3(0f, 4.05f, -28.0f);
+        public Vector3 airlockStartLocalPos = new Vector3(0f, 4.05f, -23.6f);
         public Vector3 airlockMidLocalPos = new Vector3(-2.1f, 4.05f, -16.2f);
         public Vector3 shipSideBoardLocalPos = new Vector3(-3.35f, 4.05f, -8.8f);
         public Vector3 wingStepLocalPos = new Vector3(-1.45f, 5.55f, -7.0f);
         public Vector3 canopyOverLocalPos = new Vector3(-0.35f, 6.45f, -6.0f);
-
-        [Header("8C. Cửa Hầm Sau Căn Cứ Xuất Phát (Aft Hangar Blast Doors)")]
-        public Transform aftBlastDoorLeft;
-        public Transform aftBlastDoorRight;
-        public Transform aftBlastDoorUpper;
-        public Vector3 aftDoorLeftClosedPos = new Vector3(-4.6f, 8.0f, -24.5f);
-        public Vector3 aftDoorLeftOpenPos = new Vector3(-13.8f, 8.0f, -24.5f);
-        public Vector3 aftDoorRightClosedPos = new Vector3(4.6f, 8.0f, -24.5f);
-        public Vector3 aftDoorRightOpenPos = new Vector3(13.8f, 8.0f, -24.5f);
-        public Vector3 aftDoorUpperClosedPos = new Vector3(0f, 13.0f, -24.5f);
-        public Vector3 aftDoorUpperOpenPos = new Vector3(0f, 17.8f, -24.5f);
-        public Renderer[] aftDoorStatusStripRenderers;
-        public Light[] aftDoorWarningLights;
-        public SpawnBaseAirlockDoor aftAirlockDoor;
 
         public enum HangarOnboardingState
         {
@@ -183,35 +169,6 @@ namespace SpaceCyberpunk
             {
                 playerShip = FindFirstObjectByType<PlayerSpaceshipController>();
             }
-
-            if (aftBlastDoorLeft == null)
-            {
-                var aftObj = transform.Find("05_Animated_Aft_Blast_Doors");
-                if (aftObj != null)
-                {
-                    aftBlastDoorLeft = aftObj.Find("Aft_Blast_Door_Left");
-                    aftBlastDoorRight = aftObj.Find("Aft_Blast_Door_Right");
-                    aftBlastDoorUpper = aftObj.Find("Aft_Blast_Door_Upper_Visor");
-                    var renderers = new System.Collections.Generic.List<Renderer>();
-                    foreach (var r in aftObj.GetComponentsInChildren<Renderer>())
-                    {
-                        if (r.name.Contains("StatusLED") || r.name.Contains("Pillar_LED")) renderers.Add(r);
-                    }
-                    aftDoorStatusStripRenderers = renderers.ToArray();
-                    aftDoorWarningLights = aftObj.GetComponentsInChildren<Light>();
-                }
-            }
-            ApplyAftDoorOpenProgress(0f);
-
-            if (aftAirlockDoor == null)
-            {
-                aftAirlockDoor = GetComponentInChildren<SpawnBaseAirlockDoor>();
-                if (aftAirlockDoor == null)
-                {
-                    var aftGo = GameObject.Find("Hangar_Aft_Door");
-                    if (aftGo != null) aftAirlockDoor = aftGo.GetComponent<SpawnBaseAirlockDoor>() ?? aftGo.AddComponent<SpawnBaseAirlockDoor>();
-                }
-            }
         }
 
         [ContextMenu("Preview Hangar Doors Closed")]
@@ -248,19 +205,10 @@ namespace SpaceCyberpunk
             {
                 _hasPlayedInitialBoarding = true;
                 _onboardingState = HangarOnboardingState.WalkingFromBase;
-                if (aftAirlockDoor != null)
-                {
-                    aftAirlockDoor.SetOpenImmediate(0f);
-                    aftAirlockDoor.OpenDoor(holdSeconds: walkDuration + 2.5f);
-                }
             }
             else
             {
                 _onboardingState = HangarOnboardingState.AwaitingEnterBriefing;
-                if (aftAirlockDoor != null)
-                {
-                    aftAirlockDoor.CloseDoor();
-                }
             }
         }
 
@@ -272,11 +220,6 @@ namespace SpaceCyberpunk
             if (!IsIntroWalkActive) return;
             _onboardingState = HangarOnboardingState.AwaitingEnterBriefing;
             _onboardingTimer = 0f;
-            ApplyAftDoorOpenProgress(0f);
-            if (aftAirlockDoor != null)
-            {
-                aftAirlockDoor.CloseDoor();
-            }
         }
 
         /// <summary>
@@ -427,52 +370,6 @@ namespace SpaceCyberpunk
             {
                 if (cache[i] != null && cache[i].enabled != enabled)
                     cache[i].enabled = enabled;
-            }
-        }
-
-        private float _aftDoorOpenProgress = 0f;
-
-        public void ApplyAftDoorOpenProgress(float ratio)
-        {
-            _aftDoorOpenProgress = Mathf.Clamp01(ratio);
-            float eased = _aftDoorOpenProgress * _aftDoorOpenProgress * (3f - 2f * _aftDoorOpenProgress);
-
-            if (aftBlastDoorLeft != null)
-                aftBlastDoorLeft.localPosition = Vector3.Lerp(aftDoorLeftClosedPos, aftDoorLeftOpenPos, eased);
-            if (aftBlastDoorRight != null)
-                aftBlastDoorRight.localPosition = Vector3.Lerp(aftDoorRightClosedPos, aftDoorRightOpenPos, eased);
-            if (aftBlastDoorUpper != null)
-                aftBlastDoorUpper.localPosition = Vector3.Lerp(aftDoorUpperClosedPos, aftDoorUpperOpenPos, eased);
-
-            bool isMoving = _aftDoorOpenProgress > 0.02f && _aftDoorOpenProgress < 0.96f;
-            bool isOpen = _aftDoorOpenProgress >= 0.85f;
-            float flash = 0.45f + 0.55f * Mathf.Sin(Time.time * (isMoving ? 14f : 4f));
-            Color stripColor = isOpen 
-                ? new Color(0.18f, 0.95f, 1.0f) * 1.5f 
-                : (isMoving ? new Color(1.0f, 0.5f, 0.1f) * flash * 2.2f : new Color(1.0f, 0.12f, 0.08f) * 1.8f);
-
-            if (aftDoorStatusStripRenderers != null)
-            {
-                if (_mpb == null) _mpb = new MaterialPropertyBlock();
-                for (int i = 0; i < aftDoorStatusStripRenderers.Length; i++)
-                {
-                    var r = aftDoorStatusStripRenderers[i];
-                    if (r == null) continue;
-                    r.GetPropertyBlock(_mpb);
-                    _mpb.SetColor(BaseColorId, stripColor);
-                    _mpb.SetColor(EmissionColorId, stripColor);
-                    r.SetPropertyBlock(_mpb);
-                }
-            }
-            if (aftDoorWarningLights != null)
-            {
-                for (int i = 0; i < aftDoorWarningLights.Length; i++)
-                {
-                    var l = aftDoorWarningLights[i];
-                    if (l == null) continue;
-                    l.color = isOpen ? new Color(0.2f, 0.95f, 1f) : new Color(1f, 0.35f, 0.1f);
-                    l.intensity = isMoving ? (1.5f + flash * 2.5f) : 2.0f;
-                }
             }
         }
 
@@ -726,20 +623,10 @@ namespace SpaceCyberpunk
                 }
 
                 _onboardingTimer += dt;
-                float dur = Mathf.Max(0.5f, walkDuration);
-                float u = Mathf.Clamp01(_onboardingTimer / dur);
-                float aftOpen = (u < 0.25f) ? (u / 0.25f) : ((u < 0.48f) ? 1.0f : Mathf.Clamp01(1.0f - (u - 0.48f) / 0.28f));
-                ApplyAftDoorOpenProgress(aftOpen);
-
-                if (_onboardingTimer >= dur)
+                if (_onboardingTimer >= Mathf.Max(0.5f, walkDuration))
                 {
                     _onboardingState = HangarOnboardingState.ClimbingIntoShip;
                     _onboardingTimer = 0f;
-                    ApplyAftDoorOpenProgress(0f);
-                    if (aftAirlockDoor != null)
-                    {
-                        aftAirlockDoor.CloseDoor();
-                    }
                 }
             }
             else if (_onboardingState == HangarOnboardingState.ClimbingIntoShip)
