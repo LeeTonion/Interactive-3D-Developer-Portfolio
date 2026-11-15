@@ -28,11 +28,27 @@ namespace SpaceCyberpunk
 
         private void Awake()
         {
-            EnsureExpandedContent();
+            if (gameObject.name != "Project_Zone") return;
+            EnsureExpandedContentIfNeeded();
         }
 
         private void Start()
         {
+            if (gameObject.name != "Project_Zone") return;
+            EnsureExpandedContentIfNeeded();
+        }
+
+        public void EnsureExpandedContentIfNeeded()
+        {
+            UpgradeExistingBillboards();
+            Transform pzParent = transform;
+            var pzGo = GameObject.Find("Project_Zone");
+            if (pzGo != null) pzParent = pzGo.transform;
+
+            if (pzParent.Find(OutpostRootName) != null)
+            {
+                return;
+            }
             EnsureExpandedContent();
         }
 
@@ -42,17 +58,22 @@ namespace SpaceCyberpunk
             // 1. Nâng cấp toàn bộ các biển quảng cáo hiện có thành CyberpunkVideoBillboard
             UpgradeExistingBillboards();
 
-            // 2. Kiểm tra nếu đã có phân khu mở rộng thì dọn để tạo mới đầy đủ chi tiết
-            GameObject existingRoot = GameObject.Find(OutpostRootName);
-            if (existingRoot != null)
-            {
-                if (Application.isPlaying) Destroy(existingRoot);
-                else DestroyImmediate(existingRoot);
-            }
-
             Transform pzParent = transform;
             var pzGo = GameObject.Find("Project_Zone");
             if (pzGo != null) pzParent = pzGo.transform;
+
+            // 2. Kiểm tra nếu đã có phân khu mở rộng thì dọn sạch tất cả bản trùng lặp
+            var toDestroy = new List<GameObject>();
+            for (int i = 0; i < pzParent.childCount; i++)
+            {
+                var c = pzParent.GetChild(i);
+                if (c.name == OutpostRootName) toDestroy.Add(c.gameObject);
+            }
+            foreach (var go in toDestroy)
+            {
+                if (Application.isPlaying) Destroy(go);
+                else DestroyImmediate(go);
+            }
 
             GameObject root = new GameObject(OutpostRootName);
             root.transform.SetParent(pzParent, false);
