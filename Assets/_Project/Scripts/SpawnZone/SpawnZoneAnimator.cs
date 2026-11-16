@@ -165,9 +165,11 @@ namespace SpaceCyberpunk
                 patrolDrones = new Transform[0];
             }
 
-            if (Application.isPlaying && playerShip == null)
+            if (Application.isPlaying)
             {
-                playerShip = FindFirstObjectByType<PlayerSpaceshipController>();
+                if (playerShip == null)
+                    playerShip = FindFirstObjectByType<PlayerSpaceshipController>();
+                ApplyDoorOpenProgress(0f);
             }
         }
 
@@ -200,6 +202,14 @@ namespace SpaceCyberpunk
 
             bool shouldWalk = (isInitialSpawn && playBoardingIntroOnStart && !_hasPlayedInitialBoarding)
                               || (!isInitialSpawn && playBoardingIntroOnRespawn);
+
+            if (Application.isPlaying && FindFirstObjectByType<PlayerCharacterController>() != null)
+            {
+                // Khi có nhân vật đi bộ tự lên tàu, không khóa buồng lái chờ Enter; cửa lớn tự mở khi lái tàu bay ra
+                _awaitingManualDoorOpen = false;
+                _onboardingState = HangarOnboardingState.None;
+                return;
+            }
 
             if (shouldWalk && Application.isPlaying)
             {
@@ -650,7 +660,19 @@ namespace SpaceCyberpunk
         {
             if (blastDoorLeft != null || blastDoorRight != null || blastDoorUpper != null)
             {
-                if (_awaitingManualDoorOpen)
+                bool isShipPiloted = playerShip != null && playerShip.enabled;
+
+                if (!isShipPiloted)
+                {
+                    // Khi người chơi đang đi bộ (chưa lái tàu): cửa lớn luôn đóng kín
+                    _launchSequenceActive = false;
+                    if (_doorOpenProgress > 0.001f)
+                    {
+                        float step = dt / Mathf.Max(0.35f, doorOpenDuration * 0.75f);
+                        ApplyDoorOpenProgress(Mathf.MoveTowards(_doorOpenProgress, 0f, step));
+                    }
+                }
+                else if (_awaitingManualDoorOpen)
                 {
                     if (_doorOpenProgress > 0.001f) ApplyDoorOpenProgress(0f);
                 }
@@ -670,11 +692,18 @@ namespace SpaceCyberpunk
                         }
                     }
                 }
-                else if (autoOpenForReturningShip && playerShip != null)
+                else if (playerShip != null)
                 {
                     Vector3 mouthWorld = transform.TransformPoint(hangarMouthLocalPos);
                     float dist = Vector3.Distance(playerShip.transform.position, mouthWorld);
-                    float desired = dist < returnAutoOpenDistance ? 1f : (dist > returnAutoOpenDistance + 14f ? 0f : (_doorOpenProgress >= 0.5f ? 1f : 0f));
+                    bool shipMovingOrLaunching = Mathf.Abs(playerShip.CurrentForwardSpeed) > 0.4f
+                                                 || Input.GetKey(KeyCode.W)
+                                                 || Input.GetKey(KeyCode.UpArrow)
+                                                 || Input.GetKey(KeyCode.LeftShift)
+                                                 || _doorOpenProgress > 0.02f;
+                    float desired = (dist < returnAutoOpenDistance && shipMovingOrLaunching)
+                        ? 1f
+                        : (dist > returnAutoOpenDistance + 14f ? 0f : (_doorOpenProgress >= 0.5f ? 1f : 0f));
                     if (!Mathf.Approximately(_doorOpenProgress, desired))
                     {
                         float step = dt / Mathf.Max(0.35f, doorOpenDuration * 0.75f);

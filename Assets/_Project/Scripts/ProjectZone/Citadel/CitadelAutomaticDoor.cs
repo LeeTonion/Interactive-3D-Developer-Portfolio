@@ -370,11 +370,10 @@ namespace SpaceCyberpunk
                 return;
             }
 
-            // Kiểm tra proximity tự động khi không bị khóa điều khiển bởi cinematic
-            if (autoProximity && !_isLocked)
-            {
-                CheckProximitySensors();
-            }
+            // Luôn tự động mở cửa khi người chơi đến gần
+            autoProximity = true;
+            _isLocked = false;
+            CheckProximitySensors();
 
             // Chuyển động cơ khí mượt mà
             float speed = (_targetOpen > _currentOpen) ? openSpeed : closeSpeed;
@@ -598,15 +597,22 @@ namespace SpaceCyberpunk
             Vector3 camPos = cam != null ? cam.transform.position : Vector3.zero;
             float distToCam = cam != null ? Vector3.Distance(transform.position, camPos) : 999f;
 
+            var pc = FindFirstObjectByType<PlayerCharacterController>();
+            float distToPlayer = (pc != null && pc.gameObject.activeInHierarchy)
+                ? Vector3.Distance(transform.position, pc.transform.position)
+                : 999f;
+
             // Tìm tàu người chơi nếu có
             var ship = FindFirstObjectByType<PlayerSpaceshipController>();
-            float distToShip = ship != null ? Vector3.Distance(transform.position, ship.transform.position) : 999f;
+            float distToShip = (ship != null && ship.enabled)
+                ? Vector3.Distance(transform.position, ship.transform.position)
+                : 999f;
 
-            float minDist = Mathf.Min(distToCam, distToShip);
+            float minDist = Mathf.Min(distToCam, Mathf.Min(distToPlayer, distToShip));
 
-            if (minDist <= triggerDistance)
+            if (minDist <= Mathf.Max(triggerDistance, 6.5f))
             {
-                _stayOpenTimer = 2.5f;
+                _stayOpenTimer = 2.0f;
                 if (_targetOpen < 0.5f) OpenDoor();
             }
             else if (minDist >= closeDistance)
@@ -695,6 +701,26 @@ namespace SpaceCyberpunk
             if (doorRight != null)
             {
                 doorRight.localPosition = Vector3.Lerp(closedRightPos, openRightPos, t);
+            }
+
+            if (Application.isPlaying)
+            {
+                bool blockPath = _currentOpen < 0.35f && !isBreached;
+                var portalCol = GetComponent<BoxCollider>();
+                if (portalCol != null && portalCol.enabled != blockPath)
+                {
+                    portalCol.enabled = blockPath;
+                }
+                if (doorLeft != null)
+                {
+                    var lc = doorLeft.GetComponent<Collider>();
+                    if (lc != null && lc.enabled != blockPath) lc.enabled = blockPath;
+                }
+                if (doorRight != null)
+                {
+                    var rc = doorRight.GetComponent<Collider>();
+                    if (rc != null && rc.enabled != blockPath) rc.enabled = blockPath;
+                }
             }
         }
 

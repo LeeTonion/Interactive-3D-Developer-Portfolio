@@ -51,28 +51,19 @@ namespace SpaceCyberpunk
             if (cam == null) return;
 
             float dist = Vector3.Distance(cam.transform.position, transform.position);
-            if (dist < 4.5f)
+            if (dist < 6.5f)
             {
-                if (statusText != null && statusText.text != "NHẤN [F] ĐỂ MỞ KHÓA CỬA")
+                if (statusText != null && statusText.text != "<color=#44ff77>AUTO-SENSE // CỬA TỰ ĐỘNG MỞ</color>")
                 {
-                    statusText.text = "<color=#00e5ff>NHẤN [F] ĐỂ MỞ KHÓA CỬA</color>";
-                }
-
-                if (Input.GetKeyDown(KeyCode.F))
-                {
-                    StartCoroutine(PerformPasscodeEntrySequence(() =>
-                    {
-                        var door = FindFirstObjectByType<CitadelAutomaticDoor>();
-                        if (door != null) door.OpenDoor(locked: true);
-                    }));
+                    statusText.text = "<color=#44ff77>AUTO-SENSE // CỬA TỰ ĐỘNG MỞ</color>";
                 }
             }
             else
             {
-                if (statusText != null && statusText.text.Contains("NHẤN [F]"))
+                if (statusText != null && statusText.text.Contains("AUTO-SENSE"))
                 {
-                    statusText.text = "LOCKED // ENTER SECURITY PIN";
-                    statusText.color = ColorLocked;
+                    statusText.text = "PROXIMITY SENSOR // READY";
+                    statusText.color = ColorCyan;
                 }
             }
         }
