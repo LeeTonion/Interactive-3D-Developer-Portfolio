@@ -45,10 +45,10 @@ namespace SpaceCyberpunk
         [Header("Sliding Door References")]
         public Transform doorLeft;
         public Transform doorRight;
-        public Vector3 closedLeftPos = new Vector3(1.666f, 0.0057f, 0.00f);
-        public Vector3 closedRightPos = new Vector3(-1.409f, 0.00f, 0.00f);
-        public Vector3 openLeftPos = new Vector3(3.15f, 0.0057f, 0.00f);
-        public Vector3 openRightPos = new Vector3(-2.85f, 0.00f, 0.00f);
+        public Vector3 closedLeftPos = new Vector3(1.62f, 0.0057f, 0.015f);
+        public Vector3 closedRightPos = new Vector3(-1.36f, 0.00f, -0.015f);
+        public Vector3 openLeftPos = new Vector3(3.15f, 0.0057f, 0.015f);
+        public Vector3 openRightPos = new Vector3(-2.85f, 0.00f, -0.015f);
         public float doorSpeed = 7.0f;
 
         [Header("Station, Elevator & Prop References")]
@@ -146,7 +146,7 @@ namespace SpaceCyberpunk
 
             if (doorLeft != null)
             {
-                doorLeft.localScale = new Vector3(1.20f, 1.0f, 0.8f);
+                doorLeft.localScale = new Vector3(1.42f, 1.0f, 0.8f);
                 var bc = doorLeft.GetComponent<BoxCollider>();
                 if (bc == null) bc = doorLeft.gameObject.AddComponent<BoxCollider>();
                 bc.center = new Vector3(-0.72f, 2.0f, 0f);
@@ -155,7 +155,7 @@ namespace SpaceCyberpunk
             }
             if (doorRight != null)
             {
-                doorRight.localScale = new Vector3(1.0f, 1.0f, 0.8f);
+                doorRight.localScale = new Vector3(1.24f, 1.0f, 0.8f);
                 var bc = doorRight.GetComponent<BoxCollider>();
                 if (bc == null) bc = doorRight.gameObject.AddComponent<BoxCollider>();
                 bc.center = new Vector3(0.86f, 2.0f, 0f);

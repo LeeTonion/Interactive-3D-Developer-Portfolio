@@ -40,6 +40,17 @@ namespace SpaceCyberpunk
         public bool IsInShip { get; private set; }
 
         private CharacterController _cc;
+        private Animator _animator;
+        private Transform _swordTr;
+        private int _combatMode; // 0=Normal, 1=Sword, 2=Gun
+        private int _attackIndex;
+        private float _moveX, _moveZ;
+        private float _airborneTimer;
+        private float _jumpBlend;
+        private float _rollTimer;
+        private float _upperLayerWeight = 1f;
+        private Vector3 _rollDir;
+        private Transform _rigUpperLegL, _rigLowerLegL, _rigUpperLegR, _rigLowerLegR, _rigTorso, _rigFootL, _rigFootR;
         private Renderer[] _visualRenderers;
         private GameObject _shipHudGo;
         private GameObject _targetHudGo;
@@ -60,6 +71,12 @@ namespace SpaceCyberpunk
         private void Awake()
         {
             _cc = GetComponent<CharacterController>();
+            _animator = visualRoot != null
+                ? visualRoot.GetComponentInChildren<Animator>(true)
+                : GetComponentInChildren<Animator>(true);
+            Transform vRoot = visualRoot != null ? visualRoot : transform;
+            _swordTr = vRoot.Find("Sword");
+            if (_swordTr != null) _swordTr.gameObject.SetActive(false);
             _visualRenderers = visualRoot != null
                 ? visualRoot.GetComponentsInChildren<Renderer>(true)
                 : GetComponentsInChildren<Renderer>(true);
@@ -72,6 +89,14 @@ namespace SpaceCyberpunk
         private void ResolveVisualLimbs()
         {
             Transform root = visualRoot != null ? visualRoot : transform;
+            _rigUpperLegL = root.Find("CharacterArmature/Root/Body/UpperLeg.L");
+            _rigLowerLegL = root.Find("CharacterArmature/Root/Body/UpperLeg.L/LowerLeg.L");
+            _rigUpperLegR = root.Find("CharacterArmature/Root/Body/UpperLeg.R");
+            _rigLowerLegR = root.Find("CharacterArmature/Root/Body/UpperLeg.R/LowerLeg.R");
+            _rigTorso = root.Find("CharacterArmature/Root/Body/Hips/Abdomen/Torso");
+            _rigFootL = root.Find("CharacterArmature/Root/Foot.L");
+            _rigFootR = root.Find("CharacterArmature/Root/Foot.R");
+
             _headTr = root.Find("head");
             _bodyTr = root.Find("body");
             _armLeftTr = root.Find("armLeft");
@@ -128,7 +153,31 @@ namespace SpaceCyberpunk
             {
                 SetShipHudVisible(false);
             }
+            ApplyAirborneKneeTuck();
             if (playerCamera != null) UpdateCharacterCamera();
+        }
+
+        private void ApplyAirborneKneeTuck()
+        {
+            if (_animator == null || _rigUpperLegL == null) return;
+            bool isRolling = _rollTimer > 0f;
+            float targetJump = (!_cc.isGrounded && _airborneTimer > 0.05f && !isRolling) ? 1f : 0f;
+            _jumpBlend = Mathf.MoveTowards(_jumpBlend, targetJump, Time.deltaTime * 10f);
+            if (_jumpBlend <= 0.001f) return;
+
+            Transform vRoot = visualRoot != null ? visualRoot : transform;
+            Vector3 pitchAxis = vRoot.right;
+
+            // Tuck left leg higher & right leg slightly back for an athletic mid-air jump pose
+            _rigUpperLegL.Rotate(pitchAxis, -58f * _jumpBlend, Space.World);
+            if (_rigLowerLegL != null) _rigLowerLegL.Rotate(pitchAxis, 88f * _jumpBlend, Space.World);
+
+            if (_rigUpperLegR != null) _rigUpperLegR.Rotate(pitchAxis, -24f * _jumpBlend, Space.World);
+            if (_rigLowerLegR != null) _rigLowerLegR.Rotate(pitchAxis, 56f * _jumpBlend, Space.World);
+
+            if (_rigTorso != null) _rigTorso.Rotate(pitchAxis, 14f * _jumpBlend, Space.World);
+            if (_rigFootL != null) _rigFootL.position += Vector3.up * (0.28f * _jumpBlend);
+            if (_rigFootR != null) _rigFootR.position += Vector3.up * (0.16f * _jumpBlend);
         }
 
         private void UpdateOnFoot()
@@ -179,10 +228,36 @@ namespace SpaceCyberpunk
             }
             _velocity.y += gravity * Time.deltaTime;
 
-            Vector3 finalMove = moveDir * speed + Vector3.up * _velocity.y;
+            Vector3 horizMove = moveDir * speed;
+            if (_rollTimer > 0f)
+            {
+                _rollTimer -= Time.deltaTime;
+                horizMove = _rollDir * 11.5f;
+                if (_isThirdPerson && _rollDir.sqrMagnitude > 0.01f)
+                {
+                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(_rollDir, Vector3.up), Time.deltaTime * 18f);
+                }
+            }
+
+            Vector3 finalMove = horizMove + Vector3.up * _velocity.y;
             _cc.Move(finalMove * Time.deltaTime);
 
             _currentHorizSpeed = moveDir.sqrMagnitude > 0.01f ? speed : 0f;
+            float speedFactor = _currentHorizSpeed > 0.1f ? (Input.GetKey(KeyCode.LeftShift) ? 1.0f : 0.5f) : 0f;
+            if (_isThirdPerson)
+            {
+                _moveX = 0f;
+                _moveZ = speedFactor;
+            }
+            else
+            {
+                Vector2 rawDir = new Vector2(h, v);
+                if (rawDir.sqrMagnitude > 1f) rawDir.Normalize();
+                _moveX = rawDir.x * speedFactor;
+                _moveZ = rawDir.y * speedFactor;
+            }
+
+            HandleCharacterActions(moveDir);
             UpdateLimbAnimation(Time.deltaTime);
 
             // Check boarding proximity
@@ -220,8 +295,71 @@ namespace SpaceCyberpunk
             }
         }
 
+        private void HandleCharacterActions(Vector3 moveDir)
+        {
+            if (_animator == null || _animator.runtimeAnimatorController == null) return;
+
+            if (Input.GetKeyDown(KeyCode.Alpha1)) SetCombatMode(0);
+            else if (Input.GetKeyDown(KeyCode.Alpha2)) SetCombatMode(1);
+            else if (Input.GetKeyDown(KeyCode.Alpha3)) SetCombatMode(2);
+
+            if ((Input.GetKeyDown(KeyCode.C) || Input.GetKeyDown(KeyCode.LeftControl)) && _rollTimer <= 0.05f)
+            {
+                _rollTimer = 0.42f;
+                _rollDir = moveDir.sqrMagnitude > 0.01f ? moveDir.normalized : transform.forward;
+                _animator.ResetTrigger("Roll");
+                _animator.SetTrigger("Roll");
+            }
+
+            if (Input.GetKeyDown(KeyCode.G))
+            {
+                _animator.ResetTrigger("Wave");
+                _animator.SetTrigger("Wave");
+            }
+
+            if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(interactKey))
+            {
+                _animator.ResetTrigger("Interact");
+                _animator.SetTrigger("Interact");
+            }
+
+            if (Input.GetKeyDown(KeyCode.R) || (Cursor.lockState == CursorLockMode.Locked && Input.GetMouseButtonDown(0)))
+            {
+                _animator.ResetTrigger("Attack");
+                _animator.SetInteger("AttackIndex", _attackIndex);
+                _animator.SetTrigger("Attack");
+                _attackIndex = (_attackIndex + 1) % 4;
+            }
+        }
+
+        private void SetCombatMode(int mode)
+        {
+            _combatMode = mode;
+            if (_animator != null) _animator.SetInteger("CombatMode", _combatMode);
+            if (_swordTr != null) _swordTr.gameObject.SetActive(_combatMode == 1);
+        }
+
         private void UpdateLimbAnimation(float dt)
         {
+            if (_animator != null && _animator.runtimeAnimatorController != null)
+            {
+                if (_cc.isGrounded) _airborneTimer = 0f;
+                else _airborneTimer += dt;
+
+                bool stableGrounded = _cc.isGrounded || _airborneTimer < 0.12f;
+
+                float targetUpperWeight = _rollTimer > 0f ? 0f : 1f;
+                _upperLayerWeight = Mathf.MoveTowards(_upperLayerWeight, targetUpperWeight, dt * 14f);
+                if (_animator.layerCount > 1) _animator.SetLayerWeight(1, _upperLayerWeight);
+
+                _animator.SetFloat("Speed", _currentHorizSpeed);
+                _animator.SetFloat("MoveX", _moveX, 0.06f, dt);
+                _animator.SetFloat("MoveZ", _moveZ, 0.06f, dt);
+                _animator.SetBool("IsGrounded", stableGrounded);
+                _animator.SetInteger("CombatMode", _combatMode);
+                return;
+            }
+
             if (_bodyTr == null && _legLeftTr == null) return;
 
             float blend = Mathf.Clamp01(dt * 12f);
