@@ -239,6 +239,7 @@ namespace SpaceCyberpunk
             if (!inRange && _showPanel && !_isOccupiedPose)
             {
                 _showPanel = false;
+                PlayerCharacterController.AnyUiPanelOpen = false;
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
             }
@@ -366,6 +367,7 @@ namespace SpaceCyberpunk
 
                 case MothershipStationType.HoloStarMap:
                     _showPanel = !_showPanel;
+                    PlayerCharacterController.AnyUiPanelOpen = _showPanel;
                     Cursor.lockState = _showPanel ? CursorLockMode.None : CursorLockMode.Locked;
                     Cursor.visible = _showPanel;
                     break;
@@ -462,20 +464,31 @@ namespace SpaceCyberpunk
             _toastTimer = 2.8f;
         }
 
+        private string GetShortPromptLabel()
+        {
+            switch (stationType)
+            {
+                case MothershipStationType.CaptainHelm:
+                case MothershipStationType.Seat: return _isOccupiedPose ? "ĐỨNG DẬY" : "NGỒI";
+                case MothershipStationType.Bed: return _isOccupiedPose ? "ĐỨNG DẬY" : "NẰM NGHỈ";
+                case MothershipStationType.HoloStarMap: return "BẢN ĐỒ SAO";
+                case MothershipStationType.ReactorCore: return _isActivated ? "ỔN ĐỊNH LÒ" : "TĂNG ÁP LÒ";
+                case MothershipStationType.CrewTerminal: return "TRUY CẬP";
+                case MothershipStationType.Container: return "KIỂM TRA";
+                case MothershipStationType.NPC: return "NÓI CHUYỆN";
+                case MothershipStationType.ElevatorPad: return "THANG MÁY";
+                default: return "TƯƠNG TÁC";
+            }
+        }
+
         private void OnGUI()
         {
             if (stationType == MothershipStationType.SlidingDoor || Time.timeScale <= 0.01f) return;
 
-            if (_closestActiveStation == this)
+            if (_closestActiveStation == this && !_showPanel && !PlayerCharacterController.AnyUiPanelOpen)
             {
-                var keyStyle = new GUIStyle(GUI.skin.box)
-                {
-                    fontSize = 16,
-                    fontStyle = FontStyle.Bold,
-                    alignment = TextAnchor.MiddleCenter
-                };
-                keyStyle.normal.textColor = new Color(0.45f, 1f, 0.9f, 1f);
-                GUI.Box(new Rect(Screen.width * 0.5f - 28f, Screen.height - 140f, 56f, 34f), "[E]", keyStyle);
+                Vector3 anchor = transform.position + Vector3.up * 1.15f;
+                WorldInteractPromptUI.DrawAtWorldPos(anchor, "E", GetShortPromptLabel());
             }
 
             if (_toastTimer > 0f && !string.IsNullOrEmpty(_activeToastText))
@@ -538,6 +551,7 @@ namespace SpaceCyberpunk
                 if (GUI.Button(new Rect(panelRect.x + 300f, panelRect.y + 278f, 135f, 42f), "Đóng"))
                 {
                     _showPanel = false;
+                    PlayerCharacterController.AnyUiPanelOpen = false;
                     Cursor.lockState = CursorLockMode.Locked;
                     Cursor.visible = false;
                 }

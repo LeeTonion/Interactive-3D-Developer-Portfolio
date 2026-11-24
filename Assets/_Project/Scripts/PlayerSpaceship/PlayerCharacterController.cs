@@ -30,6 +30,17 @@ namespace SpaceCyberpunk
         public Vector3 firstPersonEyeOffset = new Vector3(0f, 1.62f, 0.15f);
         public bool thirdPersonDefault = false;
 
+        [Header("Camera Feel & Juice")]
+        public float walkBobFrequency = 9.5f;
+        public float sprintBobFrequency = 13.8f;
+        public float walkBobAmplitude = 0.042f;
+        public float sprintBobAmplitude = 0.075f;
+        public float swayAmplitude = 0.048f;
+        public float walkRollDegrees = 1.1f;
+        public float sprintRollDegrees = 2.0f;
+        public float strafeTiltDegrees = 2.4f;
+        public float rollDuration = 0.42f;
+
         [Header("Ship Boarding / Exiting")]
         public KeyCode interactKey = KeyCode.F;
         public KeyCode viewToggleKey = KeyCode.V;
@@ -38,6 +49,8 @@ namespace SpaceCyberpunk
         public Vector3 exitSideOffset = new Vector3(3.8f, 0.8f, 0f);
 
         public bool IsInShip { get; private set; }
+        public static bool AnyUiPanelOpen { get; set; }
+        public static bool ExternalCameraOverride { get; set; }
 
         private CharacterController _cc;
         private Animator _animator;
@@ -68,12 +81,31 @@ namespace SpaceCyberpunk
         private bool _canBoard;
         private bool _canExit;
 
+        // Camera feel & physical spring state
+        private float _baseFov = 60f;
+        private float _fovOffset;
+        private float _bobPhase;
+        private float _bobWeight;
+        private float _strafeTilt;
+        private bool _wasGrounded = true;
+        private float _lastAirborneVy;
+        private float _camDipOffset;
+        private float _camDipVel;
+        private float _camImpactPitch;
+        private float _camImpactPitchVel;
+        private float _shakeIntensity;
+        private float _shakeSeed;
+        private float _smoothedCamY;
+        private float _smoothedCamYVel;
+        private bool _hasSmoothedCamY;
+
         private void Awake()
         {
             _cc = GetComponent<CharacterController>();
             _animator = visualRoot != null
                 ? visualRoot.GetComponentInChildren<Animator>(true)
                 : GetComponentInChildren<Animator>(true);
+            if (_animator != null) _animator.applyRootMotion = false;
             Transform vRoot = visualRoot != null ? visualRoot : transform;
             _swordTr = vRoot.Find("Sword");
             if (_swordTr != null) _swordTr.gameObject.SetActive(false);
@@ -117,6 +149,8 @@ namespace SpaceCyberpunk
             if (spaceship == null) spaceship = FindFirstObjectByType<PlayerSpaceshipController>();
             if (spaceshipCamera == null) spaceshipCamera = FindFirstObjectByType<SpaceshipCameraFollow>();
             if (playerCamera == null) playerCamera = Camera.main;
+            if (playerCamera != null) _baseFov = playerCamera.fieldOfView;
+            _shakeSeed = Random.Range(0f, 100f);
 
             if (spaceship != null)
             {
@@ -153,6 +187,7 @@ namespace SpaceCyberpunk
             {
                 SetShipHudVisible(false);
             }
+            if (ExternalCameraOverride) return;
             ApplyAirborneKneeTuck();
             if (playerCamera != null) UpdateCharacterCamera();
         }
@@ -162,37 +197,42 @@ namespace SpaceCyberpunk
             if (_animator == null || _rigUpperLegL == null) return;
             bool isRolling = _rollTimer > 0f;
             float targetJump = (!_cc.isGrounded && _airborneTimer > 0.05f && !isRolling) ? 1f : 0f;
-            _jumpBlend = Mathf.MoveTowards(_jumpBlend, targetJump, Time.deltaTime * 10f);
+            float blendRate = targetJump > 0.5f ? 10f : 22f; // Release leg smoothly & quickly on touchdown
+            _jumpBlend = Mathf.MoveTowards(_jumpBlend, targetJump, Time.deltaTime * blendRate);
             if (_jumpBlend <= 0.001f) return;
 
             Transform vRoot = visualRoot != null ? visualRoot : transform;
             Vector3 pitchAxis = vRoot.right;
 
-            // Tuck left leg higher & right leg slightly back for an athletic mid-air jump pose
-            _rigUpperLegL.Rotate(pitchAxis, -58f * _jumpBlend, Space.World);
-            if (_rigLowerLegL != null) _rigLowerLegL.Rotate(pitchAxis, 88f * _jumpBlend, Space.World);
+            // Clean single-leg mid-air tuck (tuck left knee up, keep right leg naturally extended)
+            _rigUpperLegL.Rotate(pitchAxis, -52f * _jumpBlend, Space.World);
+            if (_rigLowerLegL != null) _rigLowerLegL.Rotate(pitchAxis, 82f * _jumpBlend, Space.World);
+            if (_rigFootL != null) _rigFootL.position += Vector3.up * (0.24f * _jumpBlend);
 
-            if (_rigUpperLegR != null) _rigUpperLegR.Rotate(pitchAxis, -24f * _jumpBlend, Space.World);
-            if (_rigLowerLegR != null) _rigLowerLegR.Rotate(pitchAxis, 56f * _jumpBlend, Space.World);
-
-            if (_rigTorso != null) _rigTorso.Rotate(pitchAxis, 14f * _jumpBlend, Space.World);
-            if (_rigFootL != null) _rigFootL.position += Vector3.up * (0.28f * _jumpBlend);
-            if (_rigFootR != null) _rigFootR.position += Vector3.up * (0.16f * _jumpBlend);
+            if (_rigTorso != null) _rigTorso.Rotate(pitchAxis, 5f * _jumpBlend, Space.World);
         }
 
         private void UpdateOnFoot()
         {
+            if (ExternalCameraOverride) return;
+
             if (Input.GetKeyDown(viewToggleKey))
             {
                 _isThirdPerson = !_isThirdPerson;
                 SetVisualVisible(_isThirdPerson);
             }
 
-            // Mouse look (works with locked cursor or while holding right mouse button)
-            if (Cursor.lockState == CursorLockMode.Locked || Input.GetMouseButton(1))
+            // Mouse look (disabled while any interactive terminal/UI panel is open; clamp delta to prevent 1-frame spin spikes)
+            if (AnyUiPanelOpen)
             {
-                _yaw += Input.GetAxis("Mouse X") * mouseSensitivity;
-                _pitch = Mathf.Clamp(_pitch - Input.GetAxis("Mouse Y") * mouseSensitivity, minPitch, maxPitch);
+                // Keep cursor free for UI clicks
+            }
+            else if (Cursor.lockState == CursorLockMode.Locked || Input.GetMouseButton(1))
+            {
+                float mx = Mathf.Clamp(Input.GetAxis("Mouse X"), -12f, 12f);
+                float my = Mathf.Clamp(Input.GetAxis("Mouse Y"), -12f, 12f);
+                _yaw += mx * mouseSensitivity;
+                _pitch = Mathf.Clamp(_pitch - my * mouseSensitivity, minPitch, maxPitch);
             }
             else if (Input.GetMouseButtonDown(0))
             {
@@ -220,13 +260,19 @@ namespace SpaceCyberpunk
 
             if (_cc.isGrounded && _velocity.y < 0f)
             {
-                _velocity.y = -2f;
+                // Keep grounded firmly when walking down stairs/ramps so CharacterController doesn't bounce
+                _velocity.y = -8f;
             }
             if (_cc.isGrounded && Input.GetButtonDown("Jump"))
             {
                 _velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             }
             _velocity.y += gravity * Time.deltaTime;
+
+            if (!_cc.isGrounded)
+            {
+                _lastAirborneVy = Mathf.Min(_lastAirborneVy, _velocity.y);
+            }
 
             Vector3 horizMove = moveDir * speed;
             if (_rollTimer > 0f)
@@ -241,6 +287,13 @@ namespace SpaceCyberpunk
 
             Vector3 finalMove = horizMove + Vector3.up * _velocity.y;
             _cc.Move(finalMove * Time.deltaTime);
+
+            // Zero camera hitch/slam on landing (vertical smoothing in UpdateCharacterCamera handles touchdown fluidly)
+            if (_cc.isGrounded && !_wasGrounded)
+            {
+                _lastAirborneVy = 0f;
+            }
+            _wasGrounded = _cc.isGrounded;
 
             _currentHorizSpeed = moveDir.sqrMagnitude > 0.01f ? speed : 0f;
             float speedFactor = _currentHorizSpeed > 0.1f ? (Input.GetKey(KeyCode.LeftShift) ? 1.0f : 0.5f) : 0f;
@@ -305,8 +358,9 @@ namespace SpaceCyberpunk
 
             if ((Input.GetKeyDown(KeyCode.C) || Input.GetKeyDown(KeyCode.LeftControl)) && _rollTimer <= 0.05f)
             {
-                _rollTimer = 0.42f;
+                _rollTimer = rollDuration;
                 _rollDir = moveDir.sqrMagnitude > 0.01f ? moveDir.normalized : transform.forward;
+                _shakeIntensity = Mathf.Max(_shakeIntensity, 0.35f);
                 _animator.ResetTrigger("Roll");
                 _animator.SetTrigger("Roll");
             }
@@ -325,6 +379,8 @@ namespace SpaceCyberpunk
 
             if (Input.GetKeyDown(KeyCode.R) || (Cursor.lockState == CursorLockMode.Locked && Input.GetMouseButtonDown(0)))
             {
+                _shakeIntensity = Mathf.Max(_shakeIntensity, 0.28f);
+                _camImpactPitchVel += 22f;
                 _animator.ResetTrigger("Attack");
                 _animator.SetInteger("AttackIndex", _attackIndex);
                 _animator.SetTrigger("Attack");
@@ -366,12 +422,12 @@ namespace SpaceCyberpunk
 
             if (!_cc.isGrounded)
             {
-                // Airborne / Jump pose
-                if (_legLeftTr != null) _legLeftTr.localRotation = Quaternion.Slerp(_legLeftTr.localRotation, _initLegLRot * Quaternion.Euler(-24f, 0f, 0f), blend);
-                if (_legRightTr != null) _legRightTr.localRotation = Quaternion.Slerp(_legRightTr.localRotation, _initLegRRot * Quaternion.Euler(18f, 0f, 0f), blend);
-                if (_armLeftTr != null) _armLeftTr.localRotation = Quaternion.Slerp(_armLeftTr.localRotation, _initArmLRot * Quaternion.Euler(-30f, 0f, -18f), blend);
-                if (_armRightTr != null) _armRightTr.localRotation = Quaternion.Slerp(_armRightTr.localRotation, _initArmRRot * Quaternion.Euler(-30f, 0f, 18f), blend);
-                if (_bodyTr != null) _bodyTr.localRotation = Quaternion.Slerp(_bodyTr.localRotation, _initBodyRot * Quaternion.Euler(4f, 0f, 0f), blend);
+                // Airborne / Jump pose (single-leg tuck)
+                if (_legLeftTr != null) _legLeftTr.localRotation = Quaternion.Slerp(_legLeftTr.localRotation, _initLegLRot * Quaternion.Euler(-38f, 0f, 0f), blend);
+                if (_legRightTr != null) _legRightTr.localRotation = Quaternion.Slerp(_legRightTr.localRotation, _initLegRRot, blend);
+                if (_armLeftTr != null) _armLeftTr.localRotation = Quaternion.Slerp(_armLeftTr.localRotation, _initArmLRot * Quaternion.Euler(-15f, 0f, -10f), blend);
+                if (_armRightTr != null) _armRightTr.localRotation = Quaternion.Slerp(_armRightTr.localRotation, _initArmRRot * Quaternion.Euler(-15f, 0f, 10f), blend);
+                if (_bodyTr != null) _bodyTr.localRotation = Quaternion.Slerp(_bodyTr.localRotation, _initBodyRot * Quaternion.Euler(3f, 0f, 0f), blend);
                 return;
             }
 
@@ -430,13 +486,85 @@ namespace SpaceCyberpunk
 
         private void UpdateCharacterCamera()
         {
+            float dt = Time.deltaTime;
+            bool sprinting = _currentHorizSpeed > (walkSpeed + 1.5f);
+            bool movingGrounded = _cc.isGrounded && _currentHorizSpeed > 0.25f && _rollTimer <= 0f;
+
+            // 1. Head-bob & left-right stride sway
+            float targetBobWeight = movingGrounded ? 1f : 0f;
+            _bobWeight = Mathf.MoveTowards(_bobWeight, targetBobWeight, dt * 8f);
+            if (movingGrounded)
+            {
+                float freq = sprinting ? sprintBobFrequency : walkBobFrequency;
+                _bobPhase += dt * freq;
+            }
+
+            float bobY = Mathf.Sin(_bobPhase * 2f) * (sprinting ? sprintBobAmplitude : walkBobAmplitude) * _bobWeight;
+            float swayX = Mathf.Cos(_bobPhase) * swayAmplitude * (sprinting ? 1.3f : 0.85f) * _bobWeight;
+            float strideRoll = Mathf.Cos(_bobPhase) * (sprinting ? sprintRollDegrees : walkRollDegrees) * _bobWeight;
+
+            // Subtle idle breathing when standing still
+            float idleBreathY = (1f - _bobWeight) * Mathf.Sin(Time.time * 1.85f) * 0.009f;
+            float idleBreathPitch = (1f - _bobWeight) * Mathf.Sin(Time.time * 1.85f) * 0.18f;
+
+            // Strafe lean tilt
+            float targetStrafeTilt = -Input.GetAxisRaw("Horizontal") * strafeTiltDegrees;
+            _strafeTilt = Mathf.Lerp(_strafeTilt, targetStrafeTilt, dt * 10f);
+
+            // 2. Smooth vertical Y tracking (eliminates abrupt 1-frame camera stop/hitch on landing)
+            float safeDt = Mathf.Min(dt, 0.033f);
+            if (!_hasSmoothedCamY || Mathf.Abs(transform.position.y - _smoothedCamY) > 2.5f)
+            {
+                _smoothedCamY = transform.position.y;
+                _smoothedCamYVel = 0f;
+                _hasSmoothedCamY = true;
+            }
+            else
+            {
+                _smoothedCamY = Mathf.SmoothDamp(_smoothedCamY, transform.position.y, ref _smoothedCamYVel, 0.045f, Mathf.Infinity, safeDt);
+            }
+
+            // Decay any residual dip/pitch smoothly (no unstable high-stiffness spring bounce)
+            _camDipOffset = Mathf.Lerp(_camDipOffset, 0f, safeDt * 12f);
+            _camImpactPitch = Mathf.Lerp(_camImpactPitch, 0f, safeDt * 12f);
+            _camDipVel = 0f;
+            _camImpactPitchVel = 0f;
+
+            // 3. Organic Perlin camera shake (decays smoothly)
+            _shakeIntensity = Mathf.MoveTowards(_shakeIntensity, 0f, dt * 3.4f);
+            float shakeT = Time.time * 26f + _shakeSeed;
+            float shakeSq = _shakeIntensity * _shakeIntensity;
+            float shakePitch = (Mathf.PerlinNoise(shakeT, 0.3f) - 0.5f) * 4.5f * shakeSq;
+            float shakeYaw = (Mathf.PerlinNoise(0.7f, shakeT) - 0.5f) * 3.5f * shakeSq;
+            float shakeRoll = (Mathf.PerlinNoise(shakeT, shakeT) - 0.5f) * 5.0f * shakeSq;
+            Vector3 shakePosOffset = new Vector3(
+                (Mathf.PerlinNoise(shakeT + 3f, 1.1f) - 0.5f) * 0.07f * shakeSq,
+                (Mathf.PerlinNoise(2.2f, shakeT + 5f) - 0.5f) * 0.09f * shakeSq,
+                0f
+            );
+
+            // 4. Roll / Somersault camera perspective change
+            float rollProgress = (_rollTimer > 0f && rollDuration > 0.01f) ? Mathf.Clamp01(1f - (_rollTimer / rollDuration)) : 0f;
+            float rollCurve = Mathf.Sin(rollProgress * Mathf.PI);
+            float rollCrouchY = _rollTimer > 0f ? -0.72f * rollCurve : 0f;
+            float rollSomersaultPitch = _rollTimer > 0f && !_isThirdPerson ? Mathf.SmoothStep(0f, 360f, rollProgress) : 0f;
+            float rollDutchTilt = _rollTimer > 0f ? 16f * rollCurve : 0f;
+
+            // 5. Dynamic FOV (sprint & roll speed sensation)
+            float targetFovOffset = _rollTimer > 0f ? 9.5f * rollCurve : (sprinting && _currentHorizSpeed > 0.5f ? 6.5f : 0f);
+            _fovOffset = Mathf.Lerp(_fovOffset, targetFovOffset, dt * 9f);
+            playerCamera.fieldOfView = _baseFov + _fovOffset;
+
+            Vector3 camAnchorPos = new Vector3(transform.position.x, _smoothedCamY, transform.position.z);
+
             if (_isThirdPerson)
             {
-                Quaternion camRot = Quaternion.Euler(_pitch, _yaw, 0f);
-                Vector3 desiredPos = transform.position + camRot * thirdPersonOffset;
-                Vector3 lookTarget = transform.position + Vector3.up * 1.45f;
+                Quaternion camRot = Quaternion.Euler(_pitch + _camImpactPitch * 0.55f + shakePitch, _yaw + shakeYaw, strideRoll * 0.45f + _strafeTilt * 0.6f + rollDutchTilt * 0.7f + shakeRoll);
+                Vector3 targetOffset = thirdPersonOffset + new Vector3(swayX * 0.4f, bobY * 0.45f + _camDipOffset * 0.75f + rollCrouchY * 0.45f, _rollTimer > 0f ? 0.55f * rollCurve : 0f);
+                Vector3 desiredPos = camAnchorPos + camRot * targetOffset + shakePosOffset;
+                Vector3 lookTarget = camAnchorPos + Vector3.up * (1.45f + _camDipOffset * 0.6f + rollCrouchY * 0.5f);
 
-                // Prevent camera clipping through hangar walls/floors
+                // Prevent camera clipping through walls/floors
                 Vector3 dir = desiredPos - lookTarget;
                 if (Physics.Raycast(lookTarget, dir.normalized, out RaycastHit hit, dir.magnitude, ~0, QueryTriggerInteraction.Ignore))
                 {
@@ -446,13 +574,20 @@ namespace SpaceCyberpunk
                     }
                 }
 
-                playerCamera.transform.position = Vector3.Lerp(playerCamera.transform.position, desiredPos, Time.deltaTime * 16f);
+                float camFollow = 1f - Mathf.Exp(-18f * safeDt);
+                playerCamera.transform.position = Vector3.Lerp(playerCamera.transform.position, desiredPos, camFollow);
                 playerCamera.transform.LookAt(lookTarget);
+                playerCamera.transform.Rotate(0f, 0f, strideRoll * 0.45f + _strafeTilt * 0.6f + rollDutchTilt * 0.7f + shakeRoll, Space.Self);
             }
             else
             {
-                playerCamera.transform.position = transform.position + transform.TransformDirection(firstPersonEyeOffset);
-                playerCamera.transform.rotation = Quaternion.Euler(_pitch, _yaw, 0f);
+                Vector3 localEye = firstPersonEyeOffset + new Vector3(swayX, bobY + idleBreathY + _camDipOffset + rollCrouchY, 0f);
+                playerCamera.transform.position = camAnchorPos + transform.TransformDirection(localEye) + shakePosOffset;
+                playerCamera.transform.rotation = Quaternion.Euler(
+                    _pitch + idleBreathPitch + _camImpactPitch + shakePitch + rollSomersaultPitch,
+                    _yaw + shakeYaw,
+                    strideRoll + _strafeTilt + rollDutchTilt + shakeRoll
+                );
             }
         }
 
@@ -466,7 +601,12 @@ namespace SpaceCyberpunk
             SetVisualVisible(false);
 
             var rb = spaceship.GetComponent<Rigidbody>();
-            if (rb != null) rb.isKinematic = false;
+            if (rb != null)
+            {
+                rb.isKinematic = false;
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
             spaceship.enabled = true;
             SetShipHudVisible(true);
 
@@ -475,9 +615,10 @@ namespace SpaceCyberpunk
                 spaceshipCamera.target = spaceship.transform;
                 spaceshipCamera.spaceship = spaceship;
                 spaceshipCamera.enabled = true;
+                spaceshipCamera.SnapToTargetImmediate();
             }
 
-            // Spaceship mouse flight stick uses unlocked cursor
+            // Spaceship unlocked cursor (use WASD/Arrows or Right-Click drag to steer; no accidental runaway spin)
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
@@ -560,18 +701,16 @@ namespace SpaceCyberpunk
 
         private void OnGUI()
         {
-            if (Time.timeScale <= 0.01f) return;
+            if (Time.timeScale <= 0.01f || AnyUiPanelOpen) return;
 
-            if ((!IsInShip && _canBoard) || (IsInShip && _canExit))
+            if (!IsInShip && _canBoard && spaceship != null)
             {
-                var style = new GUIStyle(GUI.skin.box)
-                {
-                    fontSize = 16,
-                    fontStyle = FontStyle.Bold,
-                    alignment = TextAnchor.MiddleCenter
-                };
-                style.normal.textColor = new Color(0.45f, 1f, 0.9f, 1f);
-                GUI.Box(new Rect(Screen.width * 0.5f - 28f, Screen.height - 95f, 56f, 34f), "[F]", style);
+                Vector3 anchor = spaceship.transform.position + Vector3.up * 1.8f;
+                WorldInteractPromptUI.DrawAtWorldPos(anchor, "F", "LÊN TÀU");
+            }
+            else if (IsInShip && _canExit)
+            {
+                WorldInteractPromptUI.DrawAtScreenPos(Screen.width * 0.5f - 60f, Screen.height - 82f, "F", "RỜI TÀU");
             }
         }
     }

@@ -53,7 +53,8 @@ namespace SpaceCyberpunk
         public float hoverVelocityResponsiveness = 11f;
 
         [Header("Cơ Chế Lái Thực Tế & Cần Điều Khiển Ảo (Flight Stick & Aerodynamics)")]
-        public bool enableMouseFlightStick = true;
+        [Tooltip("Tắt mặc định để tránh cam/tàu tự xoay vòng vòng khi chuột nằm lệch tâm lúc lên tàu; nhấn [M] để bật/tắt hoặc giữ Chuột Phải để lái bằng chuột")]
+        public bool enableMouseFlightStick = false;
         public float mouseSteerSensitivity = 0.90f;
         public float mouseSteerDeadzone = 0.075f;
         public bool invertMousePitch = false;
@@ -413,6 +414,31 @@ namespace SpaceCyberpunk
             if (_currentHealth <= 0f) _currentHealth = maxHealth;
             CaptureSpawnPose();
             _currentYaw = transform.eulerAngles.y;
+
+            // Reset steering & virtual stick state cleanly on boarding so ship/camera never spins wildly
+            _virtualStick = Vector2.zero;
+            _virtualStickVel = Vector2.zero;
+            _rmbStick = Vector2.zero;
+            _rmbStickVel = Vector2.zero;
+            _mouseSteerArmed = false;
+            _mouseMovedPixels = 0f;
+            _lastMouseScreenPos = Input.mousePosition;
+            _smoothedTurnCmd = 0f;
+            _smoothedPitchCmd = 0f;
+            _smoothedRollCmd = 0f;
+            _turnInput = 0f;
+            _pitchInput = 0f;
+            _rollInput = 0f;
+            _yawRate = 0f;
+            _pitchRate = 0f;
+            _rollRate = 0f;
+            _currentBank = 0f;
+            if (_rb != null)
+            {
+                _rb.constraints = RigidbodyConstraints.FreezeRotation;
+                if (!_rb.isKinematic)
+                    _rb.angularVelocity = Vector3.zero;
+            }
         }
 
         private void Start()
@@ -731,6 +757,10 @@ namespace SpaceCyberpunk
             {
                 if (insideViewport)
                 {
+                    float minDimArm = Mathf.Max(200f, Mathf.Min(Screen.width, Screen.height));
+                    Vector2 centerArm = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+                    float distFromCenterNorm = Vector2.Distance(mPos, centerArm) / (minDimArm * 0.44f);
+
                     if (_lastMouseScreenPos.sqrMagnitude < 0.01f)
                     {
                         _lastMouseScreenPos = mPos;
@@ -739,7 +769,8 @@ namespace SpaceCyberpunk
                     {
                         _mouseMovedPixels += Vector2.Distance(mPos, _lastMouseScreenPos);
                         _lastMouseScreenPos = mPos;
-                        if (_mouseMovedPixels > 10f || Input.GetMouseButton(1))
+                        // Only arm mouse flight stick after cursor actually passes near screen center (prevents runaway spin on boarding!)
+                        if (_mouseMovedPixels > 18f && distFromCenterNorm < 0.28f)
                         {
                             _mouseSteerArmed = true;
                         }
@@ -1266,10 +1297,14 @@ namespace SpaceCyberpunk
 
             float dt = Time.fixedDeltaTime;
 
-            // 1. Triệt tiêu lực xoáy văng vật lý sau va chạm
-            if (_rb.angularVelocity.sqrMagnitude > 0.0001f)
+            // 1. Khóa hoàn toàn xoay vật lý do va chạm (chỉ cho phép MoveRotation có kiểm soát -> không bao giờ xoay cam vòng vòng)
+            if (_rb.constraints != RigidbodyConstraints.FreezeRotation)
             {
-                _rb.angularVelocity = Vector3.Lerp(_rb.angularVelocity, Vector3.zero, dt * gyroAngularDamping);
+                _rb.constraints = RigidbodyConstraints.FreezeRotation;
+            }
+            if (_rb.angularVelocity.sqrMagnitude > 0.00001f)
+            {
+                _rb.angularVelocity = Vector3.zero;
             }
 
             // 2. Thực hiện cú Barrel Roll 360 độ (lăn lộn vòng quanh trục mũi tàu)

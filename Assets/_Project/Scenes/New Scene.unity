@@ -21273,7 +21273,7 @@ MonoBehaviour:
   retroBrakeRate: 18
   velocityResponsiveness: 6.2
   hoverVelocityResponsiveness: 11
-  enableMouseFlightStick: 1
+  enableMouseFlightStick: 0
   mouseSteerSensitivity: 0.9
   mouseSteerDeadzone: 0.075
   invertMousePitch: 0
