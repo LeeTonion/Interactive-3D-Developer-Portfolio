@@ -46,6 +46,30 @@ namespace SpaceCyberpunk.HangarAnimation
 
         private void Start()
         {
+            // Auto-aim baseYawPivot so the welding tip always points toward the parked spaceship on the Landing Pad
+            if (baseYawPivot != null && weldingSparks != null)
+            {
+                var ship = FindFirstObjectByType<PlayerSpaceshipController>();
+                Vector3 targetPos = ship != null
+                    ? ship.transform.position
+                    : baseYawPivot.parent.TransformPoint(new Vector3(0f, 3.85f, -6.5f));
+
+                Vector3 tipDir = weldingSparks.transform.position - baseYawPivot.position;
+                tipDir.y = 0f;
+                Vector3 shipDir = targetPos - baseYawPivot.position;
+                shipDir.y = 0f;
+
+                if (tipDir.sqrMagnitude > 0.01f && shipDir.sqrMagnitude > 0.01f)
+                {
+                    float deltaYaw = Vector3.SignedAngle(tipDir, shipDir, Vector3.up);
+                    Vector3 e = baseYawPivot.localEulerAngles;
+                    e.y += deltaYaw;
+                    baseYawPivot.localEulerAngles = e;
+                }
+            }
+
+            yawRangeDegrees = Mathf.Min(yawRangeDegrees, 18f);
+
             if (baseYawPivot != null) _baseInitYaw = baseYawPivot.localEulerAngles.y;
             if (elbowPivot != null) _elbowInitEuler = elbowPivot.localEulerAngles;
             if (wristPivot != null) _wristInitEuler = wristPivot.localEulerAngles;

@@ -93,6 +93,7 @@ namespace SpaceCyberpunk.HangarAnimation
         private void ApplyRingPulse(Renderer[] ring, Color baseColor, float minMult, float maxMult, float phase)
         {
             if (ring == null || ring.Length == 0) return;
+            if (_mpb == null) _mpb = new MaterialPropertyBlock();
             float wave = (Mathf.Sin(phase) + 1f) * 0.5f;
             float mult = Mathf.Lerp(minMult, maxMult, wave);
             _mpb.SetColor(EmissionColorId, baseColor * mult);

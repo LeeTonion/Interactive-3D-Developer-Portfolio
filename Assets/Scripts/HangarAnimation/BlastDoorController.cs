@@ -1,10 +1,10 @@
+using System;
 using UnityEngine;
 
 namespace SpaceCyberpunk.HangarAnimation
 {
     /// <summary>
     /// Multi-stage heavy industrial blast door controller for 04_Animated_Hangar_Blast_Doors.
-    /// Press [O] in Play Mode to toggle Open/Close (hydraulic locks retract -> warning lights flash -> doors slide with rumble).
     /// </summary>
     public class BlastDoorController : MonoBehaviour
     {
@@ -35,6 +35,12 @@ namespace SpaceCyberpunk.HangarAnimation
         private Vector3[] _lockClosedPos;
         private float[] _baseLightIntensities;
         private float _autoTimer;
+        private string _lastBroadcastState;
+        private float _lastBroadcastProgress = -1f;
+        private bool _lastForcefieldActive;
+
+        public event Action OnDoorStateChanged;
+        public event Action<string, string> OnDoorLogEvent;
 
         public bool IsTargetOpen => _targetOpen;
         public bool IsFullyOpen => _stateProgress >= 1.99f;
@@ -43,6 +49,16 @@ namespace SpaceCyberpunk.HangarAnimation
         public float Progress01 => Mathf.Clamp01(_stateProgress * 0.5f);
         public bool IsForcefieldActive => forcefieldMembrane != null && forcefieldMembrane.activeSelf;
 
+        public string HydraulicLockStatusLabel
+        {
+            get
+            {
+                if (_stateProgress <= 0.01f) return "ĐANG KHÓA CHẶT";
+                if (_stateProgress < 0.99f) return _targetOpen ? "ĐANG RÚT CHỐT" : "ĐANG KHÓA CHỐT";
+                return "ĐÃ RÚT CHỐT";
+            }
+        }
+
         public string StatusLabel
         {
             get
@@ -50,30 +66,40 @@ namespace SpaceCyberpunk.HangarAnimation
                 if (IsTransitioning)
                 {
                     if (_targetOpen)
-                        return _stateProgress < 1f ? "ĐANG MỞ CHỐT THỦY LỰC..." : "ĐANG MỞ CỬA HANGAR...";
+                        return _stateProgress < 1f ? "ĐANG MỞ CHỐT THỦY LỰC" : "ĐANG MỞ CỬA HANGAR";
                     else
-                        return _stateProgress > 1f ? "ĐANG ĐÓNG CỬA HANGAR..." : "ĐANG KHÓA CHỐT AN NINH...";
+                        return _stateProgress > 1f ? "ĐANG ĐÓNG CỬA HANGAR" : "ĐANG MỞ CHỐT THỦY LỰC";
                 }
-                return _targetOpen ? "CỬA ĐÃ MỞ // SẴN SÀNG CẤT CÁNH" : "CỬA ĐANG ĐÓNG // ÁP SUẤT ỔN ĐỊNH";
+                return _targetOpen ? "CỬA ĐÃ MỞ" : "CỬA ĐANG ĐÓNG";
             }
         }
 
         public void OpenDoors()
         {
-            _targetOpen = true;
+            if (!_targetOpen)
+            {
+                _targetOpen = true;
+                OnDoorLogEvent?.Invoke("HANGAR", "Đang rút chốt thủy lực và mở cửa lớn.");
+                OnDoorStateChanged?.Invoke();
+            }
             _autoTimer = autoCycleInterval;
         }
 
         public void CloseDoors()
         {
-            _targetOpen = false;
+            if (_targetOpen)
+            {
+                _targetOpen = false;
+                OnDoorLogEvent?.Invoke("HANGAR", "Đang đóng cửa lớn và kích hoạt chốt khóa thủy lực.");
+                OnDoorStateChanged?.Invoke();
+            }
             _autoTimer = autoCycleInterval;
         }
 
         public void ToggleDoors()
         {
-            _targetOpen = !_targetOpen;
-            _autoTimer = autoCycleInterval;
+            if (_targetOpen) CloseDoors();
+            else OpenDoors();
         }
 
         public void ToggleForcefieldManual()
@@ -82,6 +108,8 @@ namespace SpaceCyberpunk.HangarAnimation
             _manualForcefieldState = !IsForcefieldActive;
             if (forcefieldMembrane != null)
                 forcefieldMembrane.SetActive(_manualForcefieldState);
+            OnDoorLogEvent?.Invoke("HANGAR", _manualForcefieldState ? "Đã BẬT màn chắn năng lượng." : "Đã TẮT màn chắn năng lượng.");
+            OnDoorStateChanged?.Invoke();
         }
 
         private void Start()
@@ -176,6 +204,26 @@ namespace SpaceCyberpunk.HangarAnimation
                     if (warningLights[i] != null)
                         warningLights[i].intensity = _baseLightIntensities[i] * flash;
                 }
+            }
+
+            // Event-driven UI sync (fires only when state/progress/forcefield meaningfully changes)
+            string curState = StatusLabel;
+            bool curFf = IsForcefieldActive;
+            if (curState != _lastBroadcastState || curFf != _lastForcefieldActive || Mathf.Abs(_stateProgress - _lastBroadcastProgress) >= 0.015f)
+            {
+                if (_lastBroadcastState != null && curState != _lastBroadcastState)
+                {
+                    if (curState == "CỬA ĐÃ MỞ")
+                        OnDoorLogEvent?.Invoke("HANGAR", "Cửa lớn Hangar đã mở hoàn toàn.");
+                    else if (curState == "CỬA ĐANG ĐÓNG")
+                        OnDoorLogEvent?.Invoke("HANGAR", "Cửa lớn Hangar đã đóng & khóa chốt an toàn.");
+                    else if (curState == "ĐANG MỞ CỬA HANGAR")
+                        OnDoorLogEvent?.Invoke("HANGAR", "Chốt thủy lực đã rút — cửa lớn đang trượt mở.");
+                }
+                _lastBroadcastState = curState;
+                _lastBroadcastProgress = _stateProgress;
+                _lastForcefieldActive = curFf;
+                OnDoorStateChanged?.Invoke();
             }
         }
     }

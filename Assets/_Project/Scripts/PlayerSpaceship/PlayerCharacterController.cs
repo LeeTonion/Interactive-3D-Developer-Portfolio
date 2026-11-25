@@ -313,12 +313,12 @@ namespace SpaceCyberpunk
             HandleCharacterActions(moveDir);
             UpdateLimbAnimation(Time.deltaTime);
 
-            // Check boarding proximity
+            // Check boarding proximity (must also be visible in player camera view)
             _canBoard = false;
             if (spaceship != null)
             {
                 float dist = Vector3.Distance(transform.position, spaceship.transform.position);
-                if (dist <= boardDistance)
+                if (dist <= boardDistance && IsShipVisibleInView())
                 {
                     _canBoard = true;
                     if (Input.GetKeyDown(interactKey))
@@ -327,6 +327,16 @@ namespace SpaceCyberpunk
                     }
                 }
             }
+        }
+
+        private bool IsShipVisibleInView()
+        {
+            if (playerCamera == null || spaceship == null) return true;
+            Vector3 target = spaceship.transform.position + Vector3.up * 1.2f;
+            Vector3 toShip = (target - playerCamera.transform.position).normalized;
+            if (Vector3.Dot(playerCamera.transform.forward, toShip) < 0.20f) return false;
+            Vector3 vp = playerCamera.WorldToViewportPoint(target);
+            return vp.z > 0.1f && vp.x >= 0.02f && vp.x <= 0.98f && vp.y >= 0.02f && vp.y <= 0.98f;
         }
 
         private void UpdateInShip()

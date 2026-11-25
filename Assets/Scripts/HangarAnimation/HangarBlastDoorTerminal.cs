@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -7,10 +8,8 @@ using UnityEngine.UI;
 namespace SpaceCyberpunk.HangarAnimation
 {
     /// <summary>
-    /// Attaches directly onto the existing 3-Monitor Desk (desk.prefab) + Chair (decorative_chair) in Room01_Spaceship_Hangar.
-    /// - Mounts 3 crisp, clickable WorldSpace UI screens directly onto the desk's Left, Center, and Right monitors.
-    /// - Press [E] near the chair to smoothly sit down (chair slides in + camera frames all 3 monitors cleanly).
-    /// - ZERO grey OnGUI boxes, ZERO duplicate vertical console panels.
+    /// Redesigned AAA Diegetic 3-Monitor Hangar Control Station mounted onto desk.prefab + decorative_chair.
+    /// Separates presentation from gameplay via event-driven subscriptions to HangarSimulationManager & BlastDoorController.
     /// </summary>
     public class HangarBlastDoorTerminal : MonoBehaviour
     {
@@ -25,28 +24,40 @@ namespace SpaceCyberpunk.HangarAnimation
         public float seatedFov = 65f;
         public float mouseParallaxDegrees = 2.4f;
 
-        // Runtime UI references across all 3 desk monitors
-        private TextMeshProUGUI _leftChecklistText;
-        private Image _leftPowerBar;
-        private Image _leftFuelBar;
-        private Image _leftTempBar;
+        // === Left Screen (Canvas_Left_Telemetry) ===
+        private readonly HangarStatusIndicator[] _checkDots = new HangarStatusIndicator[5];
+        private readonly TextMeshProUGUI[] _checkValues = new TextMeshProUGUI[5];
+        private HangarAnimatedBar _powerBar;
+        private HangarAnimatedBar _fuelBar;
+        private HangarAnimatedBar _tempBar;
 
+        // === Center Screen (Canvas_Center_BlastDoor) ===
+        private HangarStatusIndicator _doorStatusDot;
         private TextMeshProUGUI _centerStatusText;
-        private Image _centerDoorBar;
-        private TextMeshProUGUI _centerOpenBtnLabel;
-        private Image _centerOpenBtnImg;
-        private TextMeshProUGUI _centerFfBtnLabel;
+        private TextMeshProUGUI _centerLockText;
+        private HangarAnimatedBar _centerDoorBar;
+        private HangarSciFiButton _btnLaunchOpen;
+        private HangarSciFiButton _btnForcefield;
+        private GameObject _overrideBanner;
         private TextMeshProUGUI _centerLogText;
+        private readonly List<string> _logEntries = new List<string>(8);
 
+        // === Right Screen (Canvas_Right_Machinery) ===
+        private HangarStatusIndicator _opsStatusDot;
         private TextMeshProUGUI _rightSpeedText;
-        private TextMeshProUGUI _rightClampBtnLabel;
+        private HangarSciFiButton _btnSpeedPause;
+        private HangarSciFiButton _btnSpeedNormal;
+        private HangarSciFiButton _btnSpeedOverdrive;
+        private HangarSciFiButton _btnClamps;
 
+        // === Entrance & Diegetic Rig ===
+        private readonly List<CanvasGroup> _screenGroups = new List<CanvasGroup>(3);
         private Light _statusLight;
         private Transform _player;
         private CharacterController _playerCc;
         private Camera _cam;
 
-        // Seated state machine
+        // === Seated State Machine ===
         private enum SeatState { Standing, SittingDown, Seated, StandingUp }
         private SeatState _seatState = SeatState.Standing;
         private float _seatAnimT;
@@ -60,22 +71,17 @@ namespace SpaceCyberpunk.HangarAnimation
 
         private bool _inRange;
         private float _scanPulse;
-        private string _logMessage = "HỆ THỐNG SẴN SÀNG // BẤM CHỌN TRỰC TIẾP TRÊN 3 MÀN HÌNH";
+        private bool _overrideActive;
+        private bool _eventsBound;
+
+        private HangarSimulationManager _boundManager;
+        private BlastDoorController _boundDoor;
 
         private AudioSource _audioSource;
         private AudioClip _beepClip;
         private AudioClip _confirmClip;
         private AudioClip _alarmClip;
         private AudioClip _chairSlideClip;
-
-        private static readonly Color ColCyan = new Color(0.14f, 0.92f, 1f);
-        private static readonly Color ColGreen = new Color(0.20f, 1f, 0.52f);
-        private static readonly Color ColAmber = new Color(1f, 0.72f, 0.14f);
-        private static readonly Color ColRed = new Color(1f, 0.25f, 0.22f);
-        private static readonly Color ColBg = new Color(0.02f, 0.06f, 0.11f, 0.96f);
-        private static readonly Color ColBtn = new Color(0.06f, 0.18f, 0.28f, 0.96f);
-        private static readonly Color ColBtnDanger = new Color(0.32f, 0.08f, 0.08f, 0.96f);
-        private static readonly Color ColBtnReady = new Color(0.08f, 0.36f, 0.20f, 0.96f);
 
         private void Awake()
         {
@@ -99,12 +105,65 @@ namespace SpaceCyberpunk.HangarAnimation
             EnsureVisualRig();
             CacheChairPositions();
             AssignWorldCameras();
+            BindEvents();
+
+            AppendSystemLog("SYSTEM", "Trạm điều khiển Hangar Bay 01 đã sẵn sàng.");
+            SyncAllUI();
+        }
+
+        private void OnEnable()
+        {
+            BindEvents();
         }
 
         private void OnDisable()
         {
+            UnbindEvents();
             if (_seatState != SeatState.Standing)
                 ForceStandImmediate();
+        }
+
+        private void OnDestroy()
+        {
+            UnbindEvents();
+        }
+
+        private void BindEvents()
+        {
+            if (_eventsBound) return;
+
+            _boundManager = HangarSimulationManager.Instance;
+            if (_boundManager != null)
+            {
+                _boundManager.OnEngineeringStateChanged += SyncAllUI;
+                _boundManager.OnSystemLog += HandleSystemLog;
+            }
+
+            _boundDoor = blastDoor != null ? blastDoor : FindFirstObjectByType<BlastDoorController>();
+            if (_boundDoor != null)
+            {
+                _boundDoor.OnDoorStateChanged += SyncAllUI;
+                _boundDoor.OnDoorLogEvent += HandleSystemLog;
+            }
+
+            _eventsBound = (_boundManager != null || _boundDoor != null);
+        }
+
+        private void UnbindEvents()
+        {
+            if (_boundManager != null)
+            {
+                _boundManager.OnEngineeringStateChanged -= SyncAllUI;
+                _boundManager.OnSystemLog -= HandleSystemLog;
+                _boundManager = null;
+            }
+            if (_boundDoor != null)
+            {
+                _boundDoor.OnDoorStateChanged -= SyncAllUI;
+                _boundDoor.OnDoorLogEvent -= HandleSystemLog;
+                _boundDoor = null;
+            }
+            _eventsBound = false;
         }
 
         private void EnsureEventSystem()
@@ -124,10 +183,10 @@ namespace SpaceCyberpunk.HangarAnimation
             _audioSource.spatialBlend = 0.65f;
             _audioSource.playOnAwake = false;
 
-            _beepClip = MakeTone(840f, 0.055f, 0.22f);
-            _confirmClip = MakeDualTone(620f, 980f, 0.22f, 0.26f);
-            _alarmClip = MakeDualTone(460f, 320f, 0.30f, 0.25f);
-            _chairSlideClip = MakeTone(190f, 0.24f, 0.18f);
+            _beepClip = MakeTone(860f, 0.05f, 0.20f);
+            _confirmClip = MakeDualTone(640f, 1020f, 0.20f, 0.24f);
+            _alarmClip = MakeDualTone(460f, 320f, 0.28f, 0.24f);
+            _chairSlideClip = MakeTone(190f, 0.22f, 0.16f);
         }
 
         private void CacheChairPositions()
@@ -135,8 +194,7 @@ namespace SpaceCyberpunk.HangarAnimation
             if (existingChair != null)
             {
                 _chairIdleWorldPos = existingChair.position;
-                // Slide chair 0.38m closer toward the desk when seated
-                Vector3 toDesk = (transform.position - existingChair.position);
+                Vector3 toDesk = transform.position - existingChair.position;
                 toDesk.y = 0f;
                 Vector3 dir = toDesk.sqrMagnitude > 0.01f ? toDesk.normalized : -transform.forward;
                 _chairSeatedWorldPos = _chairIdleWorldPos + dir * 0.38f;
@@ -158,45 +216,43 @@ namespace SpaceCyberpunk.HangarAnimation
                 else DestroyImmediate(oldRig.gameObject);
             }
 
+            _screenGroups.Clear();
+
             GameObject root = new GameObject("Desk_3Monitor_UI_Root");
             root.transform.SetParent(transform, false);
 
-            // Exact hand-calibrated transforms fitting desk.prefab's 3 real monitor bezels
-            // 1. LEFT MONITOR — Pre-Flight Checklist & Telemetry
+            // Exact calibrated transforms fitting desk.prefab's 3 real monitor bezels
             BuildLeftMonitorCanvas(
                 root.transform,
                 new Vector3(1.299004f, 1.646999f, 1.027998f),
                 Quaternion.Euler(29.771f, -215.975f, -0.188f),
                 0.00169f);
 
-            // 2. CENTER MONITOR — Blast Door Command & Launch
             BuildCenterMonitorCanvas(
                 root.transform,
                 new Vector3(0.008f, 1.684f, 0.64f),
                 Quaternion.Euler(22.53f, 180.767f, 0.934f),
                 0.00213f);
 
-            // 3. RIGHT MONITOR — Hangar Machinery & Stand Up
             BuildRightMonitorCanvas(
                 root.transform,
                 new Vector3(-1.34f, 1.616f, 0.938f),
                 Quaternion.Euler(21.898f, 208.709f, -0.874f),
                 0.00169f);
 
-            // Soft desk glow light
             GameObject ltGo = new GameObject("Desk_MonitorGlow");
             ltGo.transform.SetParent(root.transform, false);
             ltGo.transform.localPosition = new Vector3(0.008f, 1.95f, 1.15f);
             _statusLight = ltGo.AddComponent<Light>();
             _statusLight.type = LightType.Point;
             _statusLight.range = 3.8f;
-            _statusLight.intensity = 1.8f;
-            _statusLight.color = ColCyan;
+            _statusLight.intensity = 1.6f;
+            _statusLight.color = HangarUITheme.NeonCyan;
 
             AssignWorldCameras();
         }
 
-        private Canvas CreateMonitorCanvas(Transform parent, string name, Vector3 localPos, Quaternion localRot, float scale, out Transform panelRoot)
+        private Canvas CreateMonitorCanvas(Transform parent, string name, Vector3 localPos, Quaternion localRot, float scale, out Transform contentRoot)
         {
             GameObject cGo = new GameObject(name);
             cGo.transform.SetParent(parent, false);
@@ -213,208 +269,417 @@ namespace SpaceCyberpunk.HangarAnimation
             RectTransform rt = cGo.GetComponent<RectTransform>();
             rt.sizeDelta = new Vector2(580f, 380f);
 
-            GameObject borderGo = new GameObject("FrameBorder");
-            borderGo.transform.SetParent(cGo.transform, false);
-            Image bImg = borderGo.AddComponent<Image>();
-            bImg.color = new Color(0.14f, 0.92f, 1f, 0.65f);
-            borderGo.GetComponent<RectTransform>().sizeDelta = new Vector2(580f, 380f);
+            CanvasGroup cg = cGo.AddComponent<CanvasGroup>();
+            cg.alpha = 0.88f;
+            _screenGroups.Add(cg);
 
-            GameObject bgGo = new GameObject("ScreenBG");
-            bgGo.transform.SetParent(cGo.transform, false);
-            Image bgImg = bgGo.AddComponent<Image>();
-            bgImg.color = ColBg;
-            bgGo.GetComponent<RectTransform>().sizeDelta = new Vector2(568f, 368f);
+            // Glassmorphism dark metallic background + glowing cyan border
+            GameObject frame = HangarUITheme.CreateGlassPanel(
+                cGo.transform, "GlassFrame", Vector2.zero, new Vector2(580f, 380f),
+                HangarUITheme.BgDeepNavy, new Color(HangarUITheme.NeonCyan.r, HangarUITheme.NeonCyan.g, HangarUITheme.NeonCyan.b, 0.72f));
 
-            panelRoot = bgGo.transform;
+            // Subtle mask + sweeping holographic scanline
+            GameObject scanMask = new GameObject("ScanSweep");
+            scanMask.transform.SetParent(frame.transform, false);
+            RectTransform smRt = scanMask.AddComponent<RectTransform>();
+            smRt.sizeDelta = new Vector2(560f, 34f);
+            Image smImg = scanMask.AddComponent<Image>();
+            smImg.sprite = HangarUITheme.GetScanlineSprite();
+            smImg.raycastTarget = false;
+            scanMask.AddComponent<HangarScanlineSweep>().Configure(165f, 44f);
+
+            contentRoot = frame.transform;
             return canvas;
         }
 
+        private void BuildHeaderBar(Transform root, string title, string badgeText)
+        {
+            GameObject hdr = HangarUITheme.CreateGlassPanel(
+                root, "HeaderBar", new Vector2(0f, 162f), new Vector2(552f, 36f),
+                HangarUITheme.BgHeaderStrip, new Color(HangarUITheme.NeonCyan.r, HangarUITheme.NeonCyan.g, HangarUITheme.NeonCyan.b, 0.45f));
+
+            HangarUITheme.CreateTMP(hdr.transform, "Title", title, 18f, HangarUITheme.NeonCyan, new Vector2(-60f, 0f), new Vector2(400f, 30f), TextAlignmentOptions.Left);
+            HangarUITheme.CreateTMP(hdr.transform, "Badge", badgeText, 12f, HangarUITheme.TextMuted, new Vector2(205f, 0f), new Vector2(120f, 26f), TextAlignmentOptions.Right);
+        }
+
+        // =====================================================================
+        // 1. LEFT SCREEN — Canvas_Left_Telemetry
+        // =====================================================================
         private void BuildLeftMonitorCanvas(Transform parent, Vector3 pos, Quaternion rot, float scale)
         {
             CreateMonitorCanvas(parent, "Canvas_Left_Telemetry", pos, rot, scale, out Transform root);
+            BuildHeaderBar(root, "SYS // CHECKLIST CẤT CÁNH", "TELEMETRY v6");
 
-            CreateTMP(root, "Title", "SYS // CHECKLIST CẤT CÁNH", 24, ColCyan, new Vector2(0f, 152f), new Vector2(540f, 36f), TextAlignmentOptions.Center);
+            // 5 Live Checklist Rows inside a clean glass panel
+            GameObject listPanel = HangarUITheme.CreateGlassPanel(
+                root, "ChecklistPanel", new Vector2(0f, 66f), new Vector2(552f, 144f),
+                HangarUITheme.BgGlassPanel, new Color(HangarUITheme.ElectricBlue.r, HangarUITheme.ElectricBlue.g, HangarUITheme.ElectricBlue.b, 0.35f));
 
-            _leftChecklistText = CreateTMP(root, "ChecklistBody",
-                "[  ] 1. ĐIỆN LƯỚI: 50%\n[  ] 2. NHIÊN LIỆU: 25%\n[  ] 3. KẸP BÃI ĐÁP: KHÓA\n[  ] 4. QUÉT THÂN VỎ: CHƯA\n[OK] 5. NHIỆT ĐỘ: 42°C",
-                18, ColAmber, new Vector2(0f, 66f), new Vector2(520f, 130f), TextAlignmentOptions.Left);
-
-            _leftPowerBar = CreateLabeledBar(root, "ĐIỆN", new Vector2(0f, -18f), ColCyan);
-            _leftFuelBar = CreateLabeledBar(root, "XĂNG", new Vector2(0f, -50f), ColGreen);
-            _leftTempBar = CreateLabeledBar(root, "NHIỆT", new Vector2(0f, -82f), ColAmber);
-
-            CreateButton(root, "Btn_ScanShip", "QUÉT TÀU & GỌI DRONE", new Vector2(-130f, -142f), new Vector2(250f, 56f), ColBtn, ColCyan, () =>
+            string[] rowNames =
             {
-                if (HangarSimulationManager.Instance != null)
-                    HangarSimulationManager.Instance.StartFullShipScan();
-                PlayClip(_confirmClip);
-                _logMessage = "ĐÃ LỆNH 2 DRONE & ROBOT QUÉT KIỂM TRA THÂN VỎ!";
-            });
+                "1. ĐIỆN LƯỚI (YÊU CẦU ≥ 75%)",
+                "2. NHIÊN LIỆU (YÊU CẦU ≥ 99%)",
+                "3. KẸP BÃI ĐÁP (4 KẸP THỦY LỰC)",
+                "4. QUÉT THÂN VỎ (DRONE & ROBOT)",
+                "5. NHIỆT ĐỘ XƯỞNG (AN TOÀN < 85°C)"
+            };
 
-            CreateButton(root, "Btn_Coolant", "XẢ NITƠ LÀM MÁT", new Vector2(130f, -142f), new Vector2(250f, 56f), ColBtn, ColGreen, () =>
+            for (int i = 0; i < 5; i++)
             {
-                if (HangarSimulationManager.Instance != null)
-                    HangarSimulationManager.Instance.PurgeCoolant(32f);
-                PlayClip(_beepClip);
-                _logMessage = "ĐÃ XẢ NITƠ LÀM MÁT TOÀN BỘ KHOANG XƯỞNG!";
-            });
+                float y = 50f - i * 25f;
+                _checkDots[i] = HangarUITheme.CreateStatusDot(listPanel.transform, $"Dot_{i}", new Vector2(-252f, y), 10f);
+                HangarUITheme.CreateTMP(listPanel.transform, $"Lbl_{i}", rowNames[i], 13.5f, HangarUITheme.TextPrimary, new Vector2(-65f, y), new Vector2(345f, 22f), TextAlignmentOptions.Left);
+                _checkValues[i] = HangarUITheme.CreateTMP(listPanel.transform, $"Val_{i}", "--", 13.5f, HangarUITheme.StatusAmber, new Vector2(182f, y), new Vector2(150f, 22f), TextAlignmentOptions.Right);
+            }
+
+            // 3 Animated Status Bars
+            GameObject barsPanel = HangarUITheme.CreateGlassPanel(
+                root, "BarsPanel", new Vector2(0f, -52f), new Vector2(552f, 78f),
+                HangarUITheme.BgGlassPanel, new Color(HangarUITheme.NeonCyan.r, HangarUITheme.NeonCyan.g, HangarUITheme.NeonCyan.b, 0.25f));
+
+            _powerBar = HangarUITheme.CreateAnimatedBar(barsPanel.transform, "Bar_Power", "ĐIỆN", new Vector2(0f, 23f), 524f, HangarUITheme.NeonCyan);
+            _fuelBar = HangarUITheme.CreateAnimatedBar(barsPanel.transform, "Bar_Fuel", "XĂNG", new Vector2(0f, 0f), 524f, HangarUITheme.StatusGreen);
+            _tempBar = HangarUITheme.CreateAnimatedBar(barsPanel.transform, "Bar_Temp", "NHIỆT", new Vector2(0f, -23f), 524f, HangarUITheme.StatusAmber);
+
+            // 2 Functional Buttons
+            HangarUITheme.CreateSciFiButton(
+                root, "Btn_ScanShip", "QUÉT TÀU & GỌI DRONE",
+                new Vector2(-140f, -134f), new Vector2(268f, 60f),
+                HangarUITheme.BtnNormal, HangarUITheme.BtnHover, HangarUITheme.NeonCyan, HangarUITheme.TextPrimary,
+                () =>
+                {
+                    if (HangarSimulationManager.Instance != null)
+                        HangarSimulationManager.Instance.StartFullShipScan();
+                    PlayClip(_confirmClip);
+                }, 14.5f);
+
+            HangarUITheme.CreateSciFiButton(
+                root, "Btn_Coolant", "XẢ NITƠ LÀM MÁT",
+                new Vector2(140f, -134f), new Vector2(268f, 60f),
+                HangarUITheme.BtnNormal, HangarUITheme.BtnHover, HangarUITheme.StatusGreen, HangarUITheme.StatusGreen,
+                () =>
+                {
+                    if (HangarSimulationManager.Instance != null)
+                        HangarSimulationManager.Instance.PurgeCoolant(32f);
+                    PlayClip(_beepClip);
+                }, 14.5f);
         }
 
+        // =====================================================================
+        // 2. CENTER SCREEN — Canvas_Center_BlastDoor
+        // =====================================================================
         private void BuildCenterMonitorCanvas(Transform parent, Vector3 pos, Quaternion rot, float scale)
         {
             CreateMonitorCanvas(parent, "Canvas_Center_BlastDoor", pos, rot, scale, out Transform root);
+            BuildHeaderBar(root, "BAY 01 // ĐIỀU KHIỂN CỬA LỚN", "PRIMARY GATE");
 
-            CreateTMP(root, "Title", "BAY 01 // ĐIỀU KHIỂN CỬA LỚN", 25, ColCyan, new Vector2(0f, 152f), new Vector2(540f, 36f), TextAlignmentOptions.Center);
+            // Large Door Status & Hydraulic Lock Card
+            GameObject statusCard = HangarUITheme.CreateGlassPanel(
+                root, "DoorStatusCard", new Vector2(0f, 102f), new Vector2(552f, 70f),
+                HangarUITheme.BgGlassPanel, new Color(HangarUITheme.NeonCyan.r, HangarUITheme.NeonCyan.g, HangarUITheme.NeonCyan.b, 0.45f));
 
-            _centerStatusText = CreateTMP(root, "DoorStatus", "CỬA ĐANG ĐÓNG // ÁP SUẤT ỔN ĐỊNH (0%)", 20, ColAmber, new Vector2(0f, 110f), new Vector2(530f, 34f), TextAlignmentOptions.Center);
+            _doorStatusDot = HangarUITheme.CreateStatusDot(statusCard.transform, "DoorDot", new Vector2(-252f, 16f), 12f);
+            _centerStatusText = HangarUITheme.CreateTMP(statusCard.transform, "DoorState", "CỬA ĐANG ĐÓNG", 18f, HangarUITheme.StatusAmber, new Vector2(-42f, 16f), new Vector2(390f, 26f), TextAlignmentOptions.Left);
+            _centerLockText = HangarUITheme.CreateTMP(statusCard.transform, "LockState", "CHỐT THỦY LỰC: ĐANG KHÓA CHẶT", 12.5f, HangarUITheme.TextMuted, new Vector2(150f, 16f), new Vector2(230f, 22f), TextAlignmentOptions.Right);
 
-            _centerDoorBar = CreateLabeledBar(root, "CỬA", new Vector2(0f, 72f), ColCyan);
+            _centerDoorBar = HangarUITheme.CreateAnimatedBar(statusCard.transform, "Bar_Door", "TIẾN ĐỘ", new Vector2(0f, -16f), 524f, HangarUITheme.NeonCyan);
 
-            var openBtn = CreateButton(root, "Btn_LaunchOpen", "MỞ CỬA LỚN\n(CẦN ĐỦ 5 BƯỚC)", new Vector2(-132f, 4f), new Vector2(254f, 68f), ColBtn, Color.white, () =>
-            {
-                var mgr = HangarSimulationManager.Instance;
-                if (mgr != null && mgr.IsLaunchReady)
+            // Emergency Override Banner (shown when override is used)
+            _overrideBanner = HangarUITheme.CreateGlassPanel(
+                root, "OverrideBanner", new Vector2(0f, 58f), new Vector2(552f, 20f),
+                HangarUITheme.BtnDanger, HangarUITheme.StatusRed);
+            HangarUITheme.CreateTMP(_overrideBanner.transform, "WarnTxt", "CẢNH BÁO KHẨN CẤP: ĐÃ KÍCH HOẠT MỞ CỬA OVERRIDE!", 11.5f, HangarUITheme.StatusAmber, Vector2.zero, new Vector2(540f, 18f), TextAlignmentOptions.Center);
+            _overrideBanner.SetActive(false);
+
+            // 4 Large Interactive Buttons
+            _btnLaunchOpen = HangarUITheme.CreateSciFiButton(
+                root, "Btn_LaunchOpen", "MỞ CỬA LỚN\n(CHƯA ĐỦ 5 ĐIỀU KIỆN)",
+                new Vector2(-140f, 18f), new Vector2(268f, 54f),
+                HangarUITheme.BtnNormal, HangarUITheme.BtnHover, HangarUITheme.NeonCyan, HangarUITheme.TextPrimary,
+                () =>
                 {
+                    var mgr = HangarSimulationManager.Instance;
+                    if (mgr != null && mgr.IsLaunchReady && blastDoor != null)
+                    {
+                        _overrideActive = false;
+                        blastDoor.OpenDoors();
+                        PlayClip(_alarmClip);
+                        AppendSystemLog("HANGAR", "Đủ 5 điều kiện — khởi động cất cánh & mở cửa lớn!");
+                        SyncAllUI();
+                    }
+                    else
+                    {
+                        PlayClip(_beepClip);
+                    }
+                }, 13.5f);
+
+            HangarUITheme.CreateSciFiButton(
+                root, "Btn_SealDoor", "ĐÓNG & NIÊM PHONG CỬA LỚN",
+                new Vector2(140f, 18f), new Vector2(268f, 54f),
+                HangarUITheme.BtnNormal, HangarUITheme.BtnHover, HangarUITheme.ElectricBlue, HangarUITheme.TextPrimary,
+                () =>
+                {
+                    _overrideActive = false;
+                    if (blastDoor != null) blastDoor.CloseDoors();
+                    PlayClip(_confirmClip);
+                    SyncAllUI();
+                }, 13.5f);
+
+            HangarUITheme.CreateSciFiButton(
+                root, "Btn_Override", "MỞ KHẨN CẤP (OVERRIDE)",
+                new Vector2(-140f, -42f), new Vector2(268f, 50f),
+                HangarUITheme.BtnDanger, HangarUITheme.BtnDangerHover, HangarUITheme.StatusRed, HangarUITheme.StatusAmber,
+                () =>
+                {
+                    _overrideActive = true;
                     if (blastDoor != null) blastDoor.OpenDoors();
                     PlayClip(_alarmClip);
-                    _logMessage = "ĐỦ ĐIỀU KIỆN CẤT CÁNH! ĐANG RÚT CHỐT & MỞ CỬA LỚN!";
-                }
-                else
+                    AppendSystemLog("OVERRIDE", "CẢNH BÁO: Cưỡng chế mở cửa lớn khẩn cấp!");
+                    SyncAllUI();
+                }, 13.5f);
+
+            _btnForcefield = HangarUITheme.CreateSciFiButton(
+                root, "Btn_Forcefield", "BẬT / TẮT MÀN CHẮN: OFF",
+                new Vector2(140f, -42f), new Vector2(268f, 50f),
+                HangarUITheme.BtnNormal, HangarUITheme.BtnHover, HangarUITheme.NeonCyan, HangarUITheme.NeonCyan,
+                () =>
                 {
+                    if (blastDoor != null) blastDoor.ToggleForcefieldManual();
                     PlayClip(_beepClip);
-                    _logMessage = "CHƯA ĐỦ 5 BƯỚC CHECKLIST! HÃY HOÀN TẤT HOẶC DÙNG OVERRIDE.";
-                }
-            });
-            _centerOpenBtnImg = openBtn.GetComponent<Image>();
-            _centerOpenBtnLabel = openBtn.GetComponentInChildren<TextMeshProUGUI>();
+                    SyncAllUI();
+                }, 13.5f);
 
-            CreateButton(root, "Btn_SealDoor", "ĐÓNG & NIÊM PHONG\nCỬA LỚN", new Vector2(132f, 4f), new Vector2(254f, 68f), ColBtn, ColCyan, () =>
-            {
-                if (blastDoor != null) blastDoor.CloseDoors();
-                PlayClip(_confirmClip);
-                _logMessage = "ĐANG ĐÓNG CỬA LỚN & KHÓA CHỐT THỦY LỰC!";
-            });
+            // Live Scrolling System Log Panel
+            GameObject logPanel = HangarUITheme.CreateGlassPanel(
+                root, "SystemLogPanel", new Vector2(0f, -124f), new Vector2(552f, 94f),
+                new Color(0.015f, 0.035f, 0.065f, 0.94f), new Color(HangarUITheme.ElectricBlue.r, HangarUITheme.ElectricBlue.g, HangarUITheme.ElectricBlue.b, 0.40f));
 
-            CreateButton(root, "Btn_Override", "MỞ KHẨN CẤP (OVERRIDE)", new Vector2(-132f, -72f), new Vector2(254f, 56f), ColBtnDanger, ColAmber, () =>
-            {
-                if (blastDoor != null) blastDoor.OpenDoors();
-                PlayClip(_alarmClip);
-                _logMessage = "OVERRIDE: ĐANG CƯỠNG CHẾ MỞ CỬA HANGAR!";
-            });
-
-            var ffBtn = CreateButton(root, "Btn_Forcefield", "BẬT / TẮT MÀN CHẮN", new Vector2(132f, -72f), new Vector2(254f, 56f), ColBtn, ColCyan, () =>
-            {
-                if (blastDoor != null) blastDoor.ToggleForcefieldManual();
-                PlayClip(_beepClip);
-                _logMessage = "ĐÃ CHUYỂN TRẠNG THÁI MÀN CHẮN NĂNG LƯỢNG!";
-            });
-            _centerFfBtnLabel = ffBtn.GetComponentInChildren<TextMeshProUGUI>();
-
-            GameObject logBg = new GameObject("LogBox");
-            logBg.transform.SetParent(root, false);
-            Image logImg = logBg.AddComponent<Image>();
-            logImg.color = new Color(0.03f, 0.10f, 0.16f, 0.95f);
-            RectTransform logRt = logBg.GetComponent<RectTransform>();
-            logRt.anchoredPosition = new Vector2(0f, -142f);
-            logRt.sizeDelta = new Vector2(524f, 56f);
-
-            _centerLogText = CreateTMP(logBg.transform, "LogText", _logMessage, 16, ColGreen, Vector2.zero, new Vector2(506f, 50f), TextAlignmentOptions.Center);
+            HangarUITheme.CreateTMP(logPanel.transform, "LogHdr", "NHẬT KÝ HỆ THỐNG (LIVE SYSTEM LOG)", 11.5f, HangarUITheme.NeonCyan, new Vector2(0f, 34f), new Vector2(532f, 18f), TextAlignmentOptions.Left);
+            _centerLogText = HangarUITheme.CreateTMP(logPanel.transform, "LogBody", "", 12f, HangarUITheme.TextPrimary, new Vector2(0f, -10f), new Vector2(532f, 68f), TextAlignmentOptions.TopLeft, FontStyles.Normal);
         }
 
+        // =====================================================================
+        // 3. RIGHT SCREEN — Canvas_Right_Machinery
+        // =====================================================================
         private void BuildRightMonitorCanvas(Transform parent, Vector3 pos, Quaternion rot, float scale)
         {
             CreateMonitorCanvas(parent, "Canvas_Right_Machinery", pos, rot, scale, out Transform root);
+            BuildHeaderBar(root, "OPS // ĐIỀU KHIỂN MÁY MÓC", "MACHINERY");
 
-            CreateTMP(root, "Title", "OPS // ĐIỀU KHIỂN MÁY MÓC", 24, ColCyan, new Vector2(0f, 152f), new Vector2(540f, 36f), TextAlignmentOptions.Center);
+            // Current Speed Status Card
+            GameObject spdCard = HangarUITheme.CreateGlassPanel(
+                root, "SpeedCard", new Vector2(0f, 114f), new Vector2(552f, 44f),
+                HangarUITheme.BgGlassPanel, new Color(HangarUITheme.NeonCyan.r, HangarUITheme.NeonCyan.g, HangarUITheme.NeonCyan.b, 0.35f));
 
-            _rightSpeedText = CreateTMP(root, "SpeedStatus", "DÂY CHUYỀN: 1.0x (TIÊU CHUẨN)", 19, ColGreen, new Vector2(0f, 108f), new Vector2(530f, 32f), TextAlignmentOptions.Center);
+            _opsStatusDot = HangarUITheme.CreateStatusDot(spdCard.transform, "OpsDot", new Vector2(-252f, 0f), 11f);
+            _rightSpeedText = HangarUITheme.CreateTMP(spdCard.transform, "SpeedStatus", "TỐC ĐỘ DÂY CHUYỀN: 1.0x (TIÊU CHUẨN)", 16f, HangarUITheme.StatusGreen, new Vector2(10f, 0f), new Vector2(490f, 28f), TextAlignmentOptions.Left);
 
-            CreateButton(root, "Btn_Pause", "TẠM DỪNG\n0.0x", new Vector2(-174f, 44f), new Vector2(164f, 64f), ColBtn, ColAmber, () =>
-            {
-                SetHangarSpeed(0f, false);
-                _logMessage = "ĐÃ TẠM DỪNG TOÀN BỘ MÁY MÓC TRONG HANGAR.";
-            });
-            CreateButton(root, "Btn_Normal", "TIÊU CHUẨN\n1.0x", new Vector2(0f, 44f), new Vector2(164f, 64f), ColBtn, ColCyan, () =>
-            {
-                SetHangarSpeed(1f, true);
-                _logMessage = "XƯỞNG BẢO TRÌ ĐANG VẬN HÀNH Ở MỨC 1.0x.";
-            });
-            CreateButton(root, "Btn_Overdrive", "OVERDRIVE\n2.0x", new Vector2(174f, 44f), new Vector2(164f, 64f), ColBtnDanger, ColRed, () =>
-            {
-                SetHangarSpeed(2f, true);
-                _logMessage = "OVERDRIVE 2.0x! LƯU Ý NHIỆT ĐỘ XƯỞNG ĐANG TĂNG!";
-            });
+            // 3 Speed Selection Buttons
+            _btnSpeedPause = HangarUITheme.CreateSciFiButton(
+                root, "Btn_Pause", "TẠM DỪNG\n0.0x",
+                new Vector2(-184f, 46f), new Vector2(174f, 66f),
+                HangarUITheme.BtnNormal, HangarUITheme.BtnSelected, HangarUITheme.StatusAmber, HangarUITheme.StatusAmber,
+                () => SetHangarSpeed(0f, false), 14.5f);
 
-            var clampBtn = CreateButton(root, "Btn_Clamps", "MỞ / KHÓA KẸP BÃI ĐÁP", new Vector2(-132f, -38f), new Vector2(254f, 60f), ColBtn, ColCyan, () =>
-            {
-                if (HangarSimulationManager.Instance != null)
-                    HangarSimulationManager.Instance.ToggleLandingClamps();
-                PlayClip(_confirmClip);
-                _logMessage = "ĐÃ CHUYỂN TRẠNG THÁI 4 KẸP THỦY LỰC BÃI ĐÁP!";
-            });
-            _rightClampBtnLabel = clampBtn.GetComponentInChildren<TextMeshProUGUI>();
+            _btnSpeedNormal = HangarUITheme.CreateSciFiButton(
+                root, "Btn_Normal", "TIÊU CHUẨN\n1.0x",
+                new Vector2(0f, 46f), new Vector2(174f, 66f),
+                HangarUITheme.BtnNormal, HangarUITheme.BtnSelected, HangarUITheme.NeonCyan, HangarUITheme.TextPrimary,
+                () => SetHangarSpeed(1f, true), 14.5f);
 
-            CreateButton(root, "Btn_RobotWeld", "ROBOT HÀN BẢO TRÌ", new Vector2(132f, -38f), new Vector2(254f, 60f), ColBtn, ColAmber, () =>
-            {
-                var arms = FindObjectsByType<RoboticArmController>(FindObjectsSortMode.None);
-                foreach (var arm in arms) arm.TriggerWeldNow(2.8f);
-                PlayClip(_confirmClip);
-                _logMessage = $"ĐÃ LỆNH {arms.Length} CÁNH TAY ROBOT HÀN BẢO TRÌ NGAY!";
-            });
+            _btnSpeedOverdrive = HangarUITheme.CreateSciFiButton(
+                root, "Btn_Overdrive", "OVERDRIVE\n2.0x",
+                new Vector2(184f, 46f), new Vector2(174f, 66f),
+                HangarUITheme.BtnDanger, HangarUITheme.BtnDangerHover, HangarUITheme.StatusRed, HangarUITheme.StatusRed,
+                () => SetHangarSpeed(2f, true), 14.5f);
 
-            CreateButton(root, "Btn_StandUp", "ĐỨNG DẬY / RỜI GHẾ  [E / ESC]", new Vector2(0f, -134f), new Vector2(516f, 64f), new Color(0.16f, 0.24f, 0.34f, 0.98f), Color.white, () =>
-            {
-                BeginStandUp();
-            });
+            // 2 Large Mechanical Control Buttons
+            _btnClamps = HangarUITheme.CreateSciFiButton(
+                root, "Btn_Clamps", "MỞ / KHÓA KẸP BÃI ĐÁP\n(ĐANG KHÓA)",
+                new Vector2(-140f, -40f), new Vector2(268f, 70f),
+                HangarUITheme.BtnNormal, HangarUITheme.BtnHover, HangarUITheme.NeonCyan, HangarUITheme.TextPrimary,
+                () =>
+                {
+                    if (HangarSimulationManager.Instance != null)
+                        HangarSimulationManager.Instance.ToggleLandingClamps();
+                    PlayClip(_confirmClip);
+                }, 14f);
+
+            HangarUITheme.CreateSciFiButton(
+                root, "Btn_RobotWeld", "ROBOT HÀN BẢO TRÌ\n(KÍCH HOẠT 2 TAY ROBOT)",
+                new Vector2(140f, -40f), new Vector2(268f, 70f),
+                HangarUITheme.BtnNormal, HangarUITheme.BtnHover, HangarUITheme.StatusAmber, HangarUITheme.StatusAmber,
+                () =>
+                {
+                    var arms = FindObjectsByType<RoboticArmController>(FindObjectsSortMode.None);
+                    foreach (var arm in arms) arm.TriggerWeldNow(2.8f);
+                    if (HangarSimulationManager.Instance != null)
+                        HangarSimulationManager.Instance.EmitLog("OPS", $"Đã kích hoạt {arms.Length} tay robot hàn bảo trì.");
+                    PlayClip(_confirmClip);
+                }, 14f);
+
+            // Prominent Exit Button
+            HangarUITheme.CreateSciFiButton(
+                root, "Btn_StandUp", "ĐỨNG DẬY / RỜI GHẾ  [E / ESC]",
+                new Vector2(0f, -132f), new Vector2(552f, 64f),
+                new Color(0.11f, 0.20f, 0.30f, 0.96f), new Color(0.18f, 0.32f, 0.46f, 1f), HangarUITheme.TextPrimary, HangarUITheme.TextPrimary,
+                BeginStandUp, 16f);
         }
 
-        private Image CreateLabeledBar(Transform parent, string label, Vector2 pos, Color fillCol)
+        // =====================================================================
+        // EVENT-DRIVEN UI SYNCHRONIZATION
+        // =====================================================================
+        private void HandleSystemLog(string tag, string message)
         {
-            CreateTMP(parent, "Lbl_" + label, label, 15, Color.white, new Vector2(-225f, pos.y), new Vector2(75f, 24f), TextAlignmentOptions.Left);
-
-            GameObject track = new GameObject("Track_" + label);
-            track.transform.SetParent(parent, false);
-            Image trImg = track.AddComponent<Image>();
-            trImg.color = new Color(0.06f, 0.14f, 0.22f, 1f);
-            RectTransform trRt = track.GetComponent<RectTransform>();
-            trRt.anchoredPosition = new Vector2(40f, pos.y);
-            trRt.sizeDelta = new Vector2(435f, 18f);
-
-            GameObject fill = new GameObject("Fill_" + label);
-            fill.transform.SetParent(track.transform, false);
-            Image fImg = fill.AddComponent<Image>();
-            fImg.color = fillCol;
-            fImg.type = Image.Type.Filled;
-            fImg.fillMethod = Image.FillMethod.Horizontal;
-            fImg.fillAmount = 0.5f;
-            RectTransform fRt = fill.GetComponent<RectTransform>();
-            fRt.anchorMin = Vector2.zero;
-            fRt.anchorMax = Vector2.one;
-            fRt.offsetMin = Vector2.zero;
-            fRt.offsetMax = Vector2.zero;
-            return fImg;
+            AppendSystemLog(tag, message);
         }
 
-        private Button CreateButton(Transform parent, string name, string label, Vector2 pos, Vector2 size, Color bgCol, Color txtCol, Action onClick)
+        private void AppendSystemLog(string tag, string message)
         {
-            GameObject bGo = new GameObject(name);
-            bGo.transform.SetParent(parent, false);
-            Image img = bGo.AddComponent<Image>();
-            img.color = bgCol;
-            RectTransform rt = bGo.GetComponent<RectTransform>();
-            rt.anchoredPosition = pos;
-            rt.sizeDelta = size;
+            string colorHex = tag switch
+            {
+                "WARNING" or "OVERRIDE" => "#FF5252",
+                "DRONE" => "#38E8FF",
+                "HANGAR" => "#3BFF96",
+                "OPS" => "#FFC13B",
+                _ => "#8CE6FF"
+            };
 
-            Button btn = bGo.AddComponent<Button>();
-            ColorBlock cb = btn.colors;
-            cb.normalColor = Color.white;
-            cb.highlightedColor = new Color(1.25f, 1.35f, 1.45f, 1f);
-            cb.pressedColor = new Color(0.75f, 0.9f, 1f, 1f);
-            btn.colors = cb;
-            btn.onClick.AddListener(() => onClick?.Invoke());
+            string line = $"<color={colorHex}>[{tag}]</color> {message}";
+            _logEntries.Add(line);
+            if (_logEntries.Count > 4)
+                _logEntries.RemoveAt(0);
 
-            CreateTMP(bGo.transform, "Label", label, 17, txtCol, Vector2.zero, size - new Vector2(10f, 6f), TextAlignmentOptions.Center);
-            return btn;
+            if (_centerLogText != null)
+                _centerLogText.text = string.Join("\n", _logEntries);
+        }
+
+        private void SyncAllUI()
+        {
+            var mgr = HangarSimulationManager.Instance;
+            float pwr = mgr != null ? mgr.powerGridPercent : 100f;
+            float fuel = mgr != null ? mgr.fuelPercent : 100f;
+            float temp = mgr != null ? mgr.coreTemperatureC : 40f;
+            bool pwrOk = pwr >= 75f;
+            bool fuelOk = fuel >= 99f;
+            bool clampOk = mgr != null && mgr.clampsReleased;
+            bool scanOk = mgr != null && mgr.hullScanComplete;
+            bool scanning = mgr != null && mgr.isHullScanning;
+            bool tempOk = mgr == null || !mgr.IsOverheating;
+            bool ready = mgr != null && mgr.IsLaunchReady;
+
+            // --- Left Screen ---
+            int cableCount = mgr != null ? mgr.ReleasedCableCount : 4;
+            UpdateCheckRow(0, pwrOk, false, $"{Mathf.RoundToInt(pwr)}%");
+            UpdateCheckRow(1, fuelOk, false, $"{Mathf.RoundToInt(fuel)}%");
+            UpdateCheckRow(2, clampOk, false, clampOk ? "ĐÃ MỞ (4/4)" : $"ĐANG KHÓA ({cableCount}/4)");
+            UpdateCheckRow(3, scanOk, scanning, scanOk ? "HOÀN TẤT" : (scanning ? $"SCANNING {Mathf.RoundToInt(mgr.hullScanProgress)}%" : "CHƯA"));
+            UpdateCheckRow(4, tempOk, !tempOk, $"{Mathf.RoundToInt(temp)}°C" + (tempOk ? "" : " (!)") );
+
+            if (_powerBar != null)
+                _powerBar.SetProgress(pwr / 100f, $"{Mathf.RoundToInt(pwr)}%", pwrOk ? HangarUITheme.NeonCyan : HangarUITheme.StatusAmber);
+            if (_fuelBar != null)
+                _fuelBar.SetProgress(fuel / 100f, $"{Mathf.RoundToInt(fuel)}%", HangarUITheme.StatusGreen);
+            if (_tempBar != null)
+            {
+                float tempNorm = Mathf.Clamp01((temp - 20f) / 100f);
+                Color tempCol = temp >= 85f ? HangarUITheme.StatusRed : Color.Lerp(HangarUITheme.StatusAmber, HangarUITheme.StatusRed, Mathf.Clamp01((temp - 65f) / 20f));
+                _tempBar.SetProgress(tempNorm, $"{Mathf.RoundToInt(temp)}°C", tempCol);
+            }
+
+            // --- Center Screen ---
+            if (blastDoor != null)
+            {
+                float prog = blastDoor.Progress01;
+                bool moving = blastDoor.IsTransitioning;
+                bool open = blastDoor.IsTargetOpen;
+
+                if (_doorStatusDot != null)
+                    _doorStatusDot.SetState(moving ? HangarUITheme.StatusAmber : (open ? HangarUITheme.StatusGreen : HangarUITheme.NeonCyan), moving ? 3.5f : 0f);
+
+                if (_centerStatusText != null)
+                {
+                    _centerStatusText.text = blastDoor.StatusLabel;
+                    _centerStatusText.color = moving ? HangarUITheme.StatusAmber : (open ? HangarUITheme.StatusGreen : HangarUITheme.NeonCyan);
+                }
+                if (_centerLockText != null)
+                    _centerLockText.text = $"CHỐT THỦY LỰC: {blastDoor.HydraulicLockStatusLabel}";
+
+                if (_centerDoorBar != null)
+                    _centerDoorBar.SetProgress(prog, $"{Mathf.RoundToInt(prog * 100f)}%", moving ? HangarUITheme.StatusAmber : (open ? HangarUITheme.StatusGreen : HangarUITheme.NeonCyan));
+
+                if (_overrideBanner != null)
+                    _overrideBanner.SetActive(_overrideActive && (open || moving));
+
+                if (_btnLaunchOpen != null)
+                {
+                    _btnLaunchOpen.SetInteractable(ready);
+                    if (ready)
+                    {
+                        _btnLaunchOpen.SetPalette(HangarUITheme.BtnGreen, HangarUITheme.BtnGreenHover, HangarUITheme.StatusGreen, HangarUITheme.TextPrimary);
+                        _btnLaunchOpen.SetText("KHỞI ĐỘNG CẤT CÁNH\n& MỞ CỬA LỚN");
+                    }
+                    else
+                    {
+                        _btnLaunchOpen.SetPalette(HangarUITheme.BtnNormal, HangarUITheme.BtnHover, HangarUITheme.NeonCyan, HangarUITheme.TextPrimary);
+                        _btnLaunchOpen.SetText("MỞ CỬA LỚN\n(CẦN ĐỦ 5 ĐIỀU KIỆN)");
+                    }
+                }
+
+                if (_btnForcefield != null)
+                {
+                    bool ffOn = blastDoor.IsForcefieldActive;
+                    _btnForcefield.SetText(ffOn ? "MÀN CHẮN: ON\n(BẤM ĐỂ TẮT)" : "MÀN CHẮN: OFF\n(BẤM ĐỂ BẬT)");
+                    _btnForcefield.SetSelected(ffOn);
+                }
+
+                if (_statusLight != null)
+                {
+                    _statusLight.color = _overrideActive ? HangarUITheme.StatusRed : (ready ? HangarUITheme.StatusGreen : HangarUITheme.NeonCyan);
+                    _statusLight.intensity = moving ? 2.4f : 1.6f;
+                }
+            }
+
+            // --- Right Screen ---
+            if (mgr != null)
+            {
+                bool active = mgr.simulationActive;
+                bool isPause = !active || mgr.globalSpeed <= 0.05f;
+                bool isOverdrive = active && mgr.globalSpeed >= 1.5f;
+                bool isNormal = active && !isPause && !isOverdrive;
+
+                if (_opsStatusDot != null)
+                    _opsStatusDot.SetState(isPause ? HangarUITheme.StatusAmber : (isOverdrive ? HangarUITheme.StatusRed : HangarUITheme.StatusGreen), isOverdrive ? 3f : 0f);
+
+                if (_rightSpeedText != null)
+                {
+                    string mode = isPause ? "TẠM DỪNG" : (isOverdrive ? "OVERDRIVE" : "TIÊU CHUẨN");
+                    _rightSpeedText.text = $"TỐC ĐỘ DÂY CHUYỀN: {(active ? mgr.globalSpeed : 0f):0.0}x ({mode})";
+                    _rightSpeedText.color = isPause ? HangarUITheme.StatusAmber : (isOverdrive ? HangarUITheme.StatusRed : HangarUITheme.StatusGreen);
+                }
+
+                if (_btnSpeedPause != null) _btnSpeedPause.SetSelected(isPause);
+                if (_btnSpeedNormal != null) _btnSpeedNormal.SetSelected(isNormal);
+                if (_btnSpeedOverdrive != null) _btnSpeedOverdrive.SetSelected(isOverdrive);
+
+                if (_btnClamps != null)
+                {
+                    _btnClamps.SetText(clampOk ? "MỞ / KHÓA KẸP BÃI ĐÁP\n(TRẠNG THÁI: ĐÃ MỞ)" : "MỞ / KHÓA KẸP BÃI ĐÁP\n(TRẠNG THÁI: ĐANG KHÓA)");
+                    _btnClamps.SetSelected(clampOk);
+                }
+            }
+        }
+
+        private void UpdateCheckRow(int idx, bool ok, bool blinkWarning, string text)
+        {
+            Color col = ok ? HangarUITheme.StatusGreen : (blinkWarning ? HangarUITheme.StatusRed : HangarUITheme.StatusAmber);
+            if (_checkDots[idx] != null)
+                _checkDots[idx].SetState(col, blinkWarning ? 3.5f : 0f);
+            if (_checkValues[idx] != null)
+            {
+                _checkValues[idx].text = text;
+                _checkValues[idx].color = col;
+            }
         }
 
         private void AssignWorldCameras()
@@ -430,6 +695,8 @@ namespace SpaceCyberpunk.HangarAnimation
 
         private void Update()
         {
+            if (!_eventsBound) BindEvents();
+
             if (_player == null)
             {
                 var pc = FindFirstObjectByType<PlayerCharacterController>();
@@ -461,7 +728,6 @@ namespace SpaceCyberpunk.HangarAnimation
             }
 
             UpdateSeatAnimation(dt);
-            UpdateAllThreeMonitors();
         }
 
         private void BeginSitDown()
@@ -482,6 +748,7 @@ namespace SpaceCyberpunk.HangarAnimation
             _seatState = SeatState.SittingDown;
             _seatAnimT = 0f;
             PlayClip(_chairSlideClip);
+            SyncAllUI();
         }
 
         private void BeginStandUp()
@@ -514,15 +781,24 @@ namespace SpaceCyberpunk.HangarAnimation
             if (_playerCc != null) _playerCc.enabled = true;
             if (_cam != null) _cam.fieldOfView = _savedFov;
             if (existingChair != null) existingChair.position = _chairIdleWorldPos;
+            SetScreenGroupAlpha(0.88f);
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+        }
+
+        private void SetScreenGroupAlpha(float alpha)
+        {
+            for (int i = 0; i < _screenGroups.Count; i++)
+            {
+                if (_screenGroups[i] != null)
+                    _screenGroups[i].alpha = alpha;
+            }
         }
 
         private void UpdateSeatAnimation(float dt)
         {
             if (_seatState == SeatState.Standing || _cam == null) return;
 
-            // Pull camera back slightly behind the chair so ALL 3 monitors (Left + Center + Right) fit cleanly in frame
             Vector3 toDeskFlat = transform.position - _chairSeatedWorldPos;
             toDeskFlat.y = 0f;
             Vector3 toDeskDir = toDeskFlat.sqrMagnitude > 0.01f ? toDeskFlat.normalized : -transform.forward;
@@ -535,6 +811,8 @@ namespace SpaceCyberpunk.HangarAnimation
             {
                 _seatAnimT = Mathf.MoveTowards(_seatAnimT, 1f, dt / Mathf.Max(0.15f, sitTransitionDuration));
                 float eased = Mathf.SmoothStep(0f, 1f, _seatAnimT);
+
+                SetScreenGroupAlpha(Mathf.Lerp(0.72f, 1f, eased));
 
                 float sitDip = Mathf.Sin(eased * Mathf.PI) * -0.14f;
                 _cam.transform.position = Vector3.Lerp(_camStartPos, seatedEyeWorld, eased) + Vector3.up * sitDip;
@@ -549,6 +827,7 @@ namespace SpaceCyberpunk.HangarAnimation
                 if (_seatAnimT >= 1f)
                 {
                     _seatState = SeatState.Seated;
+                    SetScreenGroupAlpha(1f);
                     Cursor.lockState = CursorLockMode.None;
                     Cursor.visible = true;
                     AssignWorldCameras();
@@ -570,6 +849,8 @@ namespace SpaceCyberpunk.HangarAnimation
             {
                 _seatAnimT = Mathf.MoveTowards(_seatAnimT, 1f, dt / Mathf.Max(0.15f, sitTransitionDuration * 0.85f));
                 float eased = Mathf.SmoothStep(0f, 1f, _seatAnimT);
+
+                SetScreenGroupAlpha(Mathf.Lerp(1f, 0.88f, eased));
 
                 Vector3 standEyeWorld = _savedPlayerPos + Vector3.up * 1.62f;
                 _cam.transform.position = Vector3.Lerp(_camStartPos, standEyeWorld, eased);
@@ -596,90 +877,10 @@ namespace SpaceCyberpunk.HangarAnimation
             }
         }
 
-        private void UpdateAllThreeMonitors()
-        {
-            var mgr = HangarSimulationManager.Instance;
-            int pwr = mgr != null ? Mathf.RoundToInt(mgr.powerGridPercent) : 100;
-            int fuel = mgr != null ? Mathf.RoundToInt(mgr.fuelPercent) : 100;
-            int temp = mgr != null ? Mathf.RoundToInt(mgr.coreTemperatureC) : 40;
-            bool pwrOk = pwr >= 75;
-            bool fuelOk = fuel >= 99;
-            bool clampOk = mgr != null && mgr.clampsReleased;
-            bool scanOk = mgr != null && mgr.hullScanComplete;
-            bool tempOk = mgr == null || !mgr.IsOverheating;
-            bool ready = mgr != null && mgr.IsLaunchReady;
-
-            if (_leftChecklistText != null)
-            {
-                _leftChecklistText.text =
-                    $"[{(pwrOk ? "OK" : "  ")}] 1. ĐIỆN LƯỚI: {pwr}%\n" +
-                    $"[{(fuelOk ? "OK" : "  ")}] 2. NHIÊN LIỆU: {fuel}%\n" +
-                    $"[{(clampOk ? "OK" : "  ")}] 3. KẸP BÃI ĐÁP: {(clampOk ? "ĐÃ MỞ" : "ĐANG KHÓA")}\n" +
-                    $"[{(scanOk ? "OK" : "  ")}] 4. QUÉT THÂN VỎ: {(scanOk ? "HOÀN TẤT" : (mgr != null && mgr.isHullScanning ? Mathf.RoundToInt(mgr.hullScanProgress) + "%" : "CHƯA"))}\n" +
-                    $"[{(tempOk ? "OK" : "!!")}] 5. NHIỆT ĐỘ: {temp}°C {(tempOk ? "" : "(QUÁ NHIỆT!)")}";
-                _leftChecklistText.color = ready ? ColGreen : (tempOk ? ColAmber : ColRed);
-            }
-            if (_leftPowerBar != null) _leftPowerBar.fillAmount = pwr / 100f;
-            if (_leftFuelBar != null) _leftFuelBar.fillAmount = fuel / 100f;
-            if (_leftTempBar != null)
-            {
-                _leftTempBar.fillAmount = Mathf.Clamp01((temp - 20f) / 100f);
-                _leftTempBar.color = tempOk ? ColAmber : ColRed;
-            }
-
-            if (blastDoor != null)
-            {
-                float prog = blastDoor.Progress01;
-                bool moving = blastDoor.IsTransitioning;
-                bool open = blastDoor.IsTargetOpen;
-
-                if (_centerStatusText != null)
-                {
-                    _centerStatusText.text = $"{blastDoor.StatusLabel} ({Mathf.RoundToInt(prog * 100f)}%)";
-                    _centerStatusText.color = moving ? ColRed : (open ? ColGreen : ColAmber);
-                }
-                if (_centerDoorBar != null)
-                {
-                    _centerDoorBar.fillAmount = prog;
-                    _centerDoorBar.color = moving ? ColAmber : (open ? ColGreen : ColCyan);
-                }
-                if (_centerOpenBtnLabel != null)
-                    _centerOpenBtnLabel.text = ready ? "KHỞI ĐỘNG CẤT CÁNH\n& MỞ CỬA LỚN" : "MỞ CỬA LỚN\n(CẦN ĐỦ 5 BƯỚC)";
-                if (_centerOpenBtnImg != null)
-                    _centerOpenBtnImg.color = ready ? ColBtnReady : ColBtn;
-                if (_centerFfBtnLabel != null)
-                    _centerFfBtnLabel.text = blastDoor.IsForcefieldActive ? "TẮT MÀN CHẮN" : "BẬT MÀN CHẮN";
-                if (_centerLogText != null)
-                    _centerLogText.text = _logMessage;
-
-                if (_statusLight != null)
-                {
-                    _statusLight.color = moving ? ColRed : (ready ? ColGreen : ColCyan);
-                    _statusLight.intensity = moving
-                        ? (1.5f + 1.8f * Mathf.Abs(Mathf.Sin(_scanPulse * 8f)))
-                        : (1.7f + 0.35f * Mathf.Sin(_scanPulse * 2.4f));
-                }
-            }
-
-            if (_rightSpeedText != null && mgr != null)
-            {
-                string mode = !mgr.simulationActive ? "TẠM DỪNG" : (mgr.globalSpeed > 1.3f ? "OVERDRIVE" : "TIÊU CHUẨN");
-                _rightSpeedText.text = $"DÂY CHUYỀN: {mgr.globalSpeed:0.0}x ({mode})";
-                _rightSpeedText.color = !mgr.simulationActive ? ColAmber : (mgr.globalSpeed > 1.3f ? ColRed : ColGreen);
-            }
-            if (_rightClampBtnLabel != null && mgr != null)
-            {
-                _rightClampBtnLabel.text = mgr.clampsReleased ? "KHÓA KẸP BÃI ĐÁP" : "MỞ KẸP BÃI ĐÁP";
-            }
-        }
-
         private void SetHangarSpeed(float spd, bool active)
         {
             if (HangarSimulationManager.Instance != null)
-            {
-                HangarSimulationManager.Instance.simulationActive = active;
-                HangarSimulationManager.Instance.globalSpeed = spd;
-            }
+                HangarSimulationManager.Instance.SetSimulationSpeed(spd, active);
             PlayClip(_beepClip);
         }
 
@@ -698,22 +899,6 @@ namespace SpaceCyberpunk.HangarAnimation
                 Vector3 chairAnchor = (existingChair != null ? existingChair.position : _chairIdleWorldPos) + Vector3.up * 1.05f;
                 WorldInteractPromptUI.DrawAtWorldPos(chairAnchor, "E", "NGỒI VÀO BÀN ĐIỀU KHIỂN");
             }
-        }
-
-        private static TextMeshProUGUI CreateTMP(Transform parent, string name, string text, float size, Color color, Vector2 pos, Vector2 sizeDelta, TextAlignmentOptions align)
-        {
-            GameObject go = new GameObject(name);
-            go.transform.SetParent(parent, false);
-            RectTransform rt = go.AddComponent<RectTransform>();
-            rt.anchoredPosition = pos;
-            rt.sizeDelta = sizeDelta;
-            TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
-            tmp.text = text;
-            tmp.fontSize = size;
-            tmp.fontStyle = FontStyles.Bold;
-            tmp.alignment = align;
-            tmp.color = color;
-            return tmp;
         }
 
         private static AudioClip MakeTone(float freq, float duration, float vol)

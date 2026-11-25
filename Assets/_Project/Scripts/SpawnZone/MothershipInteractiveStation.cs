@@ -199,7 +199,7 @@ namespace SpaceCyberpunk
                 _closestActiveDist = 999f;
             }
 
-            bool inRange = dist <= interactRadius;
+            bool inRange = dist <= interactRadius && HasLineOfSight();
             if (inRange && dist < _closestActiveDist)
             {
                 _closestActiveDist = dist;
@@ -556,6 +556,40 @@ namespace SpaceCyberpunk
                     Cursor.visible = false;
                 }
             }
+        }
+
+        private bool HasLineOfSight()
+        {
+            if (_player == null) return false;
+
+            Vector3 targetPos = transform.position + Vector3.up * 0.65f;
+            Camera cam = Camera.main;
+            if (cam != null)
+            {
+                Vector3 toTarget = (targetPos - cam.transform.position).normalized;
+                if (Vector3.Dot(cam.transform.forward, toTarget) < 0.25f)
+                    return false;
+
+                Vector3 vp = cam.WorldToViewportPoint(targetPos);
+                if (vp.z <= 0.1f || vp.x < 0.04f || vp.x > 0.96f || vp.y < 0.04f || vp.y > 0.96f)
+                    return false;
+            }
+
+            Vector3 eyePos = cam != null ? cam.transform.position : (_player.position + Vector3.up * 1.45f);
+            Vector3 dir = targetPos - eyePos;
+            float len = dir.magnitude;
+            if (len < 0.25f) return true;
+
+            RaycastHit[] hits = Physics.RaycastAll(eyePos, dir / len, len, ~0, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < hits.Length; i++)
+            {
+                Transform ht = hits[i].transform;
+                if (ht == null) continue;
+                if (ht.IsChildOf(_player) || ht.IsChildOf(transform)) continue;
+                if (hits[i].distance < len - 0.35f)
+                    return false;
+            }
+            return true;
         }
 
         private static Transform FindDeepChild(Transform parent, string childName)
