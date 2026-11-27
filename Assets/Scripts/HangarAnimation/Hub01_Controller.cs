@@ -45,6 +45,9 @@ namespace SpaceCyberpunk.HangarAnimation
         [Header("Server Rack LEDs (MaterialPropertyBlock)")]
         public Renderer[] serverLedRenderers;
 
+        [Header("Emergency Disaster Strobes")]
+        public Light[] emergencyStrobes;
+
         // Unused legacy fields kept null-safe for Inspector compatibility
         [HideInInspector] public Transform southDoorLeft;
         [HideInInspector] public Transform southDoorRight;
@@ -320,6 +323,19 @@ namespace SpaceCyberpunk.HangarAnimation
                 float targetAng = _auxPowerOn ? -35f : 42f;
                 Quaternion targetRot = Quaternion.Euler(0f, 0f, targetAng);
                 hvLeverPivot.localRotation = Quaternion.Slerp(hvLeverPivot.localRotation, targetRot, dt * 10f);
+            }
+
+            if (emergencyStrobes != null)
+            {
+                for (int i = 0; i < emergencyStrobes.Length; i++)
+                {
+                    Light lt = emergencyStrobes[i];
+                    if (lt == null) continue;
+                    if (!_auxPowerOn) { lt.intensity = 0.1f; continue; }
+                    float wave = Mathf.Sin(t * 5.5f + i * 1.8f);
+                    float noise = Mathf.PerlinNoise(t * 11f, i * 3.1f);
+                    lt.intensity = (wave > -0.1f && noise > 0.28f) ? (7.5f * noise + 2.0f) : 0.35f;
+                }
             }
 
             if (_toastTimer > 0f) _toastTimer -= dt;
