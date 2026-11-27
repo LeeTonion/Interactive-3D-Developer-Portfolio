@@ -18,7 +18,7 @@ namespace SpaceCyberpunk.HangarAnimation
         public Transform northDoorRight;
         public Transform southDoorLeft;
         public Transform southDoorRight;
-        public float slideDistance = 1.25f;
+        public float slideDistance = 2.05f;
 
         [Header("Floor LEDs, Laser Scanner & Rotating Amber Beacon")]
         public Renderer[] floorLedRenderers;

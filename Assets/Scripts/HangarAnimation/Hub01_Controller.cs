@@ -64,6 +64,9 @@ namespace SpaceCyberpunk.HangarAnimation
         private Light[] _hangarLights;
         private float[] _hangarBaseIntensities;
         private HangarLightingAnimator _hangarAnim;
+        private ParticleSystem[] _electricalSparkVfx;
+        private ParticleSystem[] _cabinetSmokeVfx;
+        private float[] _cabinetSmokeBaseRates;
 
         private bool _northOpen;
         private float _northProgress;
@@ -125,6 +128,25 @@ namespace SpaceCyberpunk.HangarAnimation
                     _hangarBaseIntensities[i] = _hangarLights[i].intensity;
                 _hangarAnim = hangarObj.GetComponentInChildren<HangarLightingAnimator>(true);
             }
+
+            // Cache electrical spark & cabinet smoke VFX so cutting HV power logically stops electrical shorts
+            var allHubPs = GetComponentsInChildren<ParticleSystem>(true);
+            var sparkList = new System.Collections.Generic.List<ParticleSystem>();
+            var smokeList = new System.Collections.Generic.List<ParticleSystem>();
+            var rateList = new System.Collections.Generic.List<float>();
+            for (int i = 0; i < allHubPs.Length; i++)
+            {
+                string n = allHubPs[i].name;
+                if (n.Contains("Spark")) sparkList.Add(allHubPs[i]);
+                else if (n.Contains("CabinetSmoke"))
+                {
+                    smokeList.Add(allHubPs[i]);
+                    rateList.Add(allHubPs[i].emission.rateOverTime.constant);
+                }
+            }
+            _electricalSparkVfx = sparkList.ToArray();
+            _cabinetSmokeVfx = smokeList.ToArray();
+            _cabinetSmokeBaseRates = rateList.ToArray();
 
             UpdateSecurityBarrierState();
             FindPlayer();
@@ -408,6 +430,30 @@ namespace SpaceCyberpunk.HangarAnimation
             }
             if (_hangarAnim != null)
                 _hangarAnim.enabled = _auxPowerOn;
+
+            // Cutting HV power logically stops all electrical short-circuit sparks & reduces cabinet smoke
+            if (_electricalSparkVfx != null)
+            {
+                for (int i = 0; i < _electricalSparkVfx.Length; i++)
+                {
+                    var ps = _electricalSparkVfx[i];
+                    if (ps == null) continue;
+                    if (_auxPowerOn) { if (!ps.isPlaying) ps.Play(); }
+                    else { ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear); }
+                }
+            }
+            if (_cabinetSmokeVfx != null && _cabinetSmokeBaseRates != null)
+            {
+                for (int i = 0; i < _cabinetSmokeVfx.Length; i++)
+                {
+                    var ps = _cabinetSmokeVfx[i];
+                    if (ps == null) continue;
+                    var em = ps.emission;
+                    em.rateOverTime = _auxPowerOn ? _cabinetSmokeBaseRates[i] : _cabinetSmokeBaseRates[i] * 0.15f;
+                }
+            }
+            if (hologramRoot != null) hologramRoot.gameObject.SetActive(_auxPowerOn);
+            if (hologramRing != null) hologramRing.gameObject.SetActive(_auxPowerOn);
 
             if (hvStatusRenderer != null)
             {
